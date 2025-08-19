@@ -282,7 +282,7 @@
   <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
     <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
     <div class="mini-meta">
-      <div class="mini-title">BGM — bgm.mp3</div>
+      <div class="mini-title">Music</div>
       <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
       <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
     </div>
@@ -466,7 +466,6 @@ const BGM = (() => {
       started = true;
       setMiniState();
     } catch (e) {
-      // Autoplay likely blocked; will retry on first interaction.
     }
   };
   const pause = () => { audio.pause(); setMiniState(); };
