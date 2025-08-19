@@ -19,7 +19,8 @@
     --pad: 20px;
     --radius: 18px;
 
-    --motion-scale: 0.75;   }
+    --motion-scale: 0.75;
+  }
 
   *{ box-sizing: border-box }
   html, body { height: 100% }
@@ -28,7 +29,7 @@
     margin:0;
     font-family: "Comic Neue", Arial, sans-serif;
     color:#0b3c61;
-    background:#a8cdf1;         
+    background:#a8cdf1;
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -63,7 +64,7 @@
   }
   .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
 
- 
+  /* ——— Hello ——— */
   .hello-wrap{
     width:min(980px, 92vw);
     border-radius: var(--radius);
@@ -99,7 +100,7 @@
   .hello-actions .btn{ min-width:160px }
   .hint{ margin-top:14px; font-size:14px; opacity:.8; }
 
-
+  /* ——— Game ——— */
   .game-wrap{
     width:min(1000px,95vw); height:min(70vh, 680px);
     border-radius: var(--radius);
@@ -123,7 +124,7 @@
     display:block; outline: 2px solid rgba(255,255,255,.5);
   }
 
-
+  /* ——— Draw ——— */
   .draw-wrap{
     width:min(1100px,96vw); height:min(76vh, 740px);
     border-radius: var(--radius);
@@ -169,7 +170,7 @@
     border: 1px solid rgba(0,0,0,.15); border-radius:10px;
   }
 
-  
+  /* ——— Chat ——— */
   .chat-container{
     width:min(980px, 92vw);
     border-radius: var(--radius);
@@ -238,6 +239,7 @@
     width:108px; color:#fff; background:#88b7e5
   }
 
+  /* ——— Themes Panel ——— */
   .themes-panel{
     position:fixed; top:0; right:0; height:100%;
     width:0; opacity:0; pointer-events:none; z-index:1000;
@@ -267,10 +269,63 @@
     .mood-selector{ flex-wrap:wrap }
     .header-controls{ flex-wrap:wrap }
   }
+
+  /* ——— BGM Mini Player (bottom-right, Spotify-ish) ——— */
+  .player{
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1100;
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px; border-radius:16px;
+    max-width: 320px; width: calc(100vw - 32px);
+  }
+  .player .art{
+    width:42px; height:42px; flex: 0 0 42px;
+    border-radius:10px; background:
+      radial-gradient(60% 60% at 35% 35%, rgba(255,255,255,.7), rgba(255,255,255,.1) 60%),
+      linear-gradient(135deg, rgba(255,255,255,.4), rgba(255,255,255,0));
+    outline: 1px solid rgba(255,255,255,.4);
+  }
+  .player .meta{
+    min-width:0; display:flex; flex-direction:column; gap:4px; flex:1;
+  }
+  .player .title{
+    font-weight:900; font-size:14px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .player .time{
+    font-size:12px; opacity:.85; display:flex; gap:6px; justify-content:space-between;
+  }
+  .player .row{
+    display:flex; align-items:center; gap:8px;
+  }
+  .player .play{
+    border:0; cursor:pointer; border-radius:999px; width:38px; height:38px;
+    font-size:16px; font-weight:900;
+    display:grid; place-items:center;
+    background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
+    box-shadow: 0 4px 8px rgba(168,205,241,.5);
+  }
+  .player input[type="range"]{
+    -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:999px;
+    background: rgba(255,255,255,.55); outline:1px solid rgba(255,255,255,.5);
+  }
+  .player input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%;
+    background:#ffffff; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer;
+  }
+  .player .vol{
+    width:78px;
+  }
+  .player .icon{
+    background:none; border:0; cursor:pointer; font-size:16px;
+    width:28px; height:28px; display:grid; place-items:center;
+  }
 </style>
 </head>
 <body>
 
+  <!-- ——— Screens (unchanged layout) ——— -->
   <section id="hello-screen" class="screen active">
     <div class="hello-wrap glass">
       <div class="hello-text">Hello</div>
@@ -365,6 +420,7 @@
     </div>
   </section>
 
+  <!-- Themes Panel -->
   <aside class="themes-panel" id="themesPanel" aria-hidden="true">
     <div class="panel-shell glass">
       <div class="themes-head glass">
@@ -372,14 +428,32 @@
         <button class="close-btn" id="closeThemes" aria-label="Close">✕</button>
       </div>
       <div class="themes-body">
-        <div class="swatch-strip" id="themeStrip">
-        </div>
+        <div class="swatch-strip" id="themeStrip"></div>
       </div>
     </div>
   </aside>
 
-<script>
+  <!-- ——— BGM AUDIO ELEMENT ——— -->
+  <!-- Place your file at /assets/audio/bgm.mp3 or change the src below -->
+  <audio id="bgmAudio" preload="auto" loop src="assets/audio/bgm.mp3"></audio>
 
+  <!-- ——— MINI PLAYER ——— -->
+  <div class="player glass" id="miniPlayer" aria-label="Background music player">
+    <div class="art" aria-hidden="true"></div>
+    <button class="play" id="bgmPlay" aria-pressed="false" title="Play/Pause">▶️</button>
+    <div class="meta">
+      <div class="title" id="bgmTitle">Your BGM</div>
+      <input type="range" id="bgmSeek" min="0" max="100" value="0" aria-label="Seek">
+      <div class="time"><span id="bgmCur">0:00</span><span id="bgmDur">0:00</span></div>
+    </div>
+    <button class="icon" id="bgmMute" aria-pressed="false" title="Mute/Unmute">🔈</button>
+    <input class="vol" type="range" id="bgmVol" min="0" max="1" step="0.01" value="0.7" aria-label="Volume">
+  </div>
+
+<script>
+/* ===========================
+   SFX: Click/Pop/Scribble
+   =========================== */
 const Sound = (() => {
   let ctx;
   let muted = false;
@@ -409,6 +483,9 @@ const Sound = (() => {
   return { click, pop, scribble, toggle, setMuted, isMuted };
 })();
 
+/* ===========================
+   Screens
+   =========================== */
 const screens = {
   hello: document.getElementById('hello-screen'),
   game:  document.getElementById('game-screen'),
@@ -418,6 +495,7 @@ const screens = {
 function switchScreen(key){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[key].classList.add('active');
+  BGM.tryAutoplay(); // gentle nudge to start after interactions
 }
 
 document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
@@ -427,7 +505,9 @@ document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScr
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 
-
+/* ===========================
+   Themes
+   =========================== */
 const themesPanel = document.getElementById("themesPanel");
 const closeThemes = document.getElementById("closeThemes");
 const themeStrip = document.getElementById("themeStrip");
@@ -567,7 +647,9 @@ bindMute("muteBtnGame");
 bindMute("muteBtnDraw");
 bindMute("muteBtnChat");
 
-
+/* ===========================
+   Game: Bubble Pop
+   =========================== */
 const gameCanvas = document.getElementById('gameCanvas');
 const scoreTxt = document.getElementById('scoreTxt');
 const resetGameBtn = document.getElementById('resetGame');
@@ -636,7 +718,7 @@ function gameLoop(t){
     gctx.fillStyle = grd;
     gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
 
-    if(t - lastSpawn > 700){ 
+    if(t - lastSpawn > 700){
       spawnBubble(); lastSpawn = t;
     }
     bubbles = bubbles.filter(b => b.alpha > 0);
@@ -657,10 +739,13 @@ gameCanvas.addEventListener('click', (e)=>{
       break;
     }
   }
+  BGM.tryAutoplay();
 });
 resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
 
-
+/* ===========================
+   Draw Canvas
+   =========================== */
 const drawCanvas = document.getElementById('drawCanvas');
 const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
 let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
@@ -697,6 +782,7 @@ function endDraw(){ drawing = false; dctx.globalCompositeOperation = 'source-ove
 drawCanvas.addEventListener('mousedown', e=>{
   const r = drawCanvas.getBoundingClientRect();
   startDraw(e.clientX - r.left, e.clientY - r.top);
+  BGM.tryAutoplay();
 });
 drawCanvas.addEventListener('mousemove', e=>{
   const r = drawCanvas.getBoundingClientRect();
@@ -708,6 +794,7 @@ drawCanvas.addEventListener('touchstart', e=>{
   const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
   startDraw(t.clientX - r.left, t.clientY - r.top);
   e.preventDefault();
+  BGM.tryAutoplay();
 },{passive:false});
 drawCanvas.addEventListener('touchmove', e=>{
   const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
@@ -743,7 +830,9 @@ document.getElementById('saveDraw').onclick = ()=>{
   a.href = url; a.download = 'drawing.png'; a.click();
 };
 
-
+/* ===========================
+   Chatbot
+   =========================== */
 const chatBox = document.getElementById("chat-box");
 const userInputField = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -792,11 +881,12 @@ moodButtons.forEach((btn) => {
       nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way? I’ve got you. 💙"
     };
     addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
+    BGM.tryAutoplay();
   });
 });
 
-sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); });
-userInputField.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
+sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); BGM.tryAutoplay(); });
+userInputField.addEventListener("keypress", e => { if(e.key==="Enter") { sendMessage(); BGM.tryAutoplay(); }});
 
 function setupRecognition(){
   if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
@@ -828,6 +918,7 @@ voiceModeBtn.addEventListener("click", () => {
     if (recognition) recognition.stop();
     voiceModeBtn.textContent = "🎤 Voice";
   }
+  BGM.tryAutoplay();
 });
 
 speakReplyBtn.addEventListener("click", () => {
@@ -955,6 +1046,87 @@ function processUserInput(text){
 document.addEventListener('keydown', (e)=>{
   if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel();
 });
+
+/* ===========================
+   BGM Manager + Mini Player
+   =========================== */
+const BGM = (() => {
+  const audio = document.getElementById('bgmAudio');
+  const btnPlay = document.getElementById('bgmPlay');
+  const seek = document.getElementById('bgmSeek');
+  const cur = document.getElementById('bgmCur');
+  const dur = document.getElementById('bgmDur');
+  const vol = document.getElementById('bgmVol');
+  const btnMute = document.getElementById('bgmMute');
+  const title = document.getElementById('bgmTitle');
+
+  // Title from filename if available
+  try{
+    const src = new URL(audio.currentSrc || audio.src, location.href);
+    const file = (src.pathname.split('/').pop() || 'bgm.mp3').replace(/\.[a-z0-9]+$/i,'');
+    if(file) title.textContent = decodeURIComponent(file).replace(/[-_]/g,' ').trim() || 'Your BGM';
+  }catch{}
+
+  let triedAuto = false;
+  audio.volume = parseFloat(localStorage.getItem('bgmVol') || '0.7');
+  vol.value = audio.volume.toFixed(2);
+
+  function fmt(t){
+    if(!isFinite(t)) return "0:00";
+    const m = Math.floor(t/60);
+    const s = Math.floor(t%60);
+    return m + ":" + String(s).padStart(2,'0');
+  }
+
+  function refresh(){
+    cur.textContent = fmt(audio.currentTime||0);
+    dur.textContent = fmt(audio.duration||0);
+    if(audio.duration){
+      seek.value = Math.floor((audio.currentTime / audio.duration) * 100) || 0;
+    }else{
+      seek.value = 0;
+    }
+    btnPlay.textContent = audio.paused ? "▶️" : "⏸️";
+    btnPlay.setAttribute('aria-pressed', (!audio.paused).toString());
+    btnMute.textContent = audio.muted ? "🔇" : "🔈";
+    btnMute.setAttribute('aria-pressed', audio.muted.toString());
+  }
+
+  btnPlay.addEventListener('click', ()=>{
+    if(audio.paused) { audio.play().catch(()=>{}); } else { audio.pause(); }
+    refresh();
+  });
+  btnMute.addEventListener('click', ()=>{
+    audio.muted = !audio.muted; refresh();
+  });
+  vol.addEventListener('input', ()=>{
+    audio.volume = parseFloat(vol.value);
+    localStorage.setItem('bgmVol', audio.volume.toString());
+  });
+  seek.addEventListener('input', ()=>{
+    if(audio.duration){
+      audio.currentTime = (seek.value/100) * audio.duration;
+    }
+  });
+
+  audio.addEventListener('timeupdate', refresh);
+  audio.addEventListener('play', refresh);
+  audio.addEventListener('pause', refresh);
+  audio.addEventListener('loadedmetadata', refresh);
+
+  // Autoplay politely after a user gesture (various spots call this)
+  function tryAutoplay(){
+    if(triedAuto) return;
+    triedAuto = true;
+    audio.play().then(refresh).catch(()=>{/* ignore - blocked until next gesture */ triedAuto=false;});
+  }
+
+  // Kick on any general click/tap
+  window.addEventListener('pointerdown', () => { tryAutoplay(); }, { once:false });
+
+  refresh();
+  return { tryAutoplay, refresh };
+})();
 </script>
 </body>
 </html>
