@@ -6,25 +6,20 @@
 <title>Glahp — All‑in‑One</title>
 <style>
   :root{
-    /* Base (kept from your scheme; just glassier) */
     --bot-bg:#d6e6fb;
     --bot-fg:#074279;
     --user-bg:#517fc4;
     --user-fg:#e8f3fc;
 
-    /* Glass tokens — more translucent */
     --glass-bg: rgba(255,255,255,0.20);
     --glass-border: rgba(255,255,255,0.28);
     --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
     --glass-blur: blur(18px);
 
-    /* App spacing */
     --pad: 20px;
     --radius: 18px;
 
-    /* Safe motion */
-    --motion-scale: 0.75; /* lower = calmer */
-  }
+    --motion-scale: 0.75;   }
 
   *{ box-sizing: border-box }
   html, body { height: 100% }
@@ -33,7 +28,7 @@
     margin:0;
     font-family: "Comic Neue", Arial, sans-serif;
     color:#0b3c61;
-    background:#a8cdf1;            /* keep your neutral default */
+    background:#a8cdf1;         
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -41,7 +36,6 @@
     overflow:hidden;
   }
 
-  /* Shared containers */
   .screen{
     position: absolute;
     inset: 0;
@@ -69,9 +63,7 @@
   }
   .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
 
-  /* ===================== */
-  /* 1) HELLO START SCREEN */
-  /* ===================== */
+ 
   .hello-wrap{
     width:min(980px, 92vw);
     border-radius: var(--radius);
@@ -107,9 +99,7 @@
   .hello-actions .btn{ min-width:160px }
   .hint{ margin-top:14px; font-size:14px; opacity:.8; }
 
-  /* ======================= */
-  /* 2) GAME: BUBBLE  POP 🫧 */
-  /* ======================= */
+
   .game-wrap{
     width:min(1000px,95vw); height:min(70vh, 680px);
     border-radius: var(--radius);
@@ -133,9 +123,7 @@
     display:block; outline: 2px solid rgba(255,255,255,.5);
   }
 
-  /* =========================== */
-  /* 3) DRAW PAD (MS Paint lite) */
-  /* =========================== */
+
   .draw-wrap{
     width:min(1100px,96vw); height:min(76vh, 740px);
     border-radius: var(--radius);
@@ -166,7 +154,6 @@
   .draw-bottom{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap }
   .draw-bottom .right{ display:flex; gap:8px; }
 
-  /* Big spectrum input – accessible */
   .picker{
     display:flex; align-items:center; gap:8px;
     background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px;
@@ -182,9 +169,7 @@
     border: 1px solid rgba(0,0,0,.15); border-radius:10px;
   }
 
-  /* ==================== */
-  /* 4) CHAT / SUPPORT UI */
-  /* ==================== */
+  
   .chat-container{
     width:min(980px, 92vw);
     border-radius: var(--radius);
@@ -222,7 +207,6 @@
     border: 2px solid transparent; font-size:18px;
   }
 
-  /* === Translucent black/grey chat bubbles (requested) === */
   .message.bot{
     background: rgba(0,0,0,0.35);
     color: #f0f0f0;
@@ -239,7 +223,6 @@
     -webkit-backdrop-filter: blur(8px);
   }
 
-  /* Full-width rectangular input */
   .input-footer{
     position:relative;
   }
@@ -255,9 +238,6 @@
     width:108px; color:#fff; background:#88b7e5
   }
 
-  /* ============== */
-  /* Theme Drawer   */
-  /* ============== */
   .themes-panel{
     position:fixed; top:0; right:0; height:100%;
     width:0; opacity:0; pointer-events:none; z-index:1000;
@@ -283,7 +263,6 @@
   .theme-btn[title]{ position:relative }
   .close-btn{ background:none; border:0; font-size:18px; cursor:pointer }
 
-  /* Small screens */
   @media (max-width: 880px){
     .mood-selector{ flex-wrap:wrap }
     .header-controls{ flex-wrap:wrap }
@@ -292,7 +271,6 @@
 </head>
 <body>
 
-  <!-- ========= HELLO / START ========= -->
   <section id="hello-screen" class="screen active">
     <div class="hello-wrap glass">
       <div class="hello-text">Hello</div>
@@ -306,7 +284,6 @@
     </div>
   </section>
 
-  <!-- ========= GAME: BUBBLE POP ========= -->
   <section id="game-screen" class="screen">
     <div class="game-wrap glass">
       <div class="bar">
@@ -325,7 +302,6 @@
     </div>
   </section>
 
-  <!-- ========= DRAW PAD ========= -->
   <section id="draw-screen" class="screen">
     <div class="draw-wrap glass">
       <div class="bar">
@@ -334,12 +310,9 @@
           <div class="brush">Brush
             <input type="range" id="brushSize" min="2" max="50" value="10" />
           </div>
-          <!-- Only Black & White swatches -->
           <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
           <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
-          <!-- Eraser toggle -->
           <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
-          <!-- Spectrum picker -->
           <div class="picker">
             Color
             <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/>
@@ -358,13 +331,11 @@
           <button class="btn" id="saveDraw">Save</button>
         </div>
         <div class="right">
-          <!-- nothing extra; reserved for future -->
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ========= CHAT / TALK ========= -->
   <section id="chat-screen" class="screen">
     <div class="chat-container glass">
       <div class="header-controls">
@@ -394,7 +365,6 @@
     </div>
   </section>
 
-  <!-- ========= THEME DRAWER ========= -->
   <aside class="themes-panel" id="themesPanel" aria-hidden="true">
     <div class="panel-shell glass">
       <div class="themes-head glass">
@@ -403,16 +373,13 @@
       </div>
       <div class="themes-body">
         <div class="swatch-strip" id="themeStrip">
-          <!-- Groups auto-injected below (40+ solids + gradients) -->
         </div>
       </div>
     </div>
   </aside>
 
 <script>
-/* ==========================================================
-   UTIL: Sound engine (simple beeps) + universal mute
-========================================================== */
+
 const Sound = (() => {
   let ctx;
   let muted = false;
@@ -442,9 +409,6 @@ const Sound = (() => {
   return { click, pop, scribble, toggle, setMuted, isMuted };
 })();
 
-/* ==========================================================
-   SIMPLE SCREEN ROUTER
-========================================================== */
 const screens = {
   hello: document.getElementById('hello-screen'),
   game:  document.getElementById('game-screen'),
@@ -456,19 +420,14 @@ function switchScreen(key){
   screens[key].classList.add('active');
 }
 
-/* Start buttons */
 document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
 document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); };
 document.getElementById('goTalk').onclick = ()=>{ Sound.click(); switchScreen('chat'); };
-
-/* Back buttons */
 document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 
-/* ==========================================================
-   THEMES (40+ solids + gradients) + global apply
-========================================================== */
+
 const themesPanel = document.getElementById("themesPanel");
 const closeThemes = document.getElementById("closeThemes");
 const themeStrip = document.getElementById("themeStrip");
@@ -515,7 +474,6 @@ const THEMES = {
     ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
     ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
   ],
-  /* Seven gradient sets */
   "Gradients — Sunset": [
     ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
     ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
@@ -565,7 +523,6 @@ function applyThemeRecord(bg, bot, user){
   document.documentElement.style.setProperty("--glass-shadow", dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
 }
 
-/* Build theme dots (small 'o' with tooltip names) */
 (function buildThemeDots(){
   for(const [group, items] of Object.entries(THEMES)){
     const g = document.createElement('div');
@@ -596,12 +553,10 @@ function openThemes(){ themesPanel.classList.add("open"); themesPanel.setAttribu
 function closeThemesPanel(){ themesPanel.classList.remove("open"); themesPanel.setAttribute("aria-hidden","true"); }
 document.getElementById("closeThemes").onclick = ()=>{ Sound.click(); closeThemesPanel(); };
 
-/* Theme buttons on every screen */
 document.getElementById("themeBtnGame").onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById("themeBtnDraw").onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openThemes(); };
 
-/* Universal mute buttons */
 function bindMute(btnId){
   const el = document.getElementById(btnId);
   const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
@@ -612,9 +567,7 @@ bindMute("muteBtnGame");
 bindMute("muteBtnDraw");
 bindMute("muteBtnChat");
 
-/* ==========================================================
-   GAME: BUBBLE POP 🫧  — safer motion + visible glow
-========================================================== */
+
 const gameCanvas = document.getElementById('gameCanvas');
 const scoreTxt = document.getElementById('scoreTxt');
 const resetGameBtn = document.getElementById('resetGame');
@@ -654,7 +607,6 @@ function drawBubble(b){
   ctx.save();
   ctx.globalAlpha = Math.max(0,b.alpha);
 
-  // Glow/outline to ensure visibility
   ctx.shadowColor = `rgba(255,255,255,0.9)`;
   ctx.shadowBlur = 12;
   ctx.lineWidth = 2;
@@ -668,7 +620,6 @@ function drawBubble(b){
 
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
 
-  // highlight
   ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
   ctx.restore();
@@ -679,14 +630,13 @@ function gameLoop(t){
   if(running){
     gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
 
-    // soft tint background for theme consistency
     const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
     grd.addColorStop(0,'rgba(255,255,255,.28)');
     grd.addColorStop(1,'rgba(255,255,255,.18)');
     gctx.fillStyle = grd;
     gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
 
-    if(t - lastSpawn > 700){ // slower spawn for calm
+    if(t - lastSpawn > 700){ 
       spawnBubble(); lastSpawn = t;
     }
     bubbles = bubbles.filter(b => b.alpha > 0);
@@ -710,9 +660,7 @@ gameCanvas.addEventListener('click', (e)=>{
 });
 resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
 
-/* ==========================================================
-   DRAW PAD — spectrum picker + BW swatches + eraser + clear
-========================================================== */
+
 const drawCanvas = document.getElementById('drawCanvas');
 const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
 let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
@@ -768,7 +716,6 @@ drawCanvas.addEventListener('touchmove', e=>{
 },{passive:false});
 drawCanvas.addEventListener('touchend', endDraw);
 
-/* Tools */
 document.querySelectorAll('.swatch').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     brushColor = btn.getAttribute('data-color');
@@ -796,9 +743,7 @@ document.getElementById('saveDraw').onclick = ()=>{
   a.href = url; a.download = 'drawing.png'; a.click();
 };
 
-/* ==========================================================
-   CHATBOT — fuzzy intents, no dupes, voice, speak
-========================================================== */
+
 const chatBox = document.getElementById("chat-box");
 const userInputField = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -831,10 +776,8 @@ function speakText(text){
   synth.speak(u);
 }
 
-/* Initial */
 addMessage("Hi! 👋 How was your day? 😊", "bot");
 
-/* Mood buttons */
 moodButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     Sound.click();
@@ -855,7 +798,6 @@ moodButtons.forEach((btn) => {
 sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); });
 userInputField.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 
-/* Voice */
 function setupRecognition(){
   if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
     voiceModeBtn.disabled = true;
@@ -888,7 +830,6 @@ voiceModeBtn.addEventListener("click", () => {
   }
 });
 
-/* Speak replies */
 speakReplyBtn.addEventListener("click", () => {
   Sound.toggle();
   speakRepliesOn = !speakRepliesOn;
@@ -897,7 +838,6 @@ speakReplyBtn.addEventListener("click", () => {
   if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
 });
 
-/* Fuzzy intent helpers */
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z]+/g,''); }
 function isSubsequence(needle, hay){
   let i=0; for(const c of hay){ if(c===needle[i]){ i++; if(i===needle.length) return true; } } return false;
@@ -916,14 +856,11 @@ function likelyGibberish(s){
   if(letters<2) return true;
   const vowels = (s.match(/[aeiou]/gi)||[]).length;
   if(vowels===0 && letters>4) return true;
-  // long run of consonants
   if(/[bcdfghjklmnpqrstvwxzy]{6,}/i.test(s)) return true;
-  // too many repeats
   if(/(.)\1{3,}/.test(s)) return true;
   return false;
 }
 
-/* Intent list */
 const INTENTS = [
   { key:"bullying",  patterns:["bully","bullied","bullying","mean","pickon","harass"], reply:[
     "I'm really sorry you had to face bullying. You are not alone. 💙 Want to talk through what happened?",
@@ -963,7 +900,6 @@ const INTENTS = [
 ];
 
 function chooseNonRepeating(key, arr){
-  // avoid same reply twice in a row for same key
   let choice = arr[Math.floor(Math.random()*arr.length)];
   if(lastBotKey===key && arr.length>1){
     let tries=0;
@@ -988,14 +924,11 @@ function matchIntent(text){
   const raw = text;
   const s = norm(text);
 
-  // reject true gibberish (but allow subsequence like b-u-l-y)
   const anySubseqBully = isSubsequence("bully", s);
   if(likelyGibberish(raw) && !anySubseqBully) return null;
 
-  // tolerant “b u l y” acceptance
   if(anySubseqBully) return "bullying";
 
-  // fuzzy match against intent patterns
   let best = null, bestScore = Infinity;
   for(const intent of INTENTS){
     for(const p of intent.patterns){
@@ -1019,10 +952,6 @@ function processUserInput(text){
   const reply = chooseNonRepeating(key, intent.reply);
   addMessage(reply, "bot");
 }
-
-/* ==========================================================
-   ACCESSIBLE KEY BINDS (optional, light)
-========================================================== */
 document.addEventListener('keydown', (e)=>{
   if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel();
 });
