@@ -6,10 +6,8 @@
 <title>Glahp — All‑in‑One</title>
 <style>
   :root{
-    --bot-bg:#d6e6fb;
-    --bot-fg:#074279;
-    --user-bg:#517fc4;
-    --user-fg:#e8f3fc;
+    --bot-bg:#d6e6fb; --bot-fg:#074279;
+    --user-bg:#517fc4; --user-fg:#e8f3fc;
 
     --glass-bg: rgba(255,255,255,0.20);
     --glass-border: rgba(255,255,255,0.28);
@@ -18,7 +16,6 @@
 
     --pad: 20px;
     --radius: 18px;
-
     --motion-scale: 0.75;
   }
 
@@ -38,11 +35,8 @@
   }
 
   .screen{
-    position: absolute;
-    inset: 0;
-    display: none;
-    place-items: center;
-    padding: var(--pad);
+    position: absolute; inset: 0;
+    display: none; place-items: center; padding: var(--pad);
   }
   .screen.active{ display: grid; }
 
@@ -64,248 +58,122 @@
   }
   .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
 
-  /* ===== Hello ===== */
+  /* Hello */
   .hello-wrap{
     width:min(980px, 92vw);
     border-radius: var(--radius);
-    padding: 28px;
-    text-align: center;
+    padding: 28px; text-align: center;
   }
   .hello-text{
-    font-weight:900;
-    line-height:1;
-    user-select:none;
+    font-weight:900; line-height:1; user-select:none;
     margin: 14px 0 8px;
-    font-size: clamp(42px, 8vw, 92px);
-    letter-spacing: 1px;
+    font-size: clamp(42px, 8vw, 92px); letter-spacing: 1px;
     background: linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: hueflow 12s linear infinite;
-    filter: saturate(.9);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueflow 12s linear infinite; filter: saturate(.9);
   }
-  @keyframes hueflow{
-    0%{ filter:hue-rotate(0deg) }
-    100%{ filter:hue-rotate(360deg) }
-  }
-  .hello-sub{
-    font-size: clamp(16px, 2.6vw, 22px);
-    opacity:.9;
-    margin-bottom: 18px;
-  }
-  .hello-actions{
-    display:flex; gap:12px; justify-content:center; flex-wrap: wrap;
-  }
+  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) } 100%{ filter:hue-rotate(360deg) } }
+  .hello-sub{ font-size: clamp(16px, 2.6vw, 22px); opacity:.9; margin-bottom: 18px; }
+  .hello-actions{ display:flex; gap:12px; justify-content:center; flex-wrap: wrap; }
   .hello-actions .btn{ min-width:160px }
   .hint{ margin-top:14px; font-size:14px; opacity:.8; }
 
-  /* ===== Game ===== */
+  /* Game */
   .game-wrap{
     width:min(1000px,95vw); height:min(70vh, 680px);
-    border-radius: var(--radius);
-    padding: 12px;
-    display: grid; grid-template-rows: auto 1fr;
-    gap:10px;
+    border-radius: var(--radius); padding: 12px;
+    display: grid; grid-template-rows: auto 1fr; gap:10px;
   }
-  .bar{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-  }
+  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .left-group, .right-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
   .title{ font-weight:900; font-size:20px }
+  .game-ind{ font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55) }
+  #gameCanvas{ width:100%; height:100%; border-radius: 14px; background: linear-gradient(135deg,#eaf6ff,#f6f0ff); display:block; outline: 2px solid rgba(255,255,255,.5); }
 
-  .game-ind{
-    font-weight:800; padding:8px 12px; border-radius:12px;
-    background:rgba(255,255,255,.55)
-  }
-  #gameCanvas{
-    width:100%; height:100%;
-    border-radius: 14px; background: linear-gradient(135deg,#eaf6ff,#f6f0ff);
-    display:block; outline: 2px solid rgba(255,255,255,.5);
-  }
-
-  /* ===== Draw ===== */
+  /* Draw */
   .draw-wrap{
     width:min(1100px,96vw); height:min(76vh, 740px);
-    border-radius: var(--radius);
-    padding: 12px;
-    display: grid; grid-template-rows: auto 1fr auto;
-    gap:10px;
+    border-radius: var(--radius); padding: 12px;
+    display: grid; grid-template-rows: auto 1fr auto; gap:10px;
   }
-  .draw-tools{
-    display:flex; gap:10px; align-items:center; flex-wrap: wrap
-  }
-  .brush{
-    display:flex; align-items:center; gap:8px; font-weight:800;
-    background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px;
-  }
-  .swatch{
-    width:26px; height:26px; border-radius:50%; border:0; cursor:pointer;
-    box-shadow:0 4px 10px rgba(0,0,0,.2);
-  }
-  .toggle{
-    display:flex; align-items:center; gap:6px; font-weight:800;
-    padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55)
-  }
-  .draw-canvas{
-    width:100%; height:100%; border-radius:14px;
-    background: rgba(255,255,255,.65);
-    outline: 2px solid rgba(255,255,255,.5);
-  }
+  .draw-tools{ display:flex; gap:10px; align-items:center; flex-wrap: wrap }
+  .brush{ display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; }
+  .swatch{ width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2); }
+  .toggle{ display:flex; align-items:center; gap:6px; font-weight:800; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55) }
+  .draw-canvas{ width:100%; height:100%; border-radius:14px; background: rgba(255,255,255,.65); outline: 2px solid rgba(255,255,255,.5); }
   .draw-bottom{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap }
   .draw-bottom .right{ display:flex; gap:8px; }
-
-  .picker{
-    display:flex; align-items:center; gap:8px;
-    background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px;
-    font-weight:800;
-  }
-  .picker input[type="color"]{
-    appearance: none; -webkit-appearance: none;
-    border: none; width:42px; height:26px; border-radius:10px; cursor:pointer;
-    background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);
-  }
+  .picker{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800; }
+  .picker input[type="color"]{ appearance:none; -webkit-appearance:none; border:none; width:42px; height:26px; border-radius:10px; cursor:pointer; background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red); }
   .picker input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
-  .picker input[type="color"]::-webkit-color-swatch{
-    border: 1px solid rgba(0,0,0,.15); border-radius:10px;
-  }
+  .picker input[type="color"]::-webkit-color-swatch{ border: 1px solid rgba(0,0,0,.15); border-radius:10px; }
 
-  /* ===== Chat ===== */
-  .chat-container{
-    width:min(980px, 92vw);
-    border-radius: var(--radius);
-    padding: 18px;
-    display:flex; flex-direction:column; gap:12px;
-  }
+  /* Chat */
+  .chat-container{ width:min(980px, 92vw); border-radius: var(--radius); padding: 18px; display:flex; flex-direction:column; gap:12px; }
   .header-controls{ display:flex; gap:10px; align-items:center; }
-  .mood-header{
-    flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px;
-    background: linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%);
-    box-shadow: 0 4px 8px rgba(168,205,241,.4);
-  }
+  .mood-header{ flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background: linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow: 0 4px 8px rgba(168,205,241,.4); }
   .header-buttons{ display:flex; gap:8px; flex-wrap:wrap }
   .header-buttons .btn{ height:44px }
-
   .mood-selector{ display:flex; gap:10px; flex-wrap:wrap }
-  .mood-btn{
-    border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px;
-    font-weight:800; font-size:16px;
-    transition: transform .18s ease, box-shadow .18s ease;
-  }
-  .mood-btn.happy{ background:#c1e6a6 }
-  .mood-btn.sad{ background:#a4c7f9 }
-  .mood-btn.angry{ background:#f9d6d6 }
-  .mood-btn.nervous{ background:#fff3c8 }
+  .mood-btn{ border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px; transition: transform .18s ease, box-shadow .18s ease; }
+  .mood-btn.happy{ background:#c1e6a6 } .mood-btn.sad{ background:#a4c7f9 } .mood-btn.angry{ background:#f9d6d6 } .mood-btn.nervous{ background:#fff3c8 }
   .mood-btn:hover{ transform: translateY(-3px); box-shadow:0 10px 16px rgba(0,0,0,.22) }
   .mood-btn[aria-pressed="true"]{ box-shadow:0 0 12px 2px rgba(0,0,0,.22) }
-
-  #chat-box{
-    flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px;
-    border-radius:14px; background: rgba(232,242,252,.55);
-  }
-  .message{
-    margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%;
-    border: 2px solid transparent; font-size:18px;
-  }
-  .message.bot{
-    background: rgba(0,0,0,0.35);
-    color: #f0f0f0;
-    border: 1px solid rgba(255,255,255,0.25);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  .message.user{
-    background: rgba(0,0,0,0.55);
-    color: #ffffff;
-    align-self:flex-end; text-align:right;
-    border: 1px solid rgba(255,255,255,0.25);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-
+  #chat-box{ flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background: rgba(232,242,252,.55); }
+  .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border: 2px solid transparent; font-size:18px; }
+  .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .input-footer{ position:relative; }
-  #user-input{
-    width:100%;
-    padding:16px 120px 16px 14px;
-    border-radius:12px; border:1px solid #a9c8e8;
-    background: rgba(255,255,255,.72);
-    font-size:18px; color:#0b3c61; outline:none;
-  }
-  #send-btn{
-    position:absolute; right:6px; top:6px; bottom:6px;
-    width:108px; color:#fff; background:#88b7e5
-  }
+  #user-input{ width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none; }
+  #send-btn{ position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5 }
 
-  /* ===== Themes panel ===== */
-  .themes-panel{
-    position:fixed; top:0; right:0; height:100%;
-    width:0; opacity:0; pointer-events:none; z-index:1000;
-    transition: width .3s ease, opacity .25s ease;
-    display:flex; flex-direction:column;
-  }
+  /* Themes panel */
+  .themes-panel{ position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition: width .3s ease, opacity .25s ease; display:flex; flex-direction:column; }
   .themes-panel.open{ width:320px; opacity:1; pointer-events:auto; }
   .panel-shell{ height:100%; display:flex; flex-direction:column }
-  .themes-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px; font-weight:900; border-radius:0 0 12px 12px;
-  }
+  .themes-head{ display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px; }
   .themes-body{ padding:12px 10px; overflow-y:auto; flex:1 }
   .swatch-strip{ display:flex; flex-direction:column; gap:16px }
   .group{ display:flex; flex-direction:column; gap:10px }
   .group-title{ font-weight:900; font-size:14px; opacity:.85; padding-left:4px }
   .swatch-row{ display:flex; gap:10px; flex-wrap:wrap }
-  .theme-btn{
-    width:34px; height:34px; border-radius:50%; border:0; cursor:pointer;
-    box-shadow:0 6px 16px rgba(0,0,0,.18); transition: transform .12s ease;
-  }
+  .theme-btn{ width:34px; height:34px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.18); transition: transform .12s ease; }
   .theme-btn:hover{ transform: scale(1.1) }
   .theme-btn[title]{ position:relative }
   .close-btn{ background:none; border:0; font-size:18px; cursor:pointer }
 
-  /* ===== Mini Player ===== */
-  .mini-player{
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    z-index: 1200;
+  /* BGM Mini Player */
+  .miniplayer{
+    position:fixed; right:14px; bottom:14px; z-index:1200;
     display:flex; align-items:center; gap:10px;
-    padding:10px 12px;
-    border-radius:14px;
-  }
-  .mini-title{
-    font-weight: 900; font-size: 14px; opacity:.95; white-space:nowrap;
+    padding:10px 12px; border-radius:14px;
   }
   .mini-btn{
     border:0; cursor:pointer; border-radius:12px;
-    padding:8px 12px; font-weight:900; font-size:14px;
-    color:#0b3c61;
-    background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
-    box-shadow: 0 4px 8px rgba(168,205,241,.6);
-    min-width: 80px;
+    padding:10px 12px; font-weight:800; font-size:14px;
+    background: rgba(255,255,255,.6);
+    box-shadow: 0 4px 8px rgba(0,0,0,.15);
+    transition:.18s transform, .18s filter;
   }
-  .mini-timeline{
-    flex:1; min-width:160px; height:8px; border-radius:6px;
-    background: rgba(255,255,255,.55);
-    position:relative; cursor:pointer; overflow:hidden;
-  }
+  .mini-btn:hover{ transform: translateY(-2px); filter:brightness(.95) }
+  .mini-meta{ display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:240px }
+  .mini-title{ font-weight:900; font-size:14px; line-height:1.1 }
+  .mini-time{ font-size:12px; opacity:.85 }
   .mini-progress{
-    position:absolute; left:0; top:0; bottom:0; width:0%;
-    background: rgba(255,255,255,.85);
-  }
-  .mini-time{
-    font-size:12px; font-weight:800; opacity:.85; min-width: 64px; text-align:right;
+    appearance:none; width:100%; height:6px; border-radius:6px;
+    background: rgba(255,255,255,.6); outline:none; cursor:pointer;
   }
 
   @media (max-width: 880px){
     .mood-selector{ flex-wrap:wrap }
     .header-controls{ flex-wrap:wrap }
-    .mini-title{ display:none }
-    .mini-time{ display:none }
+    .miniplayer{ right:10px; left:10px; bottom:10px; }
   }
 </style>
 </head>
 <body>
 
+  <!-- Hello -->
   <section id="hello-screen" class="screen active">
     <div class="hello-wrap glass">
       <div class="hello-text">Hello</div>
@@ -319,6 +187,7 @@
     </div>
   </section>
 
+  <!-- Game -->
   <section id="game-screen" class="screen">
     <div class="game-wrap glass">
       <div class="bar">
@@ -337,21 +206,17 @@
     </div>
   </section>
 
+  <!-- Draw -->
   <section id="draw-screen" class="screen">
     <div class="draw-wrap glass">
       <div class="bar">
         <div class="left-group">
           <div class="title">🎨 Draw Something — express or doodle</div>
-          <div class="brush">Brush
-            <input type="range" id="brushSize" min="2" max="50" value="10" />
-          </div>
+          <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
           <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
           <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
           <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
-          <div class="picker">
-            Color
-            <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/>
-          </div>
+          <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/></div>
         </div>
         <div class="right-group">
           <button class="btn" id="themeBtnDraw" title="Themes">🎨 Themes</button>
@@ -370,6 +235,7 @@
     </div>
   </section>
 
+  <!-- Chat -->
   <section id="chat-screen" class="screen">
     <div class="chat-container glass">
       <div class="header-controls">
@@ -412,21 +278,18 @@
     </div>
   </aside>
 
-  <!-- Hidden audio element for BGM -->
-  <audio id="bgm" src="bgm.mp3" preload="auto" loop></audio>
-
-  <!-- Floating mini-player -->
-  <div class="mini-player glass" id="miniPlayer" role="region" aria-label="Background music player">
-    <span class="mini-title">🎵 BGM</span>
-    <button class="mini-btn" id="miniPlayPause" aria-pressed="true">⏸ Pause</button>
-    <div class="mini-timeline" id="miniTimeline" aria-label="Seek">
-      <div class="mini-progress" id="miniProgress"></div>
+  <!-- BGM Mini Player -->
+  <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
+    <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
+    <div class="mini-meta">
+      <div class="mini-title">BGM — bgm.mp3</div>
+      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
+      <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
     </div>
-    <span class="mini-time" id="miniTime">0:00</span>
   </div>
 
 <script>
-/* ========= SFX ========= */
+/* ---------------------------- GLOBAL SOUND ---------------------------- */
 const Sound = (() => {
   let ctx;
   let muted = false;
@@ -456,7 +319,7 @@ const Sound = (() => {
   return { click, pop, scribble, toggle, setMuted, isMuted };
 })();
 
-/* ========= Screens ========= */
+/* ----------------------------- SCREENS -------------------------------- */
 const screens = {
   hello: document.getElementById('hello-screen'),
   game:  document.getElementById('game-screen'),
@@ -467,14 +330,14 @@ function switchScreen(key){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[key].classList.add('active');
 }
-document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); };
-document.getElementById('goTalk').onclick = ()=>{ Sound.click(); switchScreen('chat'); };
+document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); };
+document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); };
 document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 
-/* ========= Themes ========= */
+/* ------------------------------ THEMES -------------------------------- */
 const themesPanel = document.getElementById("themesPanel");
 const closeThemes = document.getElementById("closeThemes");
 const themeStrip = document.getElementById("themeStrip");
@@ -509,45 +372,45 @@ const THEMES = {
     ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
     ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
   ],
-  "Blue (solid)":[
+  "Blue (solid)": [
     ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
     ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
     ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
     ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
   ],
-  "Purple/Pink (solid)":[
+  "Purple/Pink (solid)": [
     ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
     ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
     ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
     ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
   ],
-  "Gradients — Sunset":[
+  "Gradients — Sunset": [
     ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
     ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
   ],
-  "Gradients — Ice/Dream":[
+  "Gradients — Ice/Dream": [
     ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
     ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
   ],
-  "Gradients — Forest/Jade":[
+  "Gradients — Forest/Jade": [
     ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
   ],
-  "Gradients — Steel":[
+  "Gradients — Steel": [
     ["steel","linear-gradient(135deg,#4b79a1,#283e51)",["#d6e6ff","#0a2a4a"],["#3a6287","#ffffff"]],
   ],
-  "Gradients — Aurora":[
+  "Gradients — Aurora": [
     ["aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)",["#e6f8ff","#0a2a4a"],["#4aa0ef","#0a2a4a"]],
   ],
-  "Gradients — Berry":[
+  "Gradients — Berry": [
     ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
   ],
-  "Gradients — Night":[
+  "Gradients — Night": [
     ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
   ],
 };
 function isDarkBackground(bg){
   if(!bg || typeof bg !== "string") return false;
-  if(bg.startsWith("linear-gradient")) return true;
+  if(bg.startsWith("linear-gradient")) return true; // darker glass for gradients
   const hex = bg.replace("#","").trim();
   if(hex.length !== 6) return false;
   const r = parseInt(hex.slice(0,2),16);
@@ -569,27 +432,16 @@ function applyThemeRecord(bg, bot, user){
 }
 (function buildThemeDots(){
   for(const [group, items] of Object.entries(THEMES)){
-    const g = document.createElement('div');
-    g.className = 'group';
-    const label = document.createElement('div');
-    label.className = 'group-title';
-    label.textContent = group;
-    const row = document.createElement('div');
-    row.className = 'swatch-row';
+    const g = document.createElement('div'); g.className = 'group';
+    const label = document.createElement('div'); label.className = 'group-title'; label.textContent = group;
+    const row = document.createElement('div'); row.className = 'swatch-row';
     items.forEach(([key,bg,bot,user])=>{
       const btn = document.createElement('button');
-      btn.className = 'theme-btn';
-      btn.title = key;
-      btn.setAttribute('data-theme', key);
-      btn.style.background = bg;
-      btn.addEventListener('click', ()=>{
-        Sound.toggle();
-        applyThemeRecord(bg,bot,user);
-      });
+      btn.className = 'theme-btn'; btn.title = key; btn.setAttribute('data-theme', key); btn.style.background = bg;
+      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
       row.appendChild(btn);
     });
-    g.appendChild(label); g.appendChild(row);
-    themeStrip.appendChild(g);
+    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
   }
 })();
 function openThemes(){ themesPanel.classList.add("open"); themesPanel.setAttribute("aria-hidden","false"); }
@@ -599,109 +451,114 @@ document.getElementById("themeBtnGame").onclick = ()=>{ Sound.click(); openTheme
 document.getElementById("themeBtnDraw").onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openThemes(); };
 
-/* ========= BGM (mini‑player + global mute integration) ========= */
-const bgm = document.getElementById('bgm');
-const miniPlayPause = document.getElementById('miniPlayPause');
-const miniTimeline = document.getElementById('miniTimeline');
-const miniProgress = document.getElementById('miniProgress');
-const miniTime = document.getElementById('miniTime');
+/* ------------------------------ BGM ----------------------------------- */
+const BGM = (() => {
+  const audio = new Audio('bgm.mp3');
+  audio.loop = true;
+  audio.preload = 'auto';
+  audio.crossOrigin = 'anonymous';
+  let started = false;
+  let userWantedPlay = true; // unmuted by default → play when allowed
 
-let userWantedPlay = true;   // "intended" state for BGM
-let autoplayTried = false;
+  const play = async () => {
+    try {
+      await audio.play();
+      started = true;
+      setMiniState();
+    } catch (e) {
+      // Autoplay likely blocked; will retry on first interaction.
+    }
+  };
+  const pause = () => { audio.pause(); setMiniState(); };
+  const resumeIfWanted = () => { if(userWantedPlay) play(); };
+  const setWantedPlay = (v) => { userWantedPlay = v; };
 
-function formatTime(s){
-  s = Math.floor(s||0);
-  const m = Math.floor(s/60);
-  const ss = String(s%60).padStart(2,'0');
-  return `${m}:${ss}`;
-}
-function updateMini(){
-  const dur = bgm.duration || 0;
-  const cur = bgm.currentTime || 0;
-  const pct = dur ? (cur/dur)*100 : 0;
-  miniProgress.style.width = `${pct}%`;
-  miniTime.textContent = `${formatTime(cur)}`;
-  miniPlayPause.textContent = bgm.paused ? "▶️ Play" : "⏸ Pause";
-  miniPlayPause.setAttribute("aria-pressed", String(!bgm.paused));
-}
-bgm.addEventListener('timeupdate', updateMini);
-bgm.addEventListener('loadedmetadata', updateMini);
-bgm.addEventListener('play', updateMini);
-bgm.addEventListener('pause', updateMini);
+  // Mini Player wiring
+  const mini = {
+    root: document.getElementById('miniPlayer'),
+    playPause: document.getElementById('miniPlayPause'),
+    seek: document.getElementById('miniSeek'),
+    cur: document.getElementById('miniCur'),
+    dur: document.getElementById('miniDur'),
+  };
 
-miniPlayPause.addEventListener('click', ()=>{
-  Sound.click();
-  // If globally muted, unmute first (spec requires unmute -> resume)
-  if(Sound.isMuted()){
-    setGlobalMuted(false); // will resume bgm
-    return;
+  function fmt(t){
+    if(isNaN(t)) return "0:00";
+    const m = Math.floor(t/60);
+    const s = Math.floor(t%60).toString().padStart(2,'0');
+    return `${m}:${s}`;
   }
-  if(bgm.paused){ userWantedPlay = true; bgm.play().catch(()=>{}); }
-  else{ userWantedPlay = false; bgm.pause(); }
-  updateMini();
-});
-miniTimeline.addEventListener('click', (e)=>{
-  if(!bgm.duration) return;
-  const r = miniTimeline.getBoundingClientRect();
-  const pct = Math.min(1, Math.max(0, (e.clientX - r.left)/r.width));
-  bgm.currentTime = pct * bgm.duration;
-  updateMini();
-});
+  function setMiniState(){
+    mini.playPause.textContent = audio.paused ? "▶️" : "⏸";
+  }
+  mini.playPause.addEventListener('click', () => {
+    Sound.click();
+    if(audio.paused){ setWantedPlay(true); play(); }
+    else { setWantedPlay(false); pause(); }
+  });
+  mini.seek.addEventListener('input', () => {
+    if(audio.duration) audio.currentTime = (mini.seek.value/100) * audio.duration;
+  });
+  audio.addEventListener('timeupdate', () => {
+    if(audio.duration){
+      mini.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
+      mini.cur.textContent = fmt(audio.currentTime);
+      mini.dur.textContent = fmt(audio.duration);
+    }
+    setMiniState();
+  });
+  audio.addEventListener('loadedmetadata', () => {
+    mini.dur.textContent = fmt(audio.duration);
+  });
 
-/* Global mute buttons also control BGM: mute => pause, unmute => resume */
+  // Public API
+  return {
+    audio, play, pause, resumeIfWanted, setWantedPlay,
+    isPaused: () => audio.paused
+  };
+})();
+
+// Start on first user interaction if autoplay was blocked
+let firstInteractionBound = false;
+function startBGMOnFirstInteraction(){
+  if(firstInteractionBound) return;
+  firstInteractionBound = true;
+  const kick = () => { document.removeEventListener('pointerdown', kick); BGM.play(); };
+  document.addEventListener('pointerdown', kick, { once:true });
+}
+// Try autoplay immediately; if blocked, the first click will start it
+BGM.play();
+
+/* ------------------------------ MUTE ---------------------------------- */
+// Global mute should silence SFX + pause BGM; unmute resumes BGM
 function bindMute(btnId){
   const el = document.getElementById(btnId);
   const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
   setLabel();
-  el.onclick = ()=>{
-    setGlobalMuted(!Sound.isMuted());
+  el.onclick = async ()=>{
+    const willMute = !Sound.isMuted();
+    Sound.setMuted(willMute);
+    setLabel();
     Sound.toggle();
+
+    if(willMute){
+      // Pause music, but remember we should resume on unmute
+      BGM.setWantedPlay(true); // resume when unmuted
+      BGM.pause();
+    }else{
+      // Unmuted → resume bgm if we wanted it
+      BGM.resumeIfWanted();
+    }
   };
-}
-function setGlobalMuted(m){
-  Sound.setMuted(m);
-  if(m){
-    // Pause bgm on mute
-    try{ bgm.pause(); }catch{}
-  }else{
-    // Resume bgm on unmute (per your spec)
-    userWantedPlay = true;
-    try{ bgm.play().catch(()=>{}); }catch{}
-  }
-  updateMini();
 }
 bindMute("muteBtnGame");
 bindMute("muteBtnDraw");
 bindMute("muteBtnChat");
 
-/* Try to autoplay (unmuted by default).
-   If blocked, start as soon as the user clicks anywhere. */
-function attemptAutoplay(){
-  if(autoplayTried) return;
-  autoplayTried = true;
-  userWantedPlay = true;
-  bgm.volume = 1.0;
-  bgm.play().then(updateMini).catch(()=>{
-    // Wait for first user gesture
-    const kick = ()=>{
-      if(!Sound.isMuted() && userWantedPlay){
-        bgm.play().catch(()=>{ /* ignore */ });
-      }
-      updateMini();
-      window.removeEventListener('pointerdown', kick, {capture:true});
-      window.removeEventListener('keydown', kick, {capture:true});
-    };
-    window.addEventListener('pointerdown', kick, {capture:true, once:true});
-    window.addEventListener('keydown', kick, {capture:true, once:true});
-  });
-}
-document.addEventListener('DOMContentLoaded', attemptAutoplay);
-
-/* ========= Game (Bubble Pop) ========= */
+/* ------------------------------ GAME ---------------------------------- */
 const gameCanvas = document.getElementById('gameCanvas');
 const scoreTxt = document.getElementById('scoreTxt');
 const resetGameBtn = document.getElementById('resetGame');
-
 let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true;
 
 function resizeGame(){
@@ -736,20 +593,16 @@ function drawBubble(b){
   const ctx = gctx;
   ctx.save();
   ctx.globalAlpha = Math.max(0,b.alpha);
-
   ctx.shadowColor = `rgba(255,255,255,0.9)`;
   ctx.shadowBlur = 12;
   ctx.lineWidth = 2;
   ctx.strokeStyle = `rgba(0,0,0,0.25)`;
-
   const cx = b.x, cy = b.y, r = b.r;
   const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
   grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`);
   grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
   ctx.fillStyle = grad;
-
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-
   ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
   ctx.restore();
@@ -759,16 +612,12 @@ function gameLoop(t){
   const dt = t - prevT; prevT = t;
   if(running){
     gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-
     const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
     grd.addColorStop(0,'rgba(255,255,255,.28)');
     grd.addColorStop(1,'rgba(255,255,255,.18)');
     gctx.fillStyle = grd;
     gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-
-    if(t - lastSpawn > 700){
-      spawnBubble(); lastSpawn = t;
-    }
+    if(t - lastSpawn > 700){ spawnBubble(); lastSpawn = t; }
     bubbles = bubbles.filter(b => b.alpha > 0);
     for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
   }
@@ -790,7 +639,7 @@ gameCanvas.addEventListener('click', (e)=>{
 });
 resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
 
-/* ========= Draw ========= */
+/* ------------------------------ DRAW ---------------------------------- */
 const drawCanvas = document.getElementById('drawCanvas');
 const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
 let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
@@ -869,24 +718,18 @@ document.getElementById('clearDraw').onclick = ()=>{
 document.getElementById('saveDraw').onclick = ()=>{
   Sound.click();
   const url = drawCanvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = url; a.download = 'drawing.png'; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click();
 };
 
-/* ========= Chatbot ========= */
+/* ------------------------------ CHAT ---------------------------------- */
 const chatBox = document.getElementById("chat-box");
 const userInputField = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 const moodButtons = document.querySelectorAll(".mood-btn");
 const voiceModeBtn = document.getElementById("voice-mode-btn");
 const speakReplyBtn = document.getElementById("speak-reply-btn");
-
-let dayMood = null;
-let voiceModeOn = false;
-let speakRepliesOn = false;
-let recognition;
-let synth = window.speechSynthesis;
-let lastBotKey = '';
+let dayMood = null, voiceModeOn = false, speakRepliesOn = false, recognition;
+let synth = window.speechSynthesis; let lastBotKey = '';
 
 function addMessage(text, sender){
   const div = document.createElement("div");
@@ -920,56 +763,39 @@ moodButtons.forEach((btn) => {
       nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way? I’ve got you. 💙"
     };
     addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
+    startBGMOnFirstInteraction(); // counts as interaction
   });
 });
-
 sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); });
 userInputField.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 
 function setupRecognition(){
   if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
-    voiceModeBtn.disabled = true;
-    voiceModeBtn.title = "Voice recognition not supported in your browser";
-    return;
+    voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported in your browser"; return;
   }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = "en-US";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+  recognition.interimResults = false; recognition.maxAlternatives = 1;
   recognition.addEventListener("result", (event) => {
     const speech = event.results[0][0].transcript;
-    userInputField.value = speech;
-    sendMessage();
+    userInputField.value = speech; sendMessage();
   });
-  recognition.addEventListener("end", () => {
-    if (voiceModeOn) recognition.start();
-  });
+  recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
 }
 voiceModeBtn.addEventListener("click", () => {
-  Sound.toggle();
-  voiceModeOn = !voiceModeOn;
-  voiceModeBtn.setAttribute("aria-pressed", voiceModeOn);
-  if (voiceModeOn){
-    setupRecognition(); recognition && recognition.start(); voiceModeBtn.textContent = "🎤 Voice ON";
-  } else {
-    if (recognition) recognition.stop();
-    voiceModeBtn.textContent = "🎤 Voice";
-  }
+  Sound.toggle(); voiceModeOn = !voiceModeOn; voiceModeBtn.setAttribute("aria-pressed", voiceModeOn);
+  if (voiceModeOn){ setupRecognition(); recognition && recognition.start(); voiceModeBtn.textContent = "🎤 Voice ON"; }
+  else { if (recognition) recognition.stop(); voiceModeBtn.textContent = "🎤 Voice"; }
 });
-
 speakReplyBtn.addEventListener("click", () => {
-  Sound.toggle();
-  speakRepliesOn = !speakRepliesOn;
-  speakReplyBtn.setAttribute("aria-pressed", speakRepliesOn);
+  Sound.toggle(); speakRepliesOn = !speakRepliesOn; speakReplyBtn.setAttribute("aria-pressed", speakRepliesOn);
   speakReplyBtn.textContent = speakRepliesOn ? "🔊 Speak ON" : "🔊 Speak";
   if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
 });
 
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z]+/g,''); }
-function isSubsequence(needle, hay){
-  let i=0; for(const c of hay){ if(c===needle[i]){ i++; if(i===needle.length) return true; } } return false;
-}
+function isSubsequence(needle, hay){ let i=0; for(const c of hay){ if(c===needle[i]){ i++; if(i===needle.length) return true; } } return false; }
 function lev(a,b){
   const m=a.length, n=b.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
   for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
@@ -988,6 +814,7 @@ function likelyGibberish(s){
   if(/(.)\1{3,}/.test(s)) return true;
   return false;
 }
+
 const INTENTS = [
   { key:"bullying",  patterns:["bully","bullied","bullying","mean","pickon","harass"], reply:[
     "I'm really sorry you had to face bullying. You are not alone. 💙 Want to talk through what happened?",
@@ -1025,13 +852,13 @@ const INTENTS = [
     "Anytime! You’ve got this. 🌟"
   ]},
 ];
+
 function chooseNonRepeating(key, arr){
   let choice = arr[Math.floor(Math.random()*arr.length)];
   if(lastBotKey===key && arr.length>1){
     let tries=0;
     while(tries<6 && arr.length>1 && choice===lastBotKey._lastText){
-      choice = arr[Math.floor(Math.random()*arr.length)];
-      tries++;
+      choice = arr[Math.floor(Math.random()*arr.length)]; tries++;
     }
   }
   lastBotKey = { key, _lastText: choice };
@@ -1045,8 +872,7 @@ function sendMessage(){
   processUserInput(userText);
 }
 function matchIntent(text){
-  const raw = text;
-  const s = norm(text);
+  const raw = text, s = norm(text);
   const anySubseqBully = isSubsequence("bully", s);
   if(likelyGibberish(raw) && !anySubseqBully) return null;
   if(anySubseqBully) return "bullying";
@@ -1064,17 +890,13 @@ function matchIntent(text){
 }
 function processUserInput(text){
   const key = matchIntent(text);
-  if(!key){
-    addMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙", "bot");
-    return;
-  }
+  if(!key){ addMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙", "bot"); return; }
   const intent = INTENTS.find(i=>i.key===key);
   const reply = chooseNonRepeating(key, intent.reply);
   addMessage(reply, "bot");
 }
-document.addEventListener('keydown', (e)=>{
-  if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel();
-});
+document.addEventListener('keydown', (e)=>{ if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel(); });
+
 </script>
 </body>
 </html>
