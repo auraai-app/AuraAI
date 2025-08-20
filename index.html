@@ -1,957 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aura AI</title>
-<style>
-  :root{
-    --bot-bg:#d6e6fb; --bot-fg:#074279;
-    --user-bg:#517fc4; --user-fg:#e8f3fc;
-
-    --glass-bg: rgba(255,255,255,0.20);
-    --glass-border: rgba(255,255,255,0.28);
-    --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
-    --glass-blur: blur(18px);
-
-    --pad: 20px;
-    --radius: 18px;
-    --motion-scale: 0.75;
-  }
-
-  *{ box-sizing: border-box }
-  html, body { height: 100% }
-
-  body{
-    margin:0;
-    font-family: "Comic Neue", Arial, sans-serif;
-    color:#0b3c61;
-    background:#a8cdf1;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-  }
-
-  .screen{
-    position: absolute; inset: 0;
-    display: none; place-items: center; padding: var(--pad);
-  }
-  .screen.active{ display: grid; }
-
-  .glass{
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-  }
-
-  .btn{
-    border:0; cursor:pointer; border-radius:14px;
-    padding:14px 18px; font-weight:800; font-size:16px;
-    color:#0b3c61;
-    background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
-    box-shadow: 0 4px 8px rgba(168,205,241,.7);
-    transition: filter .2s ease, transform .2s ease;
-  }
-  .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
-
-  /* Hello */
-  .hello-wrap{
-    width:min(980px, 92vw);
-    border-radius: var(--radius);
-    padding: 28px; text-align: center;
-  }
-  .hello-text{
-    font-weight:900; line-height:1; user-select:none;
-    margin: 14px 0 8px;
-    font-size: clamp(42px, 8vw, 92px); letter-spacing: 1px;
-    background: linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: hueflow 12s linear infinite; filter: saturate(.9);
-  }
-  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) } 100%{ filter:hue-rotate(360deg) } }
-  .hello-sub{ font-size: clamp(16px, 2.6vw, 22px); opacity:.9; margin-bottom: 18px; }
-  .hello-actions{ display:flex; gap:12px; justify-content:center; flex-wrap: wrap; }
-  .hello-actions .btn{ min-width:160px }
-  .hint{ margin-top:14px; font-size:14px; opacity:.8; }
-
-  /* Game */
-  .game-wrap{
-    width:min(1000px,95vw); height:min(70vh, 680px);
-    border-radius: var(--radius); padding: 12px;
-    display: grid; grid-template-rows: auto 1fr; gap:10px;
-  }
-  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .left-group, .right-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
-  .title{ font-weight:900; font-size:20px }
-  .game-ind{ font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55) }
-  #gameCanvas{ width:100%; height:100%; border-radius: 14px; background: linear-gradient(135deg,#eaf6ff,#f6f0ff); display:block; outline: 2px solid rgba(255,255,255,.5); }
-
-  /* Draw */
-  .draw-wrap{
-    width:min(1100px,96vw); height:min(76vh, 740px);
-    border-radius: var(--radius); padding: 12px;
-    display: grid; grid-template-rows: auto 1fr auto; gap:10px;
-  }
-  .draw-tools{ display:flex; gap:10px; align-items:center; flex-wrap: wrap }
-  .brush{ display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; }
-  .swatch{ width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2); }
-  .toggle{ display:flex; align-items:center; gap:6px; font-weight:800; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55) }
-  .draw-canvas{ width:100%; height:100%; border-radius:14px; background: rgba(255,255,255,.65); outline: 2px solid rgba(255,255,255,.5); }
-  .draw-bottom{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap }
-  .draw-bottom .right{ display:flex; gap:8px; }
-  .picker{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800; }
-  .picker input[type="color"]{ appearance:none; -webkit-appearance:none; border:none; width:42px; height:26px; border-radius:10px; cursor:pointer; background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red); }
-  .picker input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
-  .picker input[type="color"]::-webkit-color-swatch{ border: 1px solid rgba(0,0,0,.15); border-radius:10px; }
-
-  /* Chat */
-  .chat-container{ width:min(980px, 92vw); border-radius: var(--radius); padding: 18px; display:flex; flex-direction:column; gap:12px; }
-  .header-controls{ display:flex; gap:10px; align-items:center; }
-  .mood-header{ flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background: linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow: 0 4px 8px rgba(168,205,241,.4); }
-  .header-buttons{ display:flex; gap:8px; flex-wrap:wrap }
-  .header-buttons .btn{ height:44px }
-  .mood-selector{ display:flex; gap:10px; flex-wrap:wrap }
-  .mood-btn{ border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px; transition: transform .18s ease, box-shadow .18s ease; }
-  .mood-btn.happy{ background:#c1e6a6 } .mood-btn.sad{ background:#a4c7f9 } .mood-btn.angry{ background:#f9d6d6 } .mood-btn.nervous{ background:#fff3c8 }
-  .mood-btn:hover{ transform: translateY(-3px); box-shadow:0 10px 16px rgba(0,0,0,.22) }
-  .mood-btn[aria-pressed="true"]{ box-shadow:0 0 12px 2px rgba(0,0,0,.22) }
-  #chat-box{ flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background: rgba(232,242,252,.55); }
-  .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border: 2px solid transparent; font-size:18px; }
-  .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .input-footer{ position:relative; display:none; } /* hidden until flow asks to type */
-  #user-input{ width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none; }
-  #send-btn{ position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5 }
-
-  /* Themes panel */
-  .themes-panel{ position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition: width .3s ease, opacity .25s ease; display:flex; flex-direction:column; }
-  .themes-panel.open{ width:320px; opacity:1; pointer-events:auto; }
-  .panel-shell{ height:100%; display:flex; flex-direction:column }
-  .themes-head{ display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px; }
-  .themes-body{ padding:12px 10px; overflow-y:auto; flex:1 }
-  .swatch-strip{ display:flex; flex-direction:column; gap:16px }
-  .group{ display:flex; flex-direction:column; gap:10px }
-  .group-title{ font-weight:900; font-size:14px; opacity:.85; padding-left:4px }
-  .swatch-row{ display:flex; gap:10px; flex-wrap:wrap }
-  .theme-btn{ width:34px; height:34px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.18); transition: transform .12s ease; }
-  .theme-btn:hover{ transform: scale(1.1) }
-  .theme-btn[title]{ position:relative }
-  .close-btn{ background:none; border:0; font-size:18px; cursor:pointer }
-
-  /* BGM Mini Player */
-  .miniplayer{
-    position:fixed; right:14px; bottom:14px; z-index:1200;
-    display:flex; align-items:center; gap:10px;
-    padding:10px 12px; border-radius:14px;
-  }
-  .mini-btn{
-    border:0; cursor:pointer; border-radius:12px;
-    padding:10px 12px; font-weight:800; font-size:14px;
-    background: rgba(255,255,255,.6);
-    box-shadow: 0 4px 8px rgba(0,0,0,.15);
-    transition:.18s transform, .18s filter;
-  }
-  .mini-btn:hover{ transform: translateY(-2px); filter:brightness(.95) }
-  .mini-meta{ display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:240px }
-  .mini-title{ font-weight:900; font-size:14px; line-height:1.1 }
-  .mini-time{ font-size:12px; opacity:.85 }
-  .mini-progress{
-    appearance:none; width:100%; height:6px; border-radius:6px;
-    background: rgba(255,255,255,.6); outline:none; cursor:pointer;
-  }
-
-  /* Flow Overlay (non-intrusive; no layout shifts) */
-  .flow-pad{
-    position:absolute; left:16px; bottom:16px; z-index:900;
-    display:flex; flex-direction:column; gap:8px; max-width:min(560px, 80vw);
-    padding:10px 12px; border-radius:14px;
-  }
-  .flow-q{ font-weight:900; font-size:16px; line-height:1.25 }
-  .flow-actions{ display:flex; gap:8px; flex-wrap:wrap }
-  .chip{ border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65) }
-  .chip:hover{ filter:brightness(.95) }
-
-  @media (max-width: 880px){
-    .mood-selector{ flex-wrap:wrap }
-    .header-controls{ flex-wrap:wrap }
-    .miniplayer{ right:10px; left:10px; bottom:10px; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AuraAI</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- Hello -->
-  <section id="hello-screen" class="screen active">
-    <div class="hello-wrap glass">
-      <div class="hello-text">AuraAI</div>
-      <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
-      <div class="hello-actions">
-        <button class="btn" id="goPlay">🎮 Play a Game</button>
-        <button class="btn" id="goDraw">🎨 Draw Something</button>
-        <button class="btn" id="goTalk">💬 Talk</button>
-      </div>
-      <div class="hint">You can always go back here from any screen.</div>
-    </div>
-  </section>
-
-  <!-- Game -->
-  <section id="game-screen" class="screen">
-    <div class="game-wrap glass">
-      <div class="bar">
-        <div class="left-group">
-          <div class="title">🫧 Bubble Pop — calm your mind</div>
-        </div>
-        <div class="right-group">
-          <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
-          <button class="btn" id="resetGame">Reset</button>
-          <button class="btn" id="themeBtnGame" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnGame" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromGame">⬅ Back</button>
-        </div>
-      </div>
-      <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
-
-      <!-- Flow overlay for Game (non-blocking) -->
-      <div id="flowGame" class="flow-pad glass" role="group" aria-label="Game Flow" style="display:none">
-        <div class="flow-q" id="flowGameQ"></div>
-        <div class="flow-actions">
-          <button class="chip" id="flowGameYes">Yes</button>
-          <button class="chip" id="flowGameNo">No</button>
-          <button class="chip" id="flowGameClose">Close</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Draw -->
-  <section id="draw-screen" class="screen">
-    <div class="draw-wrap glass">
-      <div class="bar">
-        <div class="left-group">
-          <div class="title">🎨 Draw Something — express or doodle</div>
-          <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
-          <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
-          <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
-          <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
-          <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/></div>
-        </div>
-        <div class="right-group">
-          <button class="btn" id="themeBtnDraw" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnDraw" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromDraw">⬅ Back</button>
-        </div>
-      </div>
-      <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
-      <div class="draw-bottom">
-        <div class="left">
-          <button class="btn" id="clearDraw">Clear</button>
-          <button class="btn" id="saveDraw">Save</button>
-        </div>
-        <div class="right"></div>
-      </div>
-
-      <!-- Flow overlay for Draw (non-blocking) -->
-      <div id="flowDraw" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
-        <div class="flow-q" id="flowDrawQ"></div>
-        <div class="flow-actions">
-          <button class="chip" id="flowDrawYes">Yes</button>
-          <button class="chip" id="flowDrawNo">No</button>
-          <button class="chip" id="flowDrawClose">Close</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Chat -->
-  <section id="chat-screen" class="screen">
-    <div class="chat-container glass">
-      <div class="header-controls">
-        <div class="mood-header glass">How do you feel?</div>
-        <div class="header-buttons">
-          <button class="btn" id="voice-mode-btn" aria-pressed="false" title="Toggle Voice">🎤 Voice</button>
-          <button class="btn" id="speak-reply-btn" aria-pressed="false" title="Speak Replies">🔊 Speak</button>
-          <button class="btn" id="themeBtnChat" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnChat" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromChat" title="Back">⬅ Back</button>
-        </div>
-      </div>
-
-      <div class="mood-selector">
-        <button class="mood-btn happy" aria-pressed="false">😊 Happy</button>
-        <button class="mood-btn sad" aria-pressed="false">😢 Sad</button>
-        <button class="mood-btn angry" aria-pressed="false">😠 Angry</button>
-        <button class="mood-btn nervous" aria-pressed="false">😰 Nervous</button>
-      </div>
-
-      <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
-
-      <div class="input-footer">
-        <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
-        <button class="btn" id="send-btn">Send</button>
-      </div>
-
-      <!-- Flow overlay for Chat (non-blocking) -->
-      <div id="flowChat" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
-        <div class="flow-q" id="flowChatQ"></div>
-        <div class="flow-actions">
-          <button class="chip" id="flowChatYes">Yes</button>
-          <button class="chip" id="flowChatNo">No</button>
-          <button class="chip" id="flowChatClose">Close</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Themes panel -->
-  <aside class="themes-panel" id="themesPanel" aria-hidden="true">
-    <div class="panel-shell glass">
-      <div class="themes-head glass">
-        <div>🎨 Themes</div>
-        <button class="close-btn" id="closeThemes" aria-label="Close">✕</button>
-      </div>
-      <div class="themes-body">
-        <div class="swatch-strip" id="themeStrip"></div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- BGM Mini Player -->
-  <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
-    <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
-    <div class="mini-meta">
-      <div class="mini-title">Music</div>
-      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
-      <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
-    </div>
+  <!-- Intro Screen -->
+  <div id="intro-screen">
+    <h1 id="intro-title">AuraAI</h1>
+    <button id="start-btn">Start</button>
   </div>
 
-<script>
-/* ---------------------------- GLOBAL SOUND ---------------------------- */
-const Sound = (() => {
-  let ctx;
-  let muted = false;
-  function ensureCtx(){
-    if(!ctx){
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(AC) ctx = new AC();
-    }
-  }
-  function tone(freq=440, dur=0.08, type="sine", gain=0.06){
-    if(muted) return;
-    ensureCtx(); if(!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.value = gain;
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + dur);
-  }
-  function click(){ tone(600,0.05,"triangle",0.05) }
-  function pop(){ tone(900,0.08,"sine",0.07) }
-  function scribble(){ tone(280,0.03,"square",0.03) }
-  function toggle(){ tone(420,0.06,"sawtooth",0.06) }
-  function setMuted(v){ muted = v }
-  function isMuted(){ return muted }
-  return { click, pop, scribble, toggle, setMuted, isMuted };
-})();
+  <!-- Main App -->
+  <div id="app" style="display: none;">
+    <canvas id="bg-canvas"></canvas>
+    <div id="chat-container"></div>
+    <div id="options-container"></div>
+  </div>
 
-/* ----------------------------- SCREENS -------------------------------- */
-const screens = {
-  hello: document.getElementById('hello-screen'),
-  game:  document.getElementById('game-screen'),
-  draw:  document.getElementById('draw-screen'),
-  chat:  document.getElementById('chat-screen'),
-};
-function switchScreen(key){
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  screens[key].classList.add('active');
-}
-document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); startGameFlow(); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlow(); };
-document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); startChatFlow(); };
-document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
-document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
-document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
+  <script>
+    const introScreen = document.getElementById("intro-screen");
+    const startBtn = document.getElementById("start-btn");
+    const app = document.getElementById("app");
+    const chatContainer = document.getElementById("chat-container");
+    const optionsContainer = document.getElementById("options-container");
 
-/* ------------------------------ THEMES -------------------------------- */
-const themesPanel = document.getElementById("themesPanel");
-const closeThemes = document.getElementById("closeThemes");
-const themeStrip = document.getElementById("themeStrip");
-
-/* 50+ Themes */
-const THEMES = {
-  "Black & White (solid)": [
-    ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
-    ["deep-charcoal","#2C3E50",["#3e5368","#ffffff"],["#1c2a36","#ffffff"]],
-    ["slate-gray","#7F8C8D",["#a1adae","#1e2b30"],["#5e6a6b","#ffffff"]],
-    ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
-    ["silver-mist","linear-gradient(135deg,#ECEFF1,#B0BEC5)",["#f5f8fa","#0a3358"],["#d6e3ee","#0b2a47"]],
-  ],
-  "Red (solid)": [
-    ["poster-red","#E53935",["#f6b6b4","#6c0b0b"],["#b9221f","#ffffff"]],
-    ["rose-red","#FF6F61",["#ffd0ca","#5c1713"],["#e2574a","#ffffff"]],
-    ["crimson","#B71C1C",["#d86464","#ffffff"],["#8f1414","#ffffff"]],
-    ["wine-red","#8B0000",["#a43b3b","#ffffff"],["#5b0000","#ffffff"]],
-  ],
-  "Orange (solid)": [
-    ["poster-orange","#F57C00",["#ffc07e","#4b2a00"],["#d66700","#ffffff"]],
-    ["pumpkin","#D35400",["#f0a870","#3d2300"],["#b94900","#ffffff"]],
-    ["amber","#FFB300",["#ffe18a","#4a3a00"],["#e2a200","#231d00"]],
-  ],
-  "Yellow (solid)": [
-    ["poster-yellow","#FDD835",["#fff6b0","#3c3600"],["#eacb2f","#2a2300"]],
-    ["sun-yellow","#FFEB3B",["#fff7a6","#3a3400"],["#ecd835","#231e00"]],
-    ["goldenrod","#DAA520",["#f0d584","#2d2500"],["#c0911c","#ffffff"]],
-  ],
-  "Green (solid)": [
-    ["poster-green","#43A047",["#bfe6c3","#0f2a12"],["#2f7a33","#ffffff"]],
-    ["mint","#98FF98",["#e4ffe4","#0f2a12"],["#7be47b","#0f2a12"]],
-    ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
-    ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
-  ],
-  "Blue (solid)": [
-    ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
-    ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
-    ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
-    ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
-  ],
-  "Purple/Pink (solid)": [
-    ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
-    ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
-    ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
-    ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
-  ],
-  "Gradients — Sunset": [
-    ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
-    ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
-    ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
-  ],
-  "Gradients — Ice/Dream": [
-    ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
-    ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
-    ["cotton-candy","linear-gradient(135deg,#f6d365,#fda085)",["#fff0cf","#3a2e0a"],["#f18c6a","#2a1408"]],
-  ],
-  "Gradients — Forest/Jade": [
-    ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
-    ["moss","linear-gradient(135deg,#134E5E,#71B280)",["#cfe7db","#0a2a1f"],["#4a9b7a","#ffffff"]],
-  ],
-  "Gradients — Steel": [
-    ["steel","linear-gradient(135deg,#4b79a1,#283e51)",["#d6e6ff","#0a2a4a"],["#3a6287","#ffffff"]],
-    ["smoke","linear-gradient(135deg,#bdc3c7,#2c3e50)",["#e9edf0","#0a2a4a"],["#53697f","#ffffff"]],
-  ],
-  "Gradients — Aurora": [
-    ["aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)",["#e6f8ff","#0a2a4a"],["#4aa0ef","#0a2a4a"]],
-    ["polar","linear-gradient(135deg,#21D4FD,#B721FF)",["#eaf3ff","#0a2a4a"],["#8e6bff","#ffffff"]],
-  ],
-  "Gradients — Berry": [
-    ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
-    ["mulberry","linear-gradient(135deg,#a044ff,#6a3093)",["#ead9ff","#23123a"],["#7e45c7","#ffffff"]],
-  ],
-  "Gradients — Night": [
-    ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
-    ["midnight","linear-gradient(135deg,#0f2027,#203a43,#2c5364)",["#c8d7e0","#0a2a3a"],["#2d5a74","#ffffff"]],
-  ],
-  /* New groups to exceed 50 */
-  "Pastels": [
-    ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
-    ["pastel-peach","#FFD1BA",["#fff1ea","#2a1a0f"],["#ffb899","#2a1a0f"]],
-    ["pastel-lilac","#D9C2FF",["#f6efff","#211a2a"],["#c1a3ff","#211a2a"]],
-    ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
-  ],
-  "Neons": [
-    ["neon-cyan","#00F5FF",["#d4fdff","#002a2e"],["#00c8d0","#00181b"]],
-    ["neon-magenta","#FF00E5",["#ffd4fb","#2a0025"],["#d100bf","#2a0025"]],
-    ["neon-lime","#B6FF00",["#f0ffd4","#1a2a00"],["#8be000","#1a2a00"]],
-    ["neon-blue","#00A2FF",["#d9f0ff","#0a2740"],["#0087d1","#0a2740"]],
-  ],
-  "Earth Tones": [
-    ["earth-clay","#B5651D",["#e7c39d","#2a1807"],["#8e4a12","#ffffff"]],
-    ["earth-sand","#C2B280",["#f5edd4","#2a240f"],["#a99a65","#2a240f"]],
-    ["earth-olive","#556B2F",["#cfe0a8","#0f1a06"],["#3f4f22","#ffffff"]],
-    ["earth-ocean","#2E8B57",["#bfe7d0","#0a2a1f"],["#226b43","#ffffff"]],
-    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
-  ],
-};
-
-function isDarkBackground(bg){
-  if(!bg || typeof bg !== "string") return false;
-  if(bg.startsWith("linear-gradient")) return true; // darker glass for gradients
-  const hex = bg.replace("#","").trim();
-  if(hex.length !== 6) return false;
-  const r = parseInt(hex.slice(0,2),16);
-  const g = parseInt(hex.slice(2,4),16);
-  const b = parseInt(hex.slice(4,6),16);
-  const L = 0.2126*r + 0.7152*g + 0.0722*b;
-  return L < 128;
-}
-function applyThemeRecord(bg, bot, user){
-  document.body.style.background = bg;
-  document.documentElement.style.setProperty("--bot-bg", bot[0]);
-  document.documentElement.style.setProperty("--bot-fg", bot[1]);
-  document.documentElement.style.setProperty("--user-bg", user[0]);
-  document.documentElement.style.setProperty("--user-fg", user[1]);
-  const dark = isDarkBackground(bg);
-  document.documentElement.style.setProperty("--glass-bg", dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.20)");
-  document.documentElement.style.setProperty("--glass-border", dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.28)");
-  document.documentElement.style.setProperty("--glass-shadow", dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
-}
-(function buildThemeDots(){
-  for(const [group, items] of Object.entries(THEMES)){
-    const g = document.createElement('div'); g.className = 'group';
-    const label = document.createElement('div'); label.className = 'group-title'; label.textContent = group;
-    const row = document.createElement('div'); row.className = 'swatch-row';
-    items.forEach(([key,bg,bot,user])=>{
-      const btn = document.createElement('button');
-      btn.className = 'theme-btn'; btn.title = key; btn.setAttribute('data-theme', key); btn.style.background = bg;
-      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
-      row.appendChild(btn);
+    startBtn.addEventListener("click", () => {
+      introScreen.style.display = "none";
+      app.style.display = "block";
+      startConversation();
     });
-    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
-  }
-})();
-function openThemes(){ themesPanel.classList.add("open"); themesPanel.setAttribute("aria-hidden","false"); }
-function closeThemesPanel(){ themesPanel.classList.remove("open"); themesPanel.setAttribute("aria-hidden","true"); }
-document.getElementById("closeThemes").onclick = ()=>{ Sound.click(); closeThemesPanel(); };
-document.getElementById("themeBtnGame").onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById("themeBtnDraw").onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openThemes(); };
 
-/* ------------------------------ BGM ----------------------------------- */
-const BGM = (() => {
-  const audio = new Audio('bgm.mp3');
-  audio.loop = true;
-  audio.preload = 'auto';
-  audio.crossOrigin = 'anonymous';
-  let started = false;
-  let userWantedPlay = true; // unmuted by default → play when allowed
-
-  const play = async () => {
-    try {
-      await audio.play();
-      started = true;
-      setMiniState();
-    } catch (e) {
+    function addBotMessage(text) {
+      const msg = document.createElement("div");
+      msg.className = "bot-message";
+      msg.textContent = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-  };
-  const pause = () => { audio.pause(); setMiniState(); };
-  const resumeIfWanted = () => { if(userWantedPlay) play(); };
-  const setWantedPlay = (v) => { userWantedPlay = v; };
 
-  // Mini Player wiring
-  const mini = {
-    root: document.getElementById('miniPlayer'),
-    playPause: document.getElementById('miniPlayPause'),
-    seek: document.getElementById('miniSeek'),
-    cur: document.getElementById('miniCur'),
-    dur: document.getElementById('miniDur'),
-  };
-
-  function fmt(t){
-    if(isNaN(t)) return "0:00";
-    const m = Math.floor(t/60);
-    const s = Math.floor(t%60).toString().padStart(2,'0');
-    return `${m}:${s}`;
-  }
-  function setMiniState(){
-    mini.playPause.textContent = audio.paused ? "▶️" : "⏸";
-  }
-  mini.playPause.addEventListener('click', () => {
-    Sound.click();
-    if(audio.paused){ setWantedPlay(true); play(); }
-    else { setWantedPlay(false); pause(); }
-  });
-  mini.seek.addEventListener('input', () => {
-    if(audio.duration) audio.currentTime = (mini.seek.value/100) * audio.duration;
-  });
-  audio.addEventListener('timeupdate', () => {
-    if(audio.duration){
-      mini.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
-      mini.cur.textContent = fmt(audio.currentTime);
-      mini.dur.textContent = fmt(audio.duration);
+    function addOptionButtons(options) {
+      optionsContainer.innerHTML = "";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.className = "option-btn";
+        btn.addEventListener("click", () => handleUserInput(opt));
+        optionsContainer.appendChild(btn);
+      });
     }
-    setMiniState();
-  });
-  audio.addEventListener('loadedmetadata', () => {
-    mini.dur.textContent = fmt(audio.duration);
-  });
 
-  // Public API
-  return {
-    audio, play, pause, resumeIfWanted, setWantedPlay,
-    isPaused: () => audio.paused
-  };
-})();
+    function handleUserInput(input) {
+      const msg = document.createElement("div");
+      msg.className = "user-message";
+      msg.textContent = input;
+      chatContainer.appendChild(msg);
 
-// Start on first user interaction if autoplay was blocked
-let firstInteractionBound = false;
-function startBGMOnFirstInteraction(){
-  if(firstInteractionBound) return;
-  firstInteractionBound = true;
-  const kick = () => { document.removeEventListener('pointerdown', kick); BGM.play(); };
-  document.addEventListener('pointerdown', kick, { once:true });
-}
-// Try autoplay immediately; if blocked, the first click will start it
-BGM.play();
-
-/* ------------------------------ MUTE ---------------------------------- */
-function bindMute(btnId){
-  const el = document.getElementById(btnId);
-  const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
-  setLabel();
-  el.onclick = async ()=>{
-    const willMute = !Sound.isMuted();
-    Sound.setMuted(willMute);
-    setLabel();
-    Sound.toggle();
-
-    if(willMute){
-      BGM.setWantedPlay(true);
-      BGM.pause();
-    }else{
-      BGM.resumeIfWanted();
+      processConversation(input.toLowerCase());
     }
-  };
-}
-bindMute("muteBtnGame");
-bindMute("muteBtnDraw");
-bindMute("muteBtnChat");
 
-/* ------------------------------ GAME ---------------------------------- */
-const gameCanvas = document.getElementById('gameCanvas');
-const scoreTxt = document.getElementById('scoreTxt');
-const resetGameBtn = document.getElementById('resetGame');
-let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true;
-
-function resizeGame(){
-  const rect = gameCanvas.getBoundingClientRect();
-  gameCanvas.width = Math.floor(rect.width * devicePixelRatio);
-  gameCanvas.height = Math.floor(rect.height * devicePixelRatio);
-  W = gameCanvas.width; H = gameCanvas.height;
-  gctx = gameCanvas.getContext('2d');
-  gctx.setTransform(1,0,0,1,0,0);
-  gctx.scale(devicePixelRatio, devicePixelRatio);
-}
-window.addEventListener('resize', resizeGame);
-resizeGame();
-
-function spawnBubble(){
-  const r = 22 + Math.random()*26;
-  const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
-  const y = gameCanvas.clientHeight + r + 10;
-  const vy = (0.5 + Math.random()*0.9) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')) ;
-  const hue = Math.floor(200 + Math.random()*100);
-  bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
-}
-function updateBubble(b, dt){
-  if(!b.popped){
-    b.y -= b.vy * dt * 0.06;
-    if(b.y < -b.r){ b.popped = true; b.alpha = 0; }
-  }else{
-    b.alpha -= 0.04;
-  }
-}
-function drawBubble(b){
-  const ctx = gctx;
-  ctx.save();
-  ctx.globalAlpha = Math.max(0,b.alpha);
-  ctx.shadowColor = `rgba(255,255,255,0.9)`;
-  ctx.shadowBlur = 12;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = `rgba(0,0,0,0.25)`;
-  const cx = b.x, cy = b.y, r = b.r;
-  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
-  grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`);
-  grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
-  ctx.restore();
-}
-let prevT = performance.now();
-function gameLoop(t){
-  const dt = t - prevT; prevT = t;
-  if(running){
-    gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    grd.addColorStop(0,'rgba(255,255,255,.28)');
-    grd.addColorStop(1,'rgba(255,255,255,.18)');
-    gctx.fillStyle = grd;
-    gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    if(t - lastSpawn > 700){ spawnBubble(); lastSpawn = t; }
-    bubbles = bubbles.filter(b => b.alpha > 0);
-    for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
-  }
-  requestAnimationFrame(gameLoop);
-}
-requestAnimationFrame(gameLoop);
-
-gameCanvas.addEventListener('click', (e)=>{
-  const rect = gameCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  for(const b of bubbles){
-    const dx = x - b.x, dy = y - b.y;
-    if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
-      b.popped = true; b.vy = 0; score += 1; scoreTxt.textContent = score; Sound.pop();
-      break;
+    function startConversation() {
+      addBotMessage("How are you feeling today?");
+      addOptionButtons(["Sad", "Nervous", "Angry", "Happy"]);
     }
-  }
-});
-resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
 
-/* ------------------------------ DRAW ---------------------------------- */
-const drawCanvas = document.getElementById('drawCanvas');
-const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
-let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
+    function processConversation(input) {
+      optionsContainer.innerHTML = "";
 
-function sizeDrawCanvas(){
-  const rect = drawCanvas.getBoundingClientRect();
-  const prev = dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);
-  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
-  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
-  dctx.setTransform(1,0,0,1,0,0);
-  dctx.scale(devicePixelRatio, devicePixelRatio);
-  try{ dctx.putImageData(prev,0,0); }catch{}
-}
-new ResizeObserver(sizeDrawCanvas).observe(drawCanvas);
-setTimeout(sizeDrawCanvas, 0);
+      if (input === "sad") {
+        addBotMessage("I’m sorry you’re feeling sad 💙 Want to tell me what’s on your mind? I’m here to listen. 🌸");
+        addOptionButtons(["Yes", "No"]);
+      }
 
-function startDraw(x,y){ drawing = true; lastX=x; lastY=y; Sound.scribble(); }
-function moveDraw(x,y){
-  if(!drawing) return;
-  dctx.lineWidth = brushSize;
-  dctx.lineCap = 'round'; dctx.lineJoin = 'round';
-  if(erasing){
-    dctx.globalCompositeOperation = 'destination-out';
-    dctx.strokeStyle = 'rgba(0,0,0,1)';
-  }else{
-    dctx.globalCompositeOperation = 'source-over';
-    dctx.strokeStyle = brushColor;
-  }
-  dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
-  lastX=x; lastY=y;
-}
-function endDraw(){ drawing = false; dctx.globalCompositeOperation = 'source-over'; }
+      else if (input === "yes" && lastBotMessage().includes("want to tell")) {
+        addBotMessage("Great—I'm listening. 💬");
+        addBotMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️");
+        addOptionButtons(["done"]);
+      }
 
-drawCanvas.addEventListener('mousedown', e=>{
-  const r = drawCanvas.getBoundingClientRect();
-  startDraw(e.clientX - r.left, e.clientY - r.top);
-});
-drawCanvas.addEventListener('mousemove', e=>{
-  const r = drawCanvas.getBoundingClientRect();
-  moveDraw(e.clientX - r.left, e.clientY - r.top);
-});
-window.addEventListener('mouseup', endDraw);
+      else if (input === "done") {
+        addBotMessage("Thanks for sharing. 💙 Do you want me to suggest more ways to feel better?");
+        addOptionButtons(["Yes", "No"]);
+      }
 
-drawCanvas.addEventListener('touchstart', e=>{
-  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
-  startDraw(t.clientX - r.left, t.clientY - r.top);
-  e.preventDefault();
-},{passive:false});
-drawCanvas.addEventListener('touchmove', e=>{
-  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
-  moveDraw(t.clientX - r.left, t.clientY - r.top);
-  e.preventDefault();
-},{passive:false});
-drawCanvas.addEventListener('touchend', endDraw);
+      else if (input === "no") {
+        addBotMessage("That’s okay 💕. I’m here if you change your mind.");
+        addOptionButtons(["Back to start"]);
+      }
 
-document.querySelectorAll('.swatch').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    brushColor = btn.getAttribute('data-color');
-    erasing = false; document.getElementById('eraserToggle').checked = false;
-    Sound.click();
-  });
-});
-document.getElementById('brushSize').addEventListener('input', e=>{
-  brushSize = +e.target.value;
-});
-document.getElementById('colorPicker').addEventListener('input', e=>{
-  brushColor = e.target.value; erasing = false; document.getElementById('eraserToggle').checked=false;
-});
-document.getElementById('eraserToggle').addEventListener('change', e=>{
-  erasing = e.target.checked; Sound.toggle();
-});
-document.getElementById('clearDraw').onclick = ()=>{
-  Sound.click();
-  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-};
-document.getElementById('saveDraw').onclick = ()=>{
-  Sound.click();
-  const url = drawCanvas.toDataURL('image/png');
-  const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click();
-};
+      else if (input === "back to start") {
+        startConversation();
+      }
 
-/* ------------------------------ CHAT (display only; input hidden until flow) ------------------ */
-const chatBox = document.getElementById("chat-box");
-const userInputField = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
-const moodButtons = document.querySelectorAll(".mood-btn");
-const voiceModeBtn = document.getElementById("voice-mode-btn");
-const speakReplyBtn = document.getElementById("speak-reply-btn");
-let dayMood = null, voiceModeOn = false, speakRepliesOn = false, recognition;
-let synth = window.speechSynthesis;
+      else {
+        addBotMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙");
+        addOptionButtons(["Sad", "Nervous", "Angry", "Happy"]);
+      }
+    }
 
-function addMessage(text, sender){
-  const div = document.createElement("div");
-  div.className = "message " + sender;
-  div.textContent = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-  if (speakRepliesOn && sender === "bot") speakText(text);
-}
-function clearChat(){ chatBox.innerHTML=""; }
-function speakText(text){
-  if (!synth) return;
-  if (synth.speaking) synth.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-US";
-  synth.speak(u);
-}
-addMessage("Hi! 👋 How was your day? 😊", "bot");
-
-moodButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    Sound.click();
-    moodButtons.forEach((b) => b.setAttribute("aria-pressed","false"));
-    btn.setAttribute("aria-pressed","true");
-    dayMood = btn.classList[1];
-    clearChat();
-    const openers = {
-      happy:  "Hey! So glad you’re feeling happy today! 🌟 Want to tell me about it?",
-      sad:    "I’m sorry you’re feeling sad 💙 Want to tell me what happened?",
-      angry:  "It’s okay to feel angry 😠 Want to talk about what’s bothering you?",
-      nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way?"
-    };
-    addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
-    startBGMOnFirstInteraction();
-    startChatFlow(); // kick the yes/no flow on mood selection too
-  });
-});
-sendBtn.addEventListener("click", ()=>{ Sound.click(); if(userInputField.value.trim()){ addMessage(userInputField.value.trim(),"user"); addMessage("Thanks for sharing. 💙","bot"); userInputField.value=""; toggleChatInput(false); }});
-
-/* Voice toggles (kept as-is; optional) */
-function setupRecognition(){
-  if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
-    voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported in your browser"; return;
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = "en-US";
-  recognition.interimResults = false; recognition.maxAlternatives = 1;
-  recognition.addEventListener("result", (event) => {
-    const speech = event.results[0][0].transcript;
-    userInputField.value = speech; // will still require flow to open input
-  });
-  recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
-}
-voiceModeBtn.addEventListener("click", () => {
-  Sound.toggle(); voiceModeOn = !voiceModeOn; voiceModeBtn.setAttribute("aria-pressed", voiceModeOn);
-  if (voiceModeOn){ setupRecognition(); recognition && recognition.start(); voiceModeBtn.textContent = "🎤 Voice ON"; }
-  else { if (recognition) recognition.stop(); voiceModeBtn.textContent = "🎤 Voice"; }
-});
-speakReplyBtn.addEventListener("click", () => {
-  Sound.toggle(); speakRepliesOn = !speakRepliesOn; speakReplyBtn.setAttribute("aria-pressed", speakRepliesOn);
-  speakReplyBtn.textContent = speakRepliesOn ? "🔊 Speak ON" : "🔊 Speak";
-  if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
-});
-
-/* ------------------------------ YES/NO FLOW ENGINE -------------------- */
-function Flow(steps, onDone){
-  let idx = 0;
-  return {
-    q(){ return steps[idx]?.q || ""; },
-    yes(){ const step = steps[idx]; if(!step) return; if(step.onYes) step.onYes(); idx = step.nextYes ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    no(){ const step = steps[idx]; if(!step) return; if(step.onNo) step.onNo(); idx = step.nextNo ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    done(){ idx = steps.length; onDone && onDone(); },
-    atEnd(){ return idx>=steps.length; },
-    index(){ return idx; },
-    set(i){ idx = i; }
-  };
-}
-
-/* Helpers to show/hide flow overlays */
-const flowGameEl = { wrap: document.getElementById('flowGame'), q: document.getElementById('flowGameQ'), yes: document.getElementById('flowGameYes'), no: document.getElementById('flowGameNo'), close: document.getElementById('flowGameClose') };
-const flowDrawEl = { wrap: document.getElementById('flowDraw'), q: document.getElementById('flowDrawQ'), yes: document.getElementById('flowDrawYes'), no: document.getElementById('flowDrawNo'), close: document.getElementById('flowDrawClose') };
-const flowChatEl = { wrap: document.getElementById('flowChat'), q: document.getElementById('flowChatQ'), yes: document.getElementById('flowChatYes'), no: document.getElementById('flowChatNo'), close: document.getElementById('flowChatClose') };
-
-function bindFlowUI(el, flow){
-  el.q.textContent = flow.q();
-  el.wrap.style.display = 'flex';
-  const setQ = ()=> el.q.textContent = flow.q();
-  const yesFn = ()=>{ Sound.click(); flow.yes(); if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
-  const noFn  = ()=>{ Sound.click(); flow.no();  if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
-  const closeFn = ()=>{ Sound.click(); flow.done(); el.wrap.style.display='none'; };
-
-  el.yes.onclick = yesFn;
-  el.no.onclick = noFn;
-  el.close.onclick = closeFn;
-}
-
-/* GAME FLOW (no changes to game mechanics) */
-function startGameFlow(){
-  const flow = Flow([
-    { q:"Want a gentle focus? Try popping 5 bubbles slowly. Start?", onYes:()=>addTip("Game","Nice! Take it slow and notice the colors."), onNo:()=>addTip("Game","Cool—free play mode. 🎈") },
-    { q:"Want ambient music while you play?", onYes:()=>{ if(BGM.isPaused()) BGM.play(); }, onNo:()=>{ BGM.pause(); } },
-    { q:"Show this guide next time?", onYes:()=>addTip("Game","Guide will appear again."), onNo:()=>{ flowGameEl.wrap.style.display='none'; } },
-  ]);
-  bindFlowUI(flowGameEl, flow);
-}
-
-/* DRAW FLOW (no changes to canvas) */
-function startDrawFlow(){
-  const prompts = ["Draw a cozy mug ☕", "Sketch a cloud you like ☁️", "Make a free squiggle", "Doodle your initials"];
-  const flow = Flow([
-    { q:"Want a simple drawing prompt?", onYes:()=>addTip("Draw","Prompt: "+prompts[Math.floor(Math.random()*prompts.length)]), onNo:()=>addTip("Draw","No prompt—free doodle!") },
-    { q:"Want a quick palette swap to a calm theme?", onYes:()=>applyAnyThemeByKey("ice"), onNo:()=>{} },
-    { q:"Show this guide next time?", onYes:()=>addTip("Draw","Guide will appear again."), onNo:()=>{ flowDrawEl.wrap.style.display='none'; } },
-  ]);
-  bindFlowUI(flowDrawEl, flow);
-}
-
-/* CHAT FLOW (typing opens only if user wants to tell more, then closes) */
-function startChatFlow(){
-  const flow = Flow([
-    { q:"Want to tell?", onYes:()=>{ addMessage("Great—I'm listening. 💬","bot"); }, onNo:()=>{ addMessage("Totally fine. We can just sit here quietly. 💙","bot"); } },
-    { q:"Do you want to tell more?", onYes:()=>{ toggleChatInput(true); }, onNo:()=>{ addMessage("Okay. Would a quick tip help—like 3 slow breaths?", "bot"); } },
-    { q:"Want another coping tool suggestion?", onYes:()=>addMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️","bot"), onNo:()=>addMessage("Got it. I’m here when you need me. 💙","bot") },
-  ], ()=>{ /* end */ });
-  bindFlowUI(flowChatEl, flow);
-}
-
-function toggleChatInput(show){
-  const footer = document.querySelector('.input-footer');
-  footer.style.display = show ? 'block' : 'none';
-}
-
-/* Tip to chat box for consistency */
-function addTip(area, text){
-  const t = `[${area}] ${text}`;
-  addMessage(t, "bot");
-}
-
-/* Apply theme by key if exists anywhere */
-function applyAnyThemeByKey(key){
-  for(const group of Object.values(THEMES)){
-    const found = group.find(([k])=>k===key);
-    if(found){ const [,bg,bot,user] = found; applyThemeRecord(bg,bot,user); return true; }
-  }
-  return false;
-}
-
-function closeAllFlows(){
-  flowGameEl.wrap.style.display='none';
-  flowDrawEl.wrap.style.display='none';
-  flowChatEl.wrap.style.display='none';
-}
-
-document.addEventListener('keydown', (e)=>{ if(e.key==="Escape"){ if(themesPanel.classList.contains('open')) closeThemesPanel(); else closeAllFlows(); } });
-
-</script>
+    function lastBotMessage() {
+      const messages = chatContainer.getElementsByClassName("bot-message");
+      return messages[messages.length - 1]?.textContent || "";
+    }
+  </script>
 </body>
 </html>
