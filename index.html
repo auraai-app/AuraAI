@@ -1,109 +1,912 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AuraAI</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aura AI</title>
+<style>
+  :root{
+    --bot-bg:#d6e6fb; --bot-fg:#074279;
+    --user-bg:#517fc4; --user-fg:#e8f3fc;
+
+    --glass-bg: rgba(255,255,255,0.20);
+    --glass-border: rgba(255,255,255,0.28);
+    --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
+    --glass-blur: blur(18px);
+
+    --pad: 20px;
+    --radius: 18px;
+    --motion-scale: 1.0; /* slightly increased motion */
+  }
+
+  *{ box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body{
+    font-family: "Comic Neue", Arial, sans-serif;
+    color:#0b3c61;
+    background:#a8cdf1;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  .screen{
+    position:absolute; inset:0; display:none; place-items:center; padding:var(--pad);
+  }
+  .screen.active{ display:grid; }
+
+  .glass{
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .btn{
+    border:0; cursor:pointer; border-radius:14px;
+    padding:12px 16px; font-weight:800; font-size:15px;
+    color:#0b3c61;
+    background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
+    box-shadow: 0 4px 8px rgba(168,205,241,.7);
+    transition: filter .15s ease, transform .15s ease;
+  }
+  .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
+
+  /* Hello */
+  .hello-wrap{ width:min(980px,92vw); border-radius:var(--radius); padding:28px; text-align:center; }
+  .hello-text{
+    font-weight:900; line-height:1; user-select:none; margin:14px 0 8px;
+    font-size: clamp(42px, 8vw, 92px); letter-spacing:1px;
+    /* darker gradient just for AuraAI */
+    background: linear-gradient(90deg,#e8f4ff,#d8e7ff,#9bb9e6,#e8f4ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation: hueflow 16s linear infinite;
+  }
+  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) } 100%{ filter:hue-rotate(360deg) } }
+  .hello-sub{ font-size:clamp(16px,2.6vw,22px); opacity:.9; margin-bottom:18px; }
+  .hello-actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .hint{ margin-top:14px; font-size:14px; opacity:.8; }
+
+  /* Game */
+  .game-wrap{
+    width:min(1000px,95vw); height:min(70vh,680px);
+    border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr; gap:10px;
+  }
+  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .left-group,.right-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+  .title{ font-weight:900; font-size:20px }
+  .game-ind{ font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55) }
+  #gameCanvas{ width:100%; height:100%; border-radius:14px; background: linear-gradient(135deg,#eaf6ff,#f6f0ff); display:block; outline:2px solid rgba(255,255,255,.5); }
+
+  /* encouragement toast */
+  .encourage{
+    position:fixed; right:18px; top:18px; z-index:1400;
+    background:rgba(10,80,140,0.95); color:#fff; padding:10px 14px; border-radius:12px; font-weight:900;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+
+  /* Draw */
+  .draw-wrap{
+    width:min(1100px,96vw); height:min(76vh,740px);
+    border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr auto; gap:10px;
+  }
+  .draw-tools{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+  .brush{ display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; }
+  .swatch{ width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2); }
+  .draw-canvas{ width:100%; height:100%; border-radius:14px; background: rgba(255,255,255,.65); outline:2px solid rgba(255,255,255,.5); }
+  .draw-bottom{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap }
+  .picker{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800; }
+  .prompt-area{ display:flex; gap:10px; align-items:center; margin-left:6px; font-weight:800; }
+  .prompt-text{ font-weight:700; font-size:16px; padding:8px 12px; border-radius:12px; background: rgba(255,255,255,.85); color:#0b3c61; }
+
+  /* Chat */
+  .chat-container{ width:min(980px,92vw); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:12px; }
+  .header-controls{ display:flex; gap:10px; align-items:center; }
+  .mood-header{ flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background: linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow: 0 4px 8px rgba(168,205,241,.4); }
+  .header-buttons{ display:flex; gap:8px; flex-wrap:wrap }
+  .mood-selector{ display:flex; gap:10px; flex-wrap:wrap }
+  .mood-btn{ border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px; transition: transform .18s ease, box-shadow .18s ease; }
+  .mood-btn.happy{ background:#c1e6a6 } .mood-btn.sad{ background:#a4c7f9 } .mood-btn.angry{ background:#f9d6d6 } .mood-btn.nervous{ background:#fff3c8 }
+  .mood-btn:hover{ transform: translateY(-3px); box-shadow:0 10px 16px rgba(0,0,0,.22) }
+  .mood-btn[aria-pressed="true"]{ box-shadow:0 0 12px 2px rgba(0,0,0,.22) }
+  #chat-box{ flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background: rgba(232,242,252,.55); }
+  .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border:2px solid transparent; font-size:18px; }
+  .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border:1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .input-footer{ position:relative; display:flex; gap:8px; align-items:center; }
+  #user-input{ flex:1; padding:12px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:16px; color:#0b3c61; outline:none; }
+  #send-btn{ padding:10px 14px; color:#fff; background:#88b7e5; border-radius:12px; border:0; cursor:pointer; }
+
+  /* small overlay input for draw prompt response */
+  .overlay-input{
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:1600;
+    background:rgba(255,255,255,0.98); padding:16px; border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,.35);
+    display:none; min-width:300px;
+  }
+  .overlay-input.open{ display:block; }
+
+  /* Themes panel unchanged */
+  .themes-panel{ position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition: width .3s ease, opacity .25s ease; display:flex; flex-direction:column; }
+  .themes-panel.open{ width:320px; opacity:1; pointer-events:auto; }
+  .panel-shell{ height:100%; display:flex; flex-direction:column; }
+  .themes-head{ display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px; }
+  .themes-body{ padding:12px 10px; overflow-y:auto; flex:1 }
+  .swatch-strip{ display:flex; flex-direction:column; gap:16px }
+  .group{ display:flex; flex-direction:column; gap:10px }
+  .group-title{ font-weight:900; font-size:14px; opacity:.85; padding-left:4px }
+  .swatch-row{ display:flex; gap:10px; flex-wrap:wrap }
+  .theme-btn{ width:34px; height:34px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.18); transition: transform .12s ease; }
+  .close-btn{ background:none; border:0; font-size:18px; cursor:pointer }
+
+  /* Mini player */
+  .miniplayer{ position:fixed; right:14px; bottom:14px; z-index:1200; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; }
+  .mini-btn{ border:0; cursor:pointer; border-radius:12px; padding:10px 12px; font-weight:800; font-size:14px; background: rgba(255,255,255,.6); box-shadow: 0 4px 8px rgba(0,0,0,.15); transition:.18s transform, .18s filter; }
+  .mini-meta{ display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:240px; }
+  .mini-title{ font-weight:900; font-size:14px; line-height:1.1; }
+  .mini-time{ font-size:12px; opacity:.85; }
+  .mini-progress{ appearance:none; width:100%; height:6px; border-radius:6px; background: rgba(255,255,255,.6); outline:none; cursor:pointer; }
+
+  @media (max-width:880px){ .mood-selector{ flex-wrap:wrap } .header-controls{ flex-wrap:wrap } .miniplayer{ right:10px; left:10px; bottom:10px; } }
+</style>
 </head>
 <body>
-  <!-- Intro Screen -->
-  <div id="intro-screen">
-    <h1 id="intro-title">AuraAI</h1>
-    <button id="start-btn">Start</button>
+
+  <!-- Hello -->
+  <section id="hello-screen" class="screen active">
+    <div class="hello-wrap glass">
+      <div class="hello-text">AuraAI</div>
+      <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
+      <div class="hello-actions">
+        <button class="btn" id="goPlay">🎮 Play a Game</button>
+        <button class="btn" id="goDraw">🎨 Draw Something</button>
+        <button class="btn" id="goTalk">💬 Talk</button>
+      </div>
+      <div class="hint">You can always go back here from any screen.</div>
+    </div>
+  </section>
+
+  <!-- Game -->
+  <section id="game-screen" class="screen">
+    <div class="game-wrap glass">
+      <div class="bar">
+        <div class="left-group">
+          <div class="title">🫧 Bubble Pop — calm your mind</div>
+        </div>
+        <div class="right-group">
+          <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
+          <button class="btn" id="resetGame">Reset</button>
+          <button class="btn" id="themeBtnGame" title="Themes">🎨 Themes</button>
+          <button class="btn" id="muteBtnGame" title="Mute / Unmute">🔇 Mute</button>
+          <button class="btn" id="backFromGame">⬅ Back</button>
+        </div>
+      </div>
+      <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- Draw -->
+  <section id="draw-screen" class="screen">
+    <div class="draw-wrap glass">
+      <div class="bar">
+        <div class="left-group">
+          <div class="title">🎨 Draw Something — express or doodle</div>
+          <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
+          <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
+          <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
+          <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
+          <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/></div>
+          <div class="prompt-area">
+            <div class="prompt-text" id="drawPrompt">—</div>
+            <button class="btn" id="newPromptBtn">New Prompt</button>
+            <button class="btn" id="typePromptBtn">Type</button>
+          </div>
+        </div>
+        <div class="right-group">
+          <button class="btn" id="themeBtnDraw" title="Themes">🎨 Themes</button>
+          <button class="btn" id="muteBtnDraw" title="Mute / Unmute">🔇 Mute</button>
+          <button class="btn" id="backFromDraw">⬅ Back</button>
+        </div>
+      </div>
+
+      <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
+
+      <div class="draw-bottom">
+        <div class="left">
+          <button class="btn" id="clearDraw">Clear</button>
+          <button class="btn" id="saveDraw">Save</button>
+        </div>
+        <div class="right"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chat -->
+  <section id="chat-screen" class="screen">
+    <div class="chat-container glass">
+      <div class="header-controls">
+        <div class="mood-header glass">How do you feel?</div>
+        <div class="header-buttons">
+          <button class="btn" id="voice-mode-btn" aria-pressed="false" title="Toggle Voice">🎤 Voice</button>
+          <button class="btn" id="speak-reply-btn" aria-pressed="false" title="Speak Replies">🔊 Speak</button>
+          <button class="btn" id="themeBtnChat" title="Themes">🎨 Themes</button>
+          <button class="btn" id="muteBtnChat" title="Mute / Unmute">🔇 Mute</button>
+          <button class="btn" id="backFromChat" title="Back">⬅ Back</button>
+        </div>
+      </div>
+
+      <div class="mood-selector">
+        <button class="mood-btn happy" aria-pressed="false">😊 Happy</button>
+        <button class="mood-btn sad" aria-pressed="false">😢 Sad</button>
+        <button class="mood-btn angry" aria-pressed="false">😠 Angry</button>
+        <button class="mood-btn nervous" aria-pressed="false">😰 Nervous</button>
+      </div>
+
+      <div id="chat-box" class="glass" role="log" aria-live="polite"><div class="message bot">Hi! 👋 How was your day? 😊</div></div>
+
+      <div class="input-footer">
+        <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
+        <button class="btn" id="send-btn">Send</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themes panel -->
+  <aside class="themes-panel" id="themesPanel" aria-hidden="true">
+    <div class="panel-shell glass">
+      <div class="themes-head glass">
+        <div>🎨 Themes</div>
+        <button class="close-btn" id="closeThemes" aria-label="Close">✕</button>
+      </div>
+      <div class="themes-body">
+        <div class="swatch-strip" id="themeStrip"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay input for draw prompt typing -->
+  <div id="overlayInput" class="overlay-input" role="dialog" aria-modal="true">
+    <div style="font-weight:900;margin-bottom:8px">Tell us about your drawing</div>
+    <input id="overlayText" type="text" placeholder="Type here..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-bottom:8px" />
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="overlayCancel">Close</button>
+      <button class="btn" id="overlaySubmit">Submit</button>
+    </div>
   </div>
 
-  <!-- Main App -->
-  <div id="app" style="display: none;">
-    <canvas id="bg-canvas"></canvas>
-    <div id="chat-container"></div>
-    <div id="options-container"></div>
+  <!-- BGM Mini Player -->
+  <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
+    <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
+    <div class="mini-meta">
+      <div class="mini-title">Music</div>
+      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
+      <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
+    </div>
   </div>
 
-  <script>
-    const introScreen = document.getElementById("intro-screen");
-    const startBtn = document.getElementById("start-btn");
-    const app = document.getElementById("app");
-    const chatContainer = document.getElementById("chat-container");
-    const optionsContainer = document.getElementById("options-container");
+<script>
+/* ---------------------------- GLOBAL SOUND ---------------------------- */
+const Sound = (() => {
+  let ctx;
+  let muted = false;
+  function ensureCtx(){
+    if(!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) ctx = new AC();
+    }
+  }
+  function tone(freq=440, dur=0.08, type="sine", gain=0.06){
+    if(muted) return;
+    ensureCtx(); if(!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + dur);
+  }
+  function click(){ tone(600,0.05,"triangle",0.05) }
+  function pop(){ tone(900,0.08,"sine",0.07) }
+  function scribble(){ tone(280,0.03,"square",0.03) }
+  function toggle(){ tone(420,0.06,"sawtooth",0.06) }
+  function setMuted(v){ muted = v }
+  function isMuted(){ return muted }
+  return { click, pop, scribble, toggle, setMuted, isMuted };
+})();
 
-    startBtn.addEventListener("click", () => {
-      introScreen.style.display = "none";
-      app.style.display = "block";
-      startConversation();
+/* ----------------------------- SCREENS -------------------------------- */
+const screens = {
+  hello: document.getElementById('hello-screen'),
+  game:  document.getElementById('game-screen'),
+  draw:  document.getElementById('draw-screen'),
+  chat:  document.getElementById('chat-screen'),
+};
+function switchScreen(key){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[key].classList.add('active');
+}
+document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); };
+document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); };
+document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+
+/* ------------------------------ THEMES -------------------------------- */
+const themesPanel = document.getElementById("themesPanel");
+const closeThemes = document.getElementById("closeThemes");
+const themeStrip = document.getElementById("themeStrip");
+
+const THEMES = {
+  "Black & White (solid)": [
+    ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
+    ["deep-charcoal","#2C3E50",["#3e5368","#ffffff"],["#1c2a36","#ffffff"]],
+    ["slate-gray","#7F8C8D",["#a1adae","#1e2b30"],["#5e6a6b","#ffffff"]],
+    ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
+    ["silver-mist","linear-gradient(135deg,#ECEFF1,#B0BEC5)",["#f5f8fa","#0a3358"],["#d6e3ee","#0b2a47"]],
+  ],
+  "Red (solid)": [
+    ["poster-red","#E53935",["#f6b6b4","#6c0b0b"],["#b9221f","#ffffff"]],
+    ["rose-red","#FF6F61",["#ffd0ca","#5c1713"],["#e2574a","#ffffff"]],
+    ["crimson","#B71C1C",["#d86464","#ffffff"],["#8f1414","#ffffff"]],
+    ["wine-red","#8B0000",["#a43b3b","#ffffff"],["#5b0000","#ffffff"]],
+  ],
+  "Orange (solid)": [
+    ["poster-orange","#F57C00",["#ffc07e","#4b2a00"],["#d66700","#ffffff"]],
+    ["pumpkin","#D35400",["#f0a870","#3d2300"],["#b94900","#ffffff"]],
+    ["amber","#FFB300",["#ffe18a","#4a3a00"],["#e2a200","#231d00"]],
+  ],
+  "Yellow (solid)": [
+    ["poster-yellow","#FDD835",["#fff6b0","#3c3600"],["#eacb2f","#2a2300"]],
+    ["sun-yellow","#FFEB3B",["#fff7a6","#3a3400"],["#ecd835","#231e00"]],
+    ["goldenrod","#DAA520",["#f0d584","#2d2500"],["#c0911c","#ffffff"]],
+  ],
+  "Green (solid)": [
+    ["poster-green","#43A047",["#bfe6c3","#0f2a12"],["#2f7a33","#ffffff"]],
+    ["mint","#98FF98",["#e4ffe4","#0f2a12"],["#7be47b","#0f2a12"]],
+    ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
+    ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
+  ],
+  "Blue (solid)": [
+    ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
+    ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
+    ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
+    ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
+  ],
+  "Purple/Pink (solid)": [
+    ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
+    ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
+    ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
+    ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
+  ],
+  "Gradients — Sunset": [
+    ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
+    ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
+  ],
+  "Gradients — Ice/Dream": [
+    ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
+    ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
+  ],
+  "Gradients — Forest/Jade": [
+    ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
+  ],
+  "Gradients — Steel": [
+    ["steel","linear-gradient(135deg,#4b79a1,#283e51)",["#d6e6ff","#0a2a4a"],["#3a6287","#ffffff"]],
+  ],
+  "Gradients — Aurora": [
+    ["aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)",["#e6f8ff","#0a2a4a"],["#4aa0ef","#0a2a4a"]],
+  ],
+  "Gradients — Berry": [
+    ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
+  ],
+  "Gradients — Night": [
+    ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
+  ],
+};
+
+function isDarkBackground(bg){
+  if(!bg || typeof bg !== "string") return false;
+  if(bg.startsWith("linear-gradient")) return true;
+  const hex = bg.replace("#","").trim();
+  if(hex.length !== 6) return false;
+  const r = parseInt(hex.slice(0,2),16);
+  const g = parseInt(hex.slice(2,4),16);
+  const b = parseInt(hex.slice(4,6),16);
+  const L = 0.2126*r + 0.7152*g + 0.0722*b;
+  return L < 128;
+}
+function applyThemeRecord(bg, bot, user){
+  document.body.style.background = bg;
+  document.documentElement.style.setProperty("--bot-bg", bot[0]);
+  document.documentElement.style.setProperty("--bot-fg", bot[1]);
+  document.documentElement.style.setProperty("--user-bg", user[0]);
+  document.documentElement.style.setProperty("--user-fg", user[1]);
+  const dark = isDarkBackground(bg);
+  document.documentElement.style.setProperty("--glass-bg", dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.20)");
+  document.documentElement.style.setProperty("--glass-border", dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.28)");
+  document.documentElement.style.setProperty("--glass-shadow", dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
+}
+(function buildThemeDots(){
+  for(const [group, items] of Object.entries(THEMES)){
+    const g = document.createElement('div'); g.className = 'group';
+    const label = document.createElement('div'); label.className = 'group-title'; label.textContent = group;
+    const row = document.createElement('div'); row.className = 'swatch-row';
+    items.forEach(([key,bg,bot,user])=>{
+      const btn = document.createElement('button');
+      btn.className = 'theme-btn'; btn.title = key; btn.setAttribute('data-theme', key); btn.style.background = bg;
+      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
+      row.appendChild(btn);
     });
+    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
+  }
+})();
+function openThemes(){ themesPanel.classList.add("open"); themesPanel.setAttribute("aria-hidden","false"); }
+function closeThemesPanel(){ themesPanel.classList.remove("open"); themesPanel.setAttribute("aria-hidden","true"); }
+document.getElementById("closeThemes").onclick = ()=>{ Sound.click(); closeThemesPanel(); };
+document.getElementById("themeBtnGame").onclick = ()=>{ Sound.click(); openThemes(); };
+document.getElementById("themeBtnDraw").onclick = ()=>{ Sound.click(); openThemes(); };
+document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openThemes(); };
 
-    function addBotMessage(text) {
-      const msg = document.createElement("div");
-      msg.className = "bot-message";
-      msg.textContent = text;
-      chatContainer.appendChild(msg);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+/* ------------------------------ BGM ----------------------------------- */
+const BGM = (() => {
+  const audio = new Audio('bgm.mp3'); // keep file name same as before
+  audio.loop = true; audio.preload = 'auto'; audio.crossOrigin = 'anonymous';
+  let userWantedPlay = true;
+
+  const play = async () => {
+    try { await audio.play(); setMiniState(); } catch (e) {}
+  };
+  const pause = () => { audio.pause(); setMiniState(); };
+  const resumeIfWanted = () => { if(userWantedPlay) play(); };
+  const setWantedPlay = (v) => { userWantedPlay = v; };
+
+  const mini = {
+    root: document.getElementById('miniPlayer'),
+    playPause: document.getElementById('miniPlayPause'),
+    seek: document.getElementById('miniSeek'),
+    cur: document.getElementById('miniCur'),
+    dur: document.getElementById('miniDur'),
+  };
+
+  function fmt(t){ if(isNaN(t)) return "0:00"; const m = Math.floor(t/60); const s = Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+  function setMiniState(){ mini.playPause.textContent = audio.paused ? "▶️" : "⏸"; }
+
+  mini.playPause.addEventListener('click', () => {
+    Sound.click();
+    if(audio.paused){ setWantedPlay(true); play(); } else { setWantedPlay(false); pause(); }
+  });
+  mini.seek.addEventListener('input', () => { if(audio.duration) audio.currentTime = (mini.seek.value/100) * audio.duration; });
+  audio.addEventListener('timeupdate', () => {
+    if(audio.duration){
+      mini.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
+      mini.cur.textContent = fmt(audio.currentTime);
+      mini.dur.textContent = fmt(audio.duration);
     }
+    setMiniState();
+  });
+  audio.addEventListener('loadedmetadata', () => mini.dur.textContent = fmt(audio.duration));
 
-    function addOptionButtons(options) {
-      optionsContainer.innerHTML = "";
-      options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.className = "option-btn";
-        btn.addEventListener("click", () => handleUserInput(opt));
-        optionsContainer.appendChild(btn);
-      });
+  return { audio, play, pause, resumeIfWanted, setWantedPlay, isPaused: () => audio.paused };
+})();
+
+let firstInteractionBound = false;
+function startBGMOnFirstInteraction(){
+  if(firstInteractionBound) return;
+  firstInteractionBound = true;
+  const kick = () => { document.removeEventListener('pointerdown', kick); BGM.play(); };
+  document.addEventListener('pointerdown', kick, { once:true });
+}
+BGM.play(); // try autoplay; will be blocked in many browsers until interaction
+
+/* ------------------------------ MUTE ---------------------------------- */
+function bindMute(btnId){
+  const el = document.getElementById(btnId);
+  const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
+  setLabel();
+  el.onclick = async ()=>{
+    const willMute = !Sound.isMuted();
+    Sound.setMuted(willMute);
+    setLabel();
+    Sound.toggle();
+    if(willMute){ BGM.setWantedPlay(true); BGM.pause(); } else { BGM.resumeIfWanted(); }
+  };
+}
+bindMute("muteBtnGame");
+bindMute("muteBtnDraw");
+bindMute("muteBtnChat");
+
+/* ------------------------------ GAME ---------------------------------- */
+const gameCanvas = document.getElementById('gameCanvas');
+const scoreTxt = document.getElementById('scoreTxt');
+const resetGameBtn = document.getElementById('resetGame');
+
+let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true;
+function resizeGame(){
+  const rect = gameCanvas.getBoundingClientRect();
+  gameCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  gameCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  W = gameCanvas.width; H = gameCanvas.height;
+  gctx = gameCanvas.getContext('2d');
+  gctx.setTransform(1,0,0,1,0,0);
+  gctx.scale(devicePixelRatio, devicePixelRatio);
+}
+window.addEventListener('resize', resizeGame);
+resizeGame();
+
+function spawnBubble(){
+  const r = 18 + Math.random()*30;
+  const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
+  const y = gameCanvas.clientHeight + r + 10;
+  const vy = (0.8 + Math.random()*1.4) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
+  const hue = Math.floor(190 + Math.random()*140);
+  bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
+}
+function updateBubble(b, dt){
+  if(!b.popped){
+    b.y -= b.vy * dt * 0.06;
+    if(b.y < -b.r){ b.popped = true; b.alpha = 0; }
+  } else { b.alpha -= 0.04; }
+}
+function drawBubble(b){
+  const ctx = gctx;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0,b.alpha);
+  ctx.shadowColor = `rgba(255,255,255,0.9)`;
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = `rgba(0,0,0,0.25)`;
+  const cx = b.x, cy = b.y, r = b.r;
+  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
+  grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`);
+  grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
+  ctx.restore();
+}
+let prevT = performance.now();
+function gameLoop(t){
+  const dt = t - prevT; prevT = t;
+  if(running){
+    gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)');
+    gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+
+    // spawn more frequently: target spawn interval = ~350ms
+    if(t - lastSpawn > 350){ spawnBubble(); lastSpawn = t; }
+
+    bubbles = bubbles.filter(b => b.alpha > 0);
+    for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
+  }
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+function showEncouragement(msg, time=2200){
+  const el = document.createElement('div'); el.className = 'encourage';
+  el.textContent = msg; document.body.appendChild(el);
+  setTimeout(()=>{ el.style.transition="opacity .35s"; el.style.opacity = 0; setTimeout(()=>el.remove(),350); }, time);
+}
+
+gameCanvas.addEventListener('click', (e)=>{
+  const rect = gameCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  for(const b of bubbles){
+    const dx = x - b.x, dy = y - b.y;
+    if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
+      b.popped = true; b.vy = 0; score += 1; scoreTxt.textContent = score; Sound.pop();
+      checkScoreMilestones(score);
+      break;
     }
+  }
+});
+resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
 
-    function handleUserInput(input) {
-      const msg = document.createElement("div");
-      msg.className = "user-message";
-      msg.textContent = input;
-      chatContainer.appendChild(msg);
+function checkScoreMilestones(s){
+  // Milestones: 25, 150, 1000
+  if(s === 25) showEncouragement("Nice! Keep going 🎉");
+  if(s === 150) showEncouragement("You're doing great — keep it up! 💪");
+  if(s === 1000) showEncouragement("WOW — 1000! Incredible! 🏆");
+  // also small encouragement every 50 points
+  if(s % 50 === 0 && s < 1000) showEncouragement(`Great — ${s} points!`);
+}
 
-      processConversation(input.toLowerCase());
+/* ------------------------------ DRAW ---------------------------------- */
+/* 100 prompts array and random no-repeat picker (from earlier) */
+const DRAW_PROMPTS = [
+  "cat","dog","elephant","giraffe","penguin","owl","fox","turtle","whale","dolphin",
+  "robot","spaceship","astronaut","alien","rocket on the moon",
+  "castle","lighthouse","treehouse","cozy cabin","skyscraper",
+  "mountain range","beach scene","waterfall","desert with cactus","rainbow over hills",
+  "hot air balloon","airplane","bicycle","train","submarine",
+  "soccer ball","basketball hoop","skateboard","tennis racket","surfboard",
+  "cupcake","ice cream cone","slice of pizza","burger","sushi roll",
+  "teacup","coffee mug","fruit bowl","birthday cake","pancakes with syrup",
+  "smiling sun","crescent moon","cloud with rain","thunderstorm","snowman",
+  "dragon","unicorn","mermaid","phoenix","cute monster",
+  "superhero","pirate","wizard","ninja","knight with shield",
+  "flower bouquet","rose","sunflower","cactus in pot","bonsai tree",
+  "butterfly","bee on a flower","ladybug","koi fish","hummingbird",
+  "musical notes","guitar","piano keys","drum set","headphones",
+  "camera","old radio","game controller","smartphone","laptop",
+  "treasure map","compass","hourglass","key and lock","lantern",
+  "car with big wheels","bus","motorcycle","scooter","tractor",
+  "cartoon self‑portrait","friend’s portrait (from memory)","hands making a heart","silly face","eyes only",
+  "galaxy swirl","constellation","planet with rings","meteor shower","eclipse",
+  "campfire","tent under stars","city skyline at night","park bench with tree","bridge over river",
+  "abstract shapes","optical illusion","pattern of leaves","mandala circle","zigzag city"
+];
+
+let _promptBag = [];
+function nextDrawPrompt(){
+  if(_promptBag.length === 0){
+    _promptBag = [...DRAW_PROMPTS].map(x=>({x,r:Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.x);
+  }
+  return _promptBag.pop();
+}
+
+/* Draw canvas wiring */
+const drawCanvas = document.getElementById('drawCanvas');
+const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
+
+function sizeDrawCanvas(){
+  const rect = drawCanvas.getBoundingClientRect();
+  const prev = dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);
+  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  dctx.setTransform(1,0,0,1,0,0);
+  dctx.scale(devicePixelRatio, devicePixelRatio);
+  try{ dctx.putImageData(prev,0,0); }catch{}
+}
+new ResizeObserver(sizeDrawCanvas).observe(drawCanvas);
+setTimeout(sizeDrawCanvas, 0);
+
+function startDraw(x,y){ drawing = true; lastX=x; lastY=y; Sound.scribble(); }
+function moveDraw(x,y){
+  if(!drawing) return;
+  dctx.lineWidth = brushSize; dctx.lineCap = 'round'; dctx.lineJoin = 'round';
+  if(erasing){ dctx.globalCompositeOperation = 'destination-out'; dctx.strokeStyle = 'rgba(0,0,0,1)'; }
+  else { dctx.globalCompositeOperation = 'source-over'; dctx.strokeStyle = brushColor; }
+  dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
+  lastX=x; lastY=y;
+}
+function endDraw(){ drawing = false; dctx.globalCompositeOperation = 'source-over'; }
+
+drawCanvas.addEventListener('mousedown', e=>{
+  const r = drawCanvas.getBoundingClientRect(); startDraw(e.clientX - r.left, e.clientY - r.top);
+});
+drawCanvas.addEventListener('mousemove', e=>{
+  const r = drawCanvas.getBoundingClientRect(); moveDraw(e.clientX - r.left, e.clientY - r.top);
+});
+window.addEventListener('mouseup', endDraw);
+
+drawCanvas.addEventListener('touchstart', e=>{
+  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
+  startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault();
+},{passive:false});
+drawCanvas.addEventListener('touchmove', e=>{
+  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
+  moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault();
+},{passive:false});
+drawCanvas.addEventListener('touchend', endDraw);
+
+document.querySelectorAll('.swatch').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    brushColor = btn.getAttribute('data-color'); erasing = false; document.getElementById('eraserToggle').checked = false; Sound.click();
+  });
+});
+document.getElementById('brushSize').addEventListener('input', e=>{ brushSize = +e.target.value; });
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
+document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
+document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); };
+document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click(); };
+
+/* Draw prompt UI */
+const drawPromptEl = document.getElementById('drawPrompt');
+const newPromptBtn = document.getElementById('newPromptBtn');
+const typePromptBtn = document.getElementById('typePromptBtn');
+const overlay = document.getElementById('overlayInput');
+const overlayText = document.getElementById('overlayText');
+const overlaySubmit = document.getElementById('overlaySubmit');
+const overlayCancel = document.getElementById('overlayCancel');
+
+function showNewPrompt(){
+  const p = nextDrawPrompt();
+  drawPromptEl.textContent = p;
+}
+newPromptBtn.addEventListener('click', ()=>{ Sound.click(); showNewPrompt(); });
+typePromptBtn.addEventListener('click', ()=>{ Sound.click(); overlay.classList.add('open'); overlayText.value = ''; overlayText.focus(); });
+
+overlayCancel.addEventListener('click', ()=>{ Sound.click(); overlay.classList.remove('open'); });
+overlaySubmit.addEventListener('click', ()=>{
+  Sound.click();
+  const v = overlayText.value.trim();
+  if(v) {
+    // show a quick small confirmation near draw area
+    showEncouragement("Thanks for sharing — nice! 💙", 1600);
+  }
+  overlay.classList.remove('open');
+});
+
+/* initialize one prompt on open */
+document.getElementById('goDraw').addEventListener('click', ()=> setTimeout(showNewPrompt, 80));
+
+/* ------------------------------ CHAT ---------------------------------- */
+const chatBox = document.getElementById("chat-box");
+const userInputField = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const moodButtons = document.querySelectorAll(".mood-btn");
+const voiceModeBtn = document.getElementById("voice-mode-btn");
+const speakReplyBtn = document.getElementById("speak-reply-btn");
+let dayMood = null, voiceModeOn = false, speakRepliesOn = false, recognition;
+let synth = window.speechSynthesis; let lastBotKey = '';
+
+function addMessage(text, sender){
+  const div = document.createElement("div"); div.className = "message " + sender; div.textContent = text;
+  chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight;
+  if (speakRepliesOn && sender === "bot") speakText(text);
+}
+function clearChat(){ chatBox.innerHTML=""; }
+function speakText(text){ if(!synth) return; if(synth.speaking) synth.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang="en-US"; synth.speak(u); }
+addMessage("Hi! 👋 How was your day? 😊", "bot");
+
+moodButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    Sound.click();
+    moodButtons.forEach((b) => b.setAttribute("aria-pressed","false"));
+    btn.setAttribute("aria-pressed","true");
+    dayMood = btn.classList[1];
+    clearChat();
+    const openers = {
+      happy:  "Hey! So glad you’re feeling happy today! 🌟 What made your day so great? 😊",
+      sad:    "I’m sorry you’re feeling sad 💙 Want to tell me what’s on your mind? I’m here to listen. 🌸",
+      angry:  "It’s okay to feel angry 😠 Want to talk about what’s bothering you? I’m here for you. 🫂",
+      nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way? I’ve got you. 💙"
+    };
+    addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
+    startBGMOnFirstInteraction();
+  });
+});
+sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); });
+userInputField.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
+
+function setupRecognition(){
+  if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
+    voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported in your browser"; return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = "en-US";
+  recognition.interimResults = false; recognition.maxAlternatives = 1;
+  recognition.addEventListener("result", (event) => {
+    const speech = event.results[0][0].transcript;
+    userInputField.value = speech; sendMessage();
+  });
+  recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
+}
+voiceModeBtn.addEventListener("click", () => {
+  Sound.toggle(); voiceModeOn = !voiceModeOn; voiceModeBtn.setAttribute("aria-pressed", voiceModeOn);
+  if (voiceModeOn){ setupRecognition(); recognition && recognition.start(); voiceModeBtn.textContent = "🎤 Voice ON"; }
+  else { if (recognition) recognition.stop(); voiceModeBtn.textContent = "🎤 Voice"; }
+});
+speakReplyBtn.addEventListener("click", () => {
+  Sound.toggle(); speakRepliesOn = !speakRepliesOn; speakReplyBtn.setAttribute("aria-pressed", speakRepliesOn);
+  speakReplyBtn.textContent = speakRepliesOn ? "🔊 Speak ON" : "🔊 Speak";
+  if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
+});
+
+function norm(s){ return (s||"").toLowerCase().replace(/[^a-z]+/g,''); }
+function isSubsequence(needle, hay){ let i=0; for(const c of hay){ if(c===needle[i]){ i++; if(i===needle.length) return true; } } return false; }
+function lev(a,b){
+  const m=a.length, n=b.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){
+    const cost=a[i-1]===b[j-1]?0:1;
+    dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+  }
+  return dp[m][n];
+}
+function likelyGibberish(s){
+  const letters = (s.match(/[a-z]/gi)||[]).length;
+  if(letters<2) return true;
+  const vowels = (s.match(/[aeiou]/gi)||[]).length;
+  if(vowels===0 && letters>4) return true;
+  if(/[bcdfghjklmnpqrstvwxzy]{6,}/i.test(s)) return true;
+  if(/(.)\1{3,}/.test(s)) return true;
+  return false;
+}
+
+/* Simple intent set kept (unchanged content) */
+const INTENTS = [
+  { key:"bullying",  patterns:["bully","bullied","bullying","mean","pickon","harass"], reply:[
+    "I'm really sorry you had to face bullying. You are not alone. 💙 Want to talk through what happened?",
+    "That sounds really hard. You deserve to feel safe. We can plan what to do next together. 🫂",
+    "Thanks for telling me. If you want, we can practice what to say or who to tell. 🌸"
+  ]},
+  { key:"lonely",    patterns:["lonely","alone","isolated","leftout"], reply:[
+    "Feeling lonely hurts. Want to plan one tiny reach-out—like a message to someone you trust? 💙",
+    "Thanks for sharing. One small connection can help. Should we pick someone to text? 📱",
+    "You're not a burden. Even a simple 'hey' counts. Want help drafting it?"
+  ]},
+  { key:"anxious",   patterns:["nervous","anxious","scared","afraid","worry"], reply:[
+    "Try this: inhale 4s, hold 4s, exhale 6s—3 times. Want me to pace you? 🌬️",
+    "You’re safe here. We can list what you can control right now. 💙",
+    "Would grounding help? Name 5 things you see, 4 you feel, 3 you hear…"
+  ]},
+  { key:"angry",     patterns:["angry","mad","furious","rage","ragey"], reply:[
+    "It’s okay to feel angry. Want a 60‑second cool‑down or a vent? 🫂",
+    "Let’s do 5 slow breaths together or punch a pillow safely. Which one?",
+    "Want a quick plan: pause, breathe, then decide one fair step?"
+  ]},
+  { key:"sad",       patterns:["sad","down","cry","upset","blue"], reply:[
+    "I’m sorry you’re feeling low. Want to share what happened? 💙",
+    "Your feelings make sense. Would a tiny comfort help—music, tea, blanket?",
+    "We can name the feeling and a gentle next step. Want to try?"
+  ]},
+  { key:"embarrassed", patterns:["embarrass","awkward","cringe"], reply:[
+    "Oof, embarrassment stings. Most people forget way faster than we think. Want a reset plan?",
+    "Can we laugh‑it‑off script it together? Or do you want quiet validation?",
+    "What would future‑you thank you for right now? We can pick one step."
+  ]},
+  { key:"thanks", patterns:["thank","thanks","thx","ty","appreciate"], reply:[
+    "You're very welcome! 😊 I’m here whenever you need me. 💙",
+    "Always happy to help 💫",
+    "Anytime! You’ve got this. 🌟"
+  ]},
+];
+
+function chooseNonRepeating(key, arr){
+  let choice = arr[Math.floor(Math.random()*arr.length)];
+  if(lastBotKey===key && arr.length>1){
+    let tries=0;
+    while(tries<6 && arr.length>1 && choice===lastBotKey._lastText){
+      choice = arr[Math.floor(Math.random()*arr.length)]; tries++;
     }
-
-    function startConversation() {
-      addBotMessage("How are you feeling today?");
-      addOptionButtons(["Sad", "Nervous", "Angry", "Happy"]);
-    }
-
-    function processConversation(input) {
-      optionsContainer.innerHTML = "";
-
-      if (input === "sad") {
-        addBotMessage("I’m sorry you’re feeling sad 💙 Want to tell me what’s on your mind? I’m here to listen. 🌸");
-        addOptionButtons(["Yes", "No"]);
-      }
-
-      else if (input === "yes" && lastBotMessage().includes("want to tell")) {
-        addBotMessage("Great—I'm listening. 💬");
-        addBotMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️");
-        addOptionButtons(["done"]);
-      }
-
-      else if (input === "done") {
-        addBotMessage("Thanks for sharing. 💙 Do you want me to suggest more ways to feel better?");
-        addOptionButtons(["Yes", "No"]);
-      }
-
-      else if (input === "no") {
-        addBotMessage("That’s okay 💕. I’m here if you change your mind.");
-        addOptionButtons(["Back to start"]);
-      }
-
-      else if (input === "back to start") {
-        startConversation();
-      }
-
-      else {
-        addBotMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙");
-        addOptionButtons(["Sad", "Nervous", "Angry", "Happy"]);
+  }
+  lastBotKey = { key, _lastText: choice };
+  return choice;
+}
+function sendMessage(){
+  const userText = userInputField.value.trim();
+  if(!userText) return;
+  addMessage(userText,"user");
+  userInputField.value = "";
+  processUserInput(userText);
+}
+function matchIntent(text){
+  const raw = text, s = norm(text);
+  const anySubseqBully = isSubsequence("bully", s);
+  if(likelyGibberish(raw) && !anySubseqBully) return null;
+  if(anySubseqBully) return "bullying";
+  let best = null, bestScore = Infinity;
+  for(const intent of INTENTS){
+    for(const p of intent.patterns){
+      const d = lev(s, p);
+      const scaled = d / Math.max(3, p.length);
+      if(d<=2 || scaled<=0.34 || isSubsequence(p, s)){
+        if(d < bestScore){ best = intent.key; bestScore = d; }
       }
     }
+  }
+  return best;
+}
+function processUserInput(text){
+  const key = matchIntent(text);
+  if(!key){ addMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙", "bot"); return; }
+  const intent = INTENTS.find(i=>i.key===key);
+  const reply = chooseNonRepeating(key, intent.reply);
+  addMessage(reply, "bot");
+}
 
-    function lastBotMessage() {
-      const messages = chatContainer.getElementsByClassName("bot-message");
-      return messages[messages.length - 1]?.textContent || "";
-    }
-  </script>
+document.addEventListener('keydown', (e)=>{ if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel(); });
+
+</script>
 </body>
 </html>
