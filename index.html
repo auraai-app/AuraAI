@@ -123,7 +123,7 @@
   .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border: 2px solid transparent; font-size:18px; }
   .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .input-footer{ position:relative; }
+  .input-footer{ position:relative; display:none; } /* hidden until flow asks to type */
   #user-input{ width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none; }
   #send-btn{ position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5 }
 
@@ -164,6 +164,17 @@
     background: rgba(255,255,255,.6); outline:none; cursor:pointer;
   }
 
+  /* Flow Overlay (non-intrusive; no layout shifts) */
+  .flow-pad{
+    position:absolute; left:16px; bottom:16px; z-index:900;
+    display:flex; flex-direction:column; gap:8px; max-width:min(560px, 80vw);
+    padding:10px 12px; border-radius:14px;
+  }
+  .flow-q{ font-weight:900; font-size:16px; line-height:1.25 }
+  .flow-actions{ display:flex; gap:8px; flex-wrap:wrap }
+  .chip{ border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65) }
+  .chip:hover{ filter:brightness(.95) }
+
   @media (max-width: 880px){
     .mood-selector{ flex-wrap:wrap }
     .header-controls{ flex-wrap:wrap }
@@ -176,7 +187,7 @@
   <!-- Hello -->
   <section id="hello-screen" class="screen active">
     <div class="hello-wrap glass">
-      <div class="hello-text">Hello</div>
+      <div class="hello-text">AuraAI</div>
       <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
       <div class="hello-actions">
         <button class="btn" id="goPlay">🎮 Play a Game</button>
@@ -203,6 +214,16 @@
         </div>
       </div>
       <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
+
+      <!-- Flow overlay for Game (non-blocking) -->
+      <div id="flowGame" class="flow-pad glass" role="group" aria-label="Game Flow" style="display:none">
+        <div class="flow-q" id="flowGameQ"></div>
+        <div class="flow-actions">
+          <button class="chip" id="flowGameYes">Yes</button>
+          <button class="chip" id="flowGameNo">No</button>
+          <button class="chip" id="flowGameClose">Close</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -231,6 +252,16 @@
           <button class="btn" id="saveDraw">Save</button>
         </div>
         <div class="right"></div>
+      </div>
+
+      <!-- Flow overlay for Draw (non-blocking) -->
+      <div id="flowDraw" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
+        <div class="flow-q" id="flowDrawQ"></div>
+        <div class="flow-actions">
+          <button class="chip" id="flowDrawYes">Yes</button>
+          <button class="chip" id="flowDrawNo">No</button>
+          <button class="chip" id="flowDrawClose">Close</button>
+        </div>
       </div>
     </div>
   </section>
@@ -261,6 +292,16 @@
       <div class="input-footer">
         <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
         <button class="btn" id="send-btn">Send</button>
+      </div>
+
+      <!-- Flow overlay for Chat (non-blocking) -->
+      <div id="flowChat" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
+        <div class="flow-q" id="flowChatQ"></div>
+        <div class="flow-actions">
+          <button class="chip" id="flowChatYes">Yes</button>
+          <button class="chip" id="flowChatNo">No</button>
+          <button class="chip" id="flowChatClose">Close</button>
+        </div>
       </div>
     </div>
   </section>
@@ -330,18 +371,19 @@ function switchScreen(key){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[key].classList.add('active');
 }
-document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); };
-document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); };
-document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
-document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
-document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); startGameFlow(); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlow(); };
+document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); startChatFlow(); };
+document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
+document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
+document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
 
 /* ------------------------------ THEMES -------------------------------- */
 const themesPanel = document.getElementById("themesPanel");
 const closeThemes = document.getElementById("closeThemes");
 const themeStrip = document.getElementById("themeStrip");
 
+/* 50+ Themes */
 const THEMES = {
   "Black & White (solid)": [
     ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
@@ -387,27 +429,55 @@ const THEMES = {
   "Gradients — Sunset": [
     ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
     ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
+    ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
   ],
   "Gradients — Ice/Dream": [
     ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
     ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
+    ["cotton-candy","linear-gradient(135deg,#f6d365,#fda085)",["#fff0cf","#3a2e0a"],["#f18c6a","#2a1408"]],
   ],
   "Gradients — Forest/Jade": [
     ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
+    ["moss","linear-gradient(135deg,#134E5E,#71B280)",["#cfe7db","#0a2a1f"],["#4a9b7a","#ffffff"]],
   ],
   "Gradients — Steel": [
     ["steel","linear-gradient(135deg,#4b79a1,#283e51)",["#d6e6ff","#0a2a4a"],["#3a6287","#ffffff"]],
+    ["smoke","linear-gradient(135deg,#bdc3c7,#2c3e50)",["#e9edf0","#0a2a4a"],["#53697f","#ffffff"]],
   ],
   "Gradients — Aurora": [
     ["aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)",["#e6f8ff","#0a2a4a"],["#4aa0ef","#0a2a4a"]],
+    ["polar","linear-gradient(135deg,#21D4FD,#B721FF)",["#eaf3ff","#0a2a4a"],["#8e6bff","#ffffff"]],
   ],
   "Gradients — Berry": [
     ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
+    ["mulberry","linear-gradient(135deg,#a044ff,#6a3093)",["#ead9ff","#23123a"],["#7e45c7","#ffffff"]],
   ],
   "Gradients — Night": [
     ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
+    ["midnight","linear-gradient(135deg,#0f2027,#203a43,#2c5364)",["#c8d7e0","#0a2a3a"],["#2d5a74","#ffffff"]],
+  ],
+  /* New groups to exceed 50 */
+  "Pastels": [
+    ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
+    ["pastel-peach","#FFD1BA",["#fff1ea","#2a1a0f"],["#ffb899","#2a1a0f"]],
+    ["pastel-lilac","#D9C2FF",["#f6efff","#211a2a"],["#c1a3ff","#211a2a"]],
+    ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
+  ],
+  "Neons": [
+    ["neon-cyan","#00F5FF",["#d4fdff","#002a2e"],["#00c8d0","#00181b"]],
+    ["neon-magenta","#FF00E5",["#ffd4fb","#2a0025"],["#d100bf","#2a0025"]],
+    ["neon-lime","#B6FF00",["#f0ffd4","#1a2a00"],["#8be000","#1a2a00"]],
+    ["neon-blue","#00A2FF",["#d9f0ff","#0a2740"],["#0087d1","#0a2740"]],
+  ],
+  "Earth Tones": [
+    ["earth-clay","#B5651D",["#e7c39d","#2a1807"],["#8e4a12","#ffffff"]],
+    ["earth-sand","#C2B280",["#f5edd4","#2a240f"],["#a99a65","#2a240f"]],
+    ["earth-olive","#556B2F",["#cfe0a8","#0f1a06"],["#3f4f22","#ffffff"]],
+    ["earth-ocean","#2E8B57",["#bfe7d0","#0a2a1f"],["#226b43","#ffffff"]],
+    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
   ],
 };
+
 function isDarkBackground(bg){
   if(!bg || typeof bg !== "string") return false;
   if(bg.startsWith("linear-gradient")) return true; // darker glass for gradients
@@ -529,7 +599,6 @@ function startBGMOnFirstInteraction(){
 BGM.play();
 
 /* ------------------------------ MUTE ---------------------------------- */
-// Global mute should silence SFX + pause BGM; unmute resumes BGM
 function bindMute(btnId){
   const el = document.getElementById(btnId);
   const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
@@ -541,11 +610,9 @@ function bindMute(btnId){
     Sound.toggle();
 
     if(willMute){
-      // Pause music, but remember we should resume on unmute
-      BGM.setWantedPlay(true); // resume when unmuted
+      BGM.setWantedPlay(true);
       BGM.pause();
     }else{
-      // Unmuted → resume bgm if we wanted it
       BGM.resumeIfWanted();
     }
   };
@@ -720,7 +787,7 @@ document.getElementById('saveDraw').onclick = ()=>{
   const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click();
 };
 
-/* ------------------------------ CHAT ---------------------------------- */
+/* ------------------------------ CHAT (display only; input hidden until flow) ------------------ */
 const chatBox = document.getElementById("chat-box");
 const userInputField = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -728,7 +795,7 @@ const moodButtons = document.querySelectorAll(".mood-btn");
 const voiceModeBtn = document.getElementById("voice-mode-btn");
 const speakReplyBtn = document.getElementById("speak-reply-btn");
 let dayMood = null, voiceModeOn = false, speakRepliesOn = false, recognition;
-let synth = window.speechSynthesis; let lastBotKey = '';
+let synth = window.speechSynthesis;
 
 function addMessage(text, sender){
   const div = document.createElement("div");
@@ -756,18 +823,19 @@ moodButtons.forEach((btn) => {
     dayMood = btn.classList[1];
     clearChat();
     const openers = {
-      happy:  "Hey! So glad you’re feeling happy today! 🌟 What made your day so great? 😊",
-      sad:    "I’m sorry you’re feeling sad 💙 Want to tell me what’s on your mind? I’m here to listen. 🌸",
-      angry:  "It’s okay to feel angry 😠 Want to talk about what’s bothering you? I’m here for you. 🫂",
-      nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way? I’ve got you. 💙"
+      happy:  "Hey! So glad you’re feeling happy today! 🌟 Want to tell me about it?",
+      sad:    "I’m sorry you’re feeling sad 💙 Want to tell me what happened?",
+      angry:  "It’s okay to feel angry 😠 Want to talk about what’s bothering you?",
+      nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way?"
     };
     addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
-    startBGMOnFirstInteraction(); // counts as interaction
+    startBGMOnFirstInteraction();
+    startChatFlow(); // kick the yes/no flow on mood selection too
   });
 });
-sendBtn.addEventListener("click", ()=>{ Sound.click(); sendMessage(); });
-userInputField.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
+sendBtn.addEventListener("click", ()=>{ Sound.click(); if(userInputField.value.trim()){ addMessage(userInputField.value.trim(),"user"); addMessage("Thanks for sharing. 💙","bot"); userInputField.value=""; toggleChatInput(false); }});
 
+/* Voice toggles (kept as-is; optional) */
 function setupRecognition(){
   if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
     voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported in your browser"; return;
@@ -778,7 +846,7 @@ function setupRecognition(){
   recognition.interimResults = false; recognition.maxAlternatives = 1;
   recognition.addEventListener("result", (event) => {
     const speech = event.results[0][0].transcript;
-    userInputField.value = speech; sendMessage();
+    userInputField.value = speech; // will still require flow to open input
   });
   recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
 }
@@ -793,108 +861,96 @@ speakReplyBtn.addEventListener("click", () => {
   if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
 });
 
-function norm(s){ return (s||"").toLowerCase().replace(/[^a-z]+/g,''); }
-function isSubsequence(needle, hay){ let i=0; for(const c of hay){ if(c===needle[i]){ i++; if(i===needle.length) return true; } } return false; }
-function lev(a,b){
-  const m=a.length, n=b.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
-  for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){
-    const cost=a[i-1]===b[j-1]?0:1;
-    dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
-  }
-  return dp[m][n];
+/* ------------------------------ YES/NO FLOW ENGINE -------------------- */
+function Flow(steps, onDone){
+  let idx = 0;
+  return {
+    q(){ return steps[idx]?.q || ""; },
+    yes(){ const step = steps[idx]; if(!step) return; if(step.onYes) step.onYes(); idx = step.nextYes ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
+    no(){ const step = steps[idx]; if(!step) return; if(step.onNo) step.onNo(); idx = step.nextNo ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
+    done(){ idx = steps.length; onDone && onDone(); },
+    atEnd(){ return idx>=steps.length; },
+    index(){ return idx; },
+    set(i){ idx = i; }
+  };
 }
-function likelyGibberish(s){
-  const letters = (s.match(/[a-z]/gi)||[]).length;
-  if(letters<2) return true;
-  const vowels = (s.match(/[aeiou]/gi)||[]).length;
-  if(vowels===0 && letters>4) return true;
-  if(/[bcdfghjklmnpqrstvwxzy]{6,}/i.test(s)) return true;
-  if(/(.)\1{3,}/.test(s)) return true;
+
+/* Helpers to show/hide flow overlays */
+const flowGameEl = { wrap: document.getElementById('flowGame'), q: document.getElementById('flowGameQ'), yes: document.getElementById('flowGameYes'), no: document.getElementById('flowGameNo'), close: document.getElementById('flowGameClose') };
+const flowDrawEl = { wrap: document.getElementById('flowDraw'), q: document.getElementById('flowDrawQ'), yes: document.getElementById('flowDrawYes'), no: document.getElementById('flowDrawNo'), close: document.getElementById('flowDrawClose') };
+const flowChatEl = { wrap: document.getElementById('flowChat'), q: document.getElementById('flowChatQ'), yes: document.getElementById('flowChatYes'), no: document.getElementById('flowChatNo'), close: document.getElementById('flowChatClose') };
+
+function bindFlowUI(el, flow){
+  el.q.textContent = flow.q();
+  el.wrap.style.display = 'flex';
+  const setQ = ()=> el.q.textContent = flow.q();
+  const yesFn = ()=>{ Sound.click(); flow.yes(); if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
+  const noFn  = ()=>{ Sound.click(); flow.no();  if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
+  const closeFn = ()=>{ Sound.click(); flow.done(); el.wrap.style.display='none'; };
+
+  el.yes.onclick = yesFn;
+  el.no.onclick = noFn;
+  el.close.onclick = closeFn;
+}
+
+/* GAME FLOW (no changes to game mechanics) */
+function startGameFlow(){
+  const flow = Flow([
+    { q:"Want a gentle focus? Try popping 5 bubbles slowly. Start?", onYes:()=>addTip("Game","Nice! Take it slow and notice the colors."), onNo:()=>addTip("Game","Cool—free play mode. 🎈") },
+    { q:"Want ambient music while you play?", onYes:()=>{ if(BGM.isPaused()) BGM.play(); }, onNo:()=>{ BGM.pause(); } },
+    { q:"Show this guide next time?", onYes:()=>addTip("Game","Guide will appear again."), onNo:()=>{ flowGameEl.wrap.style.display='none'; } },
+  ]);
+  bindFlowUI(flowGameEl, flow);
+}
+
+/* DRAW FLOW (no changes to canvas) */
+function startDrawFlow(){
+  const prompts = ["Draw a cozy mug ☕", "Sketch a cloud you like ☁️", "Make a free squiggle", "Doodle your initials"];
+  const flow = Flow([
+    { q:"Want a simple drawing prompt?", onYes:()=>addTip("Draw","Prompt: "+prompts[Math.floor(Math.random()*prompts.length)]), onNo:()=>addTip("Draw","No prompt—free doodle!") },
+    { q:"Want a quick palette swap to a calm theme?", onYes:()=>applyAnyThemeByKey("ice"), onNo:()=>{} },
+    { q:"Show this guide next time?", onYes:()=>addTip("Draw","Guide will appear again."), onNo:()=>{ flowDrawEl.wrap.style.display='none'; } },
+  ]);
+  bindFlowUI(flowDrawEl, flow);
+}
+
+/* CHAT FLOW (typing opens only if user wants to tell more, then closes) */
+function startChatFlow(){
+  const flow = Flow([
+    { q:"Want to tell?", onYes:()=>{ addMessage("Great—I'm listening. 💬","bot"); }, onNo:()=>{ addMessage("Totally fine. We can just sit here quietly. 💙","bot"); } },
+    { q:"Do you want to tell more?", onYes:()=>{ toggleChatInput(true); }, onNo:()=>{ addMessage("Okay. Would a quick tip help—like 3 slow breaths?", "bot"); } },
+    { q:"Want another coping tool suggestion?", onYes:()=>addMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️","bot"), onNo:()=>addMessage("Got it. I’m here when you need me. 💙","bot") },
+  ], ()=>{ /* end */ });
+  bindFlowUI(flowChatEl, flow);
+}
+
+function toggleChatInput(show){
+  const footer = document.querySelector('.input-footer');
+  footer.style.display = show ? 'block' : 'none';
+}
+
+/* Tip to chat box for consistency */
+function addTip(area, text){
+  const t = `[${area}] ${text}`;
+  addMessage(t, "bot");
+}
+
+/* Apply theme by key if exists anywhere */
+function applyAnyThemeByKey(key){
+  for(const group of Object.values(THEMES)){
+    const found = group.find(([k])=>k===key);
+    if(found){ const [,bg,bot,user] = found; applyThemeRecord(bg,bot,user); return true; }
+  }
   return false;
 }
 
-const INTENTS = [
-  { key:"bullying",  patterns:["bully","bullied","bullying","mean","pickon","harass"], reply:[
-    "I'm really sorry you had to face bullying. You are not alone. 💙 Want to talk through what happened?",
-    "That sounds really hard. You deserve to feel safe. We can plan what to do next together. 🫂",
-    "Thanks for telling me. If you want, we can practice what to say or who to tell. 🌸"
-  ]},
-  { key:"lonely",    patterns:["lonely","alone","isolated","leftout"], reply:[
-    "Feeling lonely hurts. Want to plan one tiny reach-out—like a message to someone you trust? 💙",
-    "Thanks for sharing. One small connection can help. Should we pick someone to text? 📱",
-    "You're not a burden. Even a simple 'hey' counts. Want help drafting it?"
-  ]},
-  { key:"anxious",   patterns:["nervous","anxious","scared","afraid","worry"], reply:[
-    "Try this: inhale 4s, hold 4s, exhale 6s—3 times. Want me to pace you? 🌬️",
-    "You’re safe here. We can list what you can control right now. 💙",
-    "Would grounding help? Name 5 things you see, 4 you feel, 3 you hear…"
-  ]},
-  { key:"angry",     patterns:["angry","mad","furious","rage","ragey"], reply:[
-    "It’s okay to feel angry. Want a 60‑second cool‑down or a vent? 🫂",
-    "Let’s do 5 slow breaths together or punch a pillow safely. Which one?",
-    "Want a quick plan: pause, breathe, then decide one fair step?"
-  ]},
-  { key:"sad",       patterns:["sad","down","cry","upset","blue"], reply:[
-    "I’m sorry you’re feeling low. Want to share what happened? 💙",
-    "Your feelings make sense. Would a tiny comfort help—music, tea, blanket?",
-    "We can name the feeling and a gentle next step. Want to try?"
-  ]},
-  { key:"embarrassed", patterns:["embarrass","awkward","cringe"], reply:[
-    "Oof, embarrassment stings. Most people forget way faster than we think. Want a reset plan?",
-    "Can we laugh‑it‑off script it together? Or do you want quiet validation?",
-    "What would future‑you thank you for right now? We can pick one step."
-  ]},
-  { key:"thanks", patterns:["thank","thanks","thx","ty","appreciate"], reply:[
-    "You're very welcome! 😊 I’m here whenever you need me. 💙",
-    "Always happy to help 💫",
-    "Anytime! You’ve got this. 🌟"
-  ]},
-];
+function closeAllFlows(){
+  flowGameEl.wrap.style.display='none';
+  flowDrawEl.wrap.style.display='none';
+  flowChatEl.wrap.style.display='none';
+}
 
-function chooseNonRepeating(key, arr){
-  let choice = arr[Math.floor(Math.random()*arr.length)];
-  if(lastBotKey===key && arr.length>1){
-    let tries=0;
-    while(tries<6 && arr.length>1 && choice===lastBotKey._lastText){
-      choice = arr[Math.floor(Math.random()*arr.length)]; tries++;
-    }
-  }
-  lastBotKey = { key, _lastText: choice };
-  return choice;
-}
-function sendMessage(){
-  const userText = userInputField.value.trim();
-  if(!userText) return;
-  addMessage(userText,"user");
-  userInputField.value = "";
-  processUserInput(userText);
-}
-function matchIntent(text){
-  const raw = text, s = norm(text);
-  const anySubseqBully = isSubsequence("bully", s);
-  if(likelyGibberish(raw) && !anySubseqBully) return null;
-  if(anySubseqBully) return "bullying";
-  let best = null, bestScore = Infinity;
-  for(const intent of INTENTS){
-    for(const p of intent.patterns){
-      const d = lev(s, p);
-      const scaled = d / Math.max(3, p.length);
-      if(d<=2 || scaled<=0.34 || isSubsequence(p, s)){
-        if(d < bestScore){ best = intent.key; bestScore = d; }
-      }
-    }
-  }
-  return best;
-}
-function processUserInput(text){
-  const key = matchIntent(text);
-  if(!key){ addMessage("I didn’t quite catch that—want to rephrase or pick a mood above? 💙", "bot"); return; }
-  const intent = INTENTS.find(i=>i.key===key);
-  const reply = chooseNonRepeating(key, intent.reply);
-  addMessage(reply, "bot");
-}
-document.addEventListener('keydown', (e)=>{ if(e.key==="Escape" && themesPanel.classList.contains('open')) closeThemesPanel(); });
+document.addEventListener('keydown', (e)=>{ if(e.key==="Escape"){ if(themesPanel.classList.contains('open')) closeThemesPanel(); else closeAllFlows(); } });
 
 </script>
 </body>
