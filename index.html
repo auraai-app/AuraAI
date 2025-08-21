@@ -3,629 +3,888 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Aura AI — Tahoe Edition</title>
-<!--
- Single-file AuraAI with:
-  - organized theme system (100+)
-  - drawing pad with 100 tasks and Auto-Check (TF.js + MobileNet)
-  - music player (bgm.mp3, bgm2.mp3, bgm3.mp3 in same folder)
-  - bubble pop, chat preserved
--->
+<title>Aura AI — All‑in‑One</title>
+
+<!-- TensorFlow.js + MobileNet (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@3.1.0/dist/mobilenet.min.js"></script>
+
 <style>
-:root{
-  --pad:20px; --radius:16px;
-  --glass-bg: rgba(255,255,255,0.20);
-  --glass-border: rgba(255,255,255,0.28);
-  --glass-shadow: 0 18px 40px rgba(0,0,0,0.18);
-  --accent-grad: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
-  --text: #0b3c61;
-  --muted: rgba(11,60,97,0.65);
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:"Comic Neue",Arial,sans-serif;background:#a8cdf1;color:var(--text)}
-body{display:flex;align-items:center;justify-content:center;overflow:hidden}
-.screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
-.screen.active{display:grid}
-.glass{background:var(--glass-bg);backdrop-filter: blur(14px);-webkit-backdrop-filter: blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);border-radius:var(--radius)}
-.btn{border:0;cursor:pointer;border-radius:12px;padding:12px 14px;font-weight:800;font-size:15px;background:var(--accent-grad);color:var(--text);box-shadow:0 6px 16px rgba(168,205,241,.6)}
-.btn:hover{transform:translateY(-2px);filter:brightness(.95)}
-/* main hello */
-.hello-wrap{width:min(980px,92vw);padding:28px;text-align:center;border-radius:18px}
-.hello-text{font-weight:900;font-size:clamp(36px,7vw,72px);margin:6px 0;background:linear-gradient(90deg,#fff,#f7b7b9,#a8cdf1,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
-.hello-sub{font-size:clamp(15px,2.4vw,20px);opacity:.9;margin-bottom:16px}
-.hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.hint{margin-top:12px;font-size:13px;opacity:.8}
-
-/* game */
-.game-wrap{width:min(1000px,95vw);height:min(70vh,680px);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px;border-radius:16px}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.title{font-weight:900;font-size:18px}
-.game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.6)}
-
-/* draw */
-.draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px;border-radius:16px}
-.draw-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.brush{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
-.swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.12)}
-.toggle{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.55);font-weight:800}
-.draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.85);outline:2px solid rgba(255,255,255,.5)}
-.draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
-.picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
-.picker input[type=color]{border:none;width:42px;height:26px;border-radius:10px}
-
-/* chat */
-.chat-container{width:min(980px,92vw);padding:18px;display:flex;flex-direction:column;gap:12px;border-radius:16px}
-.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.mood-header{flex:1;text-align:center;font-weight:900;font-size:20px;padding:12px 16px;border-radius:14px;background:var(--accent-grad)}
-.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.mood-selector{display:flex;gap:10px;flex-wrap:wrap}
-.mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:15px}
-.mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
-#mood-strip{display:flex;gap:8px}
-#chat-box{flex:1;min-height:260px;max-height:52vh;overflow:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.65)}
-.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;font-size:16px}
-.message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;backdrop-filter:blur(6px)} .message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right}
-
-/* Themes panel - Tahoe macOS style */
-.themes-panel{position:fixed;right:20px;top:60px;width:420px;max-height:70vh;overflow:auto;padding:12px;border-radius:14px;background:rgba(255,255,255,0.88);box-shadow:0 20px 40px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,0.06);z-index:1200}
-.themes-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.group{margin-bottom:12px}
-.group-title{font-weight:900;margin-bottom:8px}
-.swatch-row{display:flex;gap:8px;flex-wrap:wrap}
-.theme-btn{width:46px;height:46px;border-radius:8px;border:0;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.12);position:relative;overflow:hidden}
-.theme-btn .thumb-label{position:absolute;bottom:4px;left:6px;font-size:11px;background:rgba(0,0,0,0.28);color:#fff;padding:2px 6px;border-radius:8px}
-
-/* mini player */
-.miniplayer{position:fixed;right:18px;bottom:18px;background:rgba(255,255,255,0.9);padding:10px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);z-index:1300}
-.mini-meta{display:flex;flex-direction:column;gap:6px;min-width:200px}
-.mini-progress{width:220px}
-
-/* drawing control card integrated into UI */
-.draw-card{position:relative;display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;background:rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.08);margin-bottom:8px}
-.draw-card .label{font-weight:900}
-.control-buttons{display:flex;gap:8px;align-items:center}
-
-/* yes/no/later buttons style */
-.choice-btn{padding:8px 10px;border-radius:10px;border:0;cursor:pointer;background:rgba(11,60,97,0.06);font-weight:800}
-.choice-btn.primary{background:linear-gradient(90deg,#a8cdf1,#f7b7b9);color:var(--text)}
-.choice-btn:hover{transform:translateY(-1px)}
-
-/* small helpers */
-.small{font-size:13px;color:var(--muted)}
-.tooltip{font-size:12px;opacity:.85}
-
-/* responsive */
-@media (max-width:880px){
-  .themes-panel{right:10px;left:10px;width:auto}
-  .miniplayer{left:10px;right:10px;bottom:10px}
-}
+  :root{
+    --pad:20px; --radius:16px;
+    --glass-bg: rgba(255,255,255,0.20);
+    --glass-border: rgba(255,255,255,0.28);
+    --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
+    --text:#0b3c61; --accent:#1E88E5;
+    --bot-bg:#d6e6fb; --bot-fg:#074279;
+    --user-bg:#517fc4; --user-fg:#e8f3fc;
+    --motion-scale:0.75;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family: "Comic Neue", Arial, sans-serif;background:#a8cdf1;color:var(--text);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
+  .screen.active{display:grid}
+  .glass{background:var(--glass-bg);backdrop-filter: blur(14px);-webkit-backdrop-filter: blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);border-radius:var(--radius)}
+  .btn{border:0;cursor:pointer;border-radius:14px;padding:12px 16px;font-weight:800;font-size:15px;color:var(--text);background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 6px 12px rgba(0,0,0,.08)}
+  .btn:active{transform:translateY(1px)}
+  /* hello */
+  .hello-wrap{width:min(980px,92vw);padding:28px;text-align:center;border-radius:18px}
+  .hello-text{font-weight:900;font-size:clamp(42px,8vw,72px);line-height:1;margin:8px 0;background:linear-gradient(90deg,#fff,#f7b7b9,#a8cdf1,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
+  .hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .hint{font-size:13px;opacity:.85;margin-top:12px}
+  /* shared containers */
+  .game-wrap{width:min(1000px,95vw);height:min(70vh,700px);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px;border-radius:16px}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .left-group,.right-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .title{font-weight:900;font-size:20px}
+  #gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5)}
+  /* draw */
+  .draw-wrap{width:min(1100px,96vw);height:min(76vh,760px);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px;border-radius:16px}
+  .draw-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+  .draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.65);outline:2px solid rgba(255,255,255,.6)}
+  .mini-meta{display:flex;flex-direction:column}
+  /* chat */
+  .chat-container{width:min(980px,92vw);padding:18px;display:flex;flex-direction:column;gap:12px;border-radius:16px}
+  .header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .mood-header{flex:1;text-align:center;font-weight:900;font-size:20px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#a8cdf1,#f7b7b9);box-shadow:0 4px 8px rgba(168,205,241,.3)}
+  .mood-selector{display:flex;gap:10px}
+  .mood-btn{border:0;flex:1;cursor:pointer;padding:10px 12px;border-radius:12px;font-weight:800}
+  .mood-btn.happy{background:#c1e6a6}.mood-btn.sad{background:#a4c7f9}.mood-btn.angry{background:#f9d6d6}.mood-btn.nervous{background:#fff3c8}
+  #chat-box{flex:1;min-height:240px;max-height:56vh;overflow:auto;padding:14px;border-radius:12px;background:rgba(232,242,252,.55)}
+  .message{margin:8px 0;padding:10px 12px;border-radius:12px;max-width:78%;font-size:16px}
+  .message.bot{background:var(--bot-bg);color:var(--bot-fg);align-self:flex-start}
+  .message.user{background:var(--user-bg);color:var(--user-fg);align-self:flex-end;text-align:right}
+  .message.fadein{animation:fadeIn .28s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .input-footer{position:relative}
+  #user-input{width:100%;padding:14px 120px 14px 14px;border-radius:12px;border:1px solid #a9c8e8;background:rgba(255,255,255,.78);font-size:16px;outline:none}
+  #send-btn{position:absolute;right:6px;top:6px;bottom:6px;width:108px;color:#fff;background:#88b7e5;border-radius:10px}
+  /* flow card (app-in-app) */
+  .aura-card{width:min(520px,88vw);padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.45));box-shadow:0 12px 30px rgba(0,0,0,.12)}
+  .aura-header{display:flex;align-items:center;gap:12px}
+  .aura-icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#8e44ad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px}
+  .aura-lines{display:flex;flex-direction:column;gap:6px}
+  .aura-actions{display:flex;gap:8px;margin-top:8px}
+  .chip{border:0;border-radius:12px;padding:8px 12px;background:rgba(255,255,255,.7);cursor:pointer;font-weight:800}
+  /* themes panel */
+  .themes-panel{position:fixed;right:0;top:0;height:100%;width:0;opacity:0;pointer-events:none;z-index:1000;transition:width .28s ease,opacity .25s ease}
+  .themes-panel.open{width:360px;opacity:1;pointer-events:auto}
+  .themes-body{padding:12px;overflow:auto;height:calc(100% - 72px)}
+  .group-title{font-weight:900;margin:8px 4px}
+  .swatch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .theme-btn{width:44px;height:44px;border-radius:8px;border:0;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.12);position:relative}
+  .theme-btn:hover{transform:translateY(-4px)}
+  .theme-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:6px 8px;border-radius:8px;font-size:12px;white-space:nowrap;display:none}
+  .theme-btn:hover .theme-tooltip{display:block}
+  /* miniplayer */
+  .miniplayer{position:fixed;right:16px;bottom:16px;z-index:1200;display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;backdrop-filter:blur(8px);background:rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+  .mini-btn{background:rgba(255,255,255,.9);border-radius:10px;padding:8px 12px;border:0;cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,.06);font-weight:800}
+  .mini-progress{appearance:none;width:220px;height:6px;border-radius:6px;background:rgba(0,0,0,.08)}
+  .pulse{animation:pulse .9s infinite alternate}
+  @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.02)}}
+  /* responsive */
+  @media (max-width:880px){ .hello-text{font-size:42px} .themes-panel.open{width:100%} .miniplayer{left:10px;right:10px} }
 </style>
 </head>
 <body>
 
-<!-- AUDIO TRACKS (expected in repo) -->
-<audio id="bg1" src="bgm.mp3" crossorigin="anonymous"></audio>
-<audio id="bg2" src="bgm2.mp3" crossorigin="anonymous"></audio>
-<audio id="bg3" src="bgm3.mp3" crossorigin="anonymous"></audio>
-
 <!-- HELLO -->
-<section id="hello" class="screen active">
+<section id="hello-screen" class="screen active">
   <div class="hello-wrap glass">
     <div class="hello-text">AuraAI</div>
     <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
     <div class="hello-actions">
-      <button class="btn" id="btnPlay">🎮 Play</button>
-      <button class="btn" id="btnDraw">🎨 Draw</button>
-      <button class="btn" id="btnChat">💬 Talk</button>
+      <button class="btn" id="goPlay">🎮 Play a Game</button>
+      <button class="btn" id="goDraw">🎨 Draw Something</button>
+      <button class="btn" id="goTalk">💬 Talk</button>
     </div>
-    <div class="hint">This is Aura inside the app — an app inside an app (macOS Tahoe look).</div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:14px">
+      <button class="btn" id="themesToggle">🎨 Themes</button>
+      <button class="btn" id="musicToggle">🎶 Music</button>
+    </div>
+    <div class="hint">Dedicated to Eswar — we built this to help express, breathe, and connect. 💙</div>
   </div>
 </section>
 
 <!-- GAME -->
-<section id="game" class="screen">
+<section id="game-screen" class="screen">
   <div class="game-wrap glass">
     <div class="bar">
-      <div class="left-group"><div class="title">🫧 Bubble Pop — levels & calm</div></div>
+      <div class="left-group">
+        <div class="title">🫧 Bubble Pop — calm your mind (Levels)</div>
+      </div>
       <div class="right-group">
-        <span class="game-ind">Level: <span id="levelNum">1</span></span>
-        <span class="game-ind">Score: <span id="score">0</span></span>
-        <button class="btn" id="resetBtn">Reset</button>
-        <button class="btn" id="backGame">⬅ Back</button>
+        <div class="game-ind">Level: <span id="levelTxt">1</span></div>
+        <div class="game-ind">Score: <span id="scoreTxt">0</span></div>
+        <button class="btn" id="resetGame">Reset</button>
+        <button class="btn" id="backFromGame">⬅ Back</button>
       </div>
     </div>
-    <canvas id="gameCanvas" aria-label="Bubble pop canvas"></canvas>
+    <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
   </div>
 </section>
 
 <!-- DRAW -->
-<section id="draw" class="screen">
+<section id="draw-screen" class="screen">
   <div class="draw-wrap glass">
     <div class="bar">
       <div class="left-group">
-        <div class="title">🎨 Draw — practice & check</div>
+        <div class="title">🎨 Draw — Challenges & Free‑style</div>
+        <div style="margin-left:8px" class="draw-controls">
+          <button class="btn" id="newChallengeBtn">🔄 New</button>
+          <button class="btn" id="okChallengeBtn">✅ Try</button>
+          <button class="btn" id="noChallengeBtn">❌ No</button>
+          <button class="btn" id="laterBtn">🕓 Later</button>
+          <button class="btn" id="clearBtn">Clear</button>
+          <button class="btn" id="saveBtn">Save</button>
+        </div>
       </div>
       <div class="right-group">
-        <button class="btn" id="themesDraw">🎨 Themes</button>
-        <button class="btn" id="backDraw">⬅ Back</button>
+        <div class="game-ind">Auto‑Check: <input type="checkbox" id="autoCheck" checked /></div>
+        <button class="btn" id="backFromDraw">⬅ Back</button>
       </div>
     </div>
 
-    <!-- integrated draw control card -->
-    <div class="draw-card" id="drawCard">
-      <div style="flex:1">
-        <div class="label">🧠 Idea</div>
-        <div id="taskText" class="small">Try drawing a ...</div>
+    <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas" tabindex="0"></canvas>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="font-weight:900">Challenge</label>
+          <div id="challengeBox" class="aura-card" style="min-width:260px;padding:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#8e44ad,#1e88e5);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900">A</div>
+              <div style="display:flex;flex-direction:column">
+                <div id="challengeText" style="font-weight:900">Loading challenge...</div>
+                <div id="challengeHint" style="font-size:13px;opacity:.8">Say "Try" to accept or "Later" to free‑style.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="font-weight:900">Recognition</label>
+          <div id="recognitionBox" class="aura-card" style="min-width:260px;padding:8px">
+            <div id="recognitionResult">Awaiting drawing...</div>
+          </div>
+        </div>
       </div>
-      <div class="control-buttons">
-        <button class="choice-btn" id="newTaskBtn" title="New idea">🔄 New</button>
-        <button class="choice-btn" id="autoCheckToggle" title="Auto-check">✅ Auto‑Check</button>
-        <button class="choice-btn primary" id="askBtn">Try this</button>
+
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <div style="font-weight:900">Tools</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="brushSize" type="range" min="2" max="60" value="10" />
+          <input id="colorPicker" type="color" value="#1e88e5" />
+          <label style="display:flex;align-items:center;gap:6px"><input id="eraserToggle" type="checkbox">Eraser</label>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="freeStyleBtn">✏️ Free‑style</button>
+          <button class="btn" id="rotateBtn">🔁 Rotate</button>
+        </div>
       </div>
     </div>
 
-    <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing canvas"></canvas>
-
-    <div class="draw-bottom">
-      <div>
-        <button class="btn" id="clearBtn">Clear</button>
-        <button class="btn" id="saveBtn">Save</button>
-        <button class="btn" id="freestyleBtn">Free‑style</button>
-      </div>
-      <div class="small">Guides & checks are gentle — you can always redo.</div>
-    </div>
   </div>
 </section>
 
 <!-- CHAT -->
-<section id="chat" class="screen">
+<section id="chat-screen" class="screen">
   <div class="chat-container glass">
     <div class="header-controls">
       <div class="mood-header glass">How do you feel?</div>
-      <div class="header-buttons">
-        <button class="btn" id="voiceBtn">🎤 Voice</button>
-        <button class="btn" id="speakBtn">🔊 Speak</button>
-        <button class="btn" id="themesChat">🎨 Themes</button>
-        <button class="btn" id="backChat">⬅ Back</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" id="voice-mode-btn" aria-pressed="false">🎤 Voice</button>
+        <button class="btn" id="speak-reply-btn" aria-pressed="false">🔊 Speak</button>
+        <button class="btn" id="themeBtnChat">🎨 Themes</button>
+        <button class="btn" id="muteBtnChat">🔇 Mute</button>
+        <button class="btn" id="backFromChat">⬅ Back</button>
       </div>
     </div>
 
-    <div id="mood-strip" class="mood-selector">
-      <button class="mood-btn happy" data-mood="happy">😊 Happy</button>
-      <button class="mood-btn sad" data-mood="sad">😢 Sad</button>
-      <button class="mood-btn angry" data-mood="angry">😠 Angry</button>
-      <button class="mood-btn nervous" data-mood="nervous">😰 Nervous</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="mood-selector" style="flex:1">
+        <button class="mood-btn happy" data-mood="happy">😊 Happy</button>
+        <button class="mood-btn sad" data-mood="sad">😢 Sad</button>
+        <button class="mood-btn angry" data-mood="angry">😠 Angry</button>
+        <button class="mood-btn nervous" data-mood="nervous">😰 Nervous</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="activityBtn">✨ Activities</button>
+      </div>
     </div>
 
     <div id="chat-box" role="log" aria-live="polite"></div>
-
-    <div style="display:flex;gap:10px;align-items:center">
-      <input id="chatInput" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.06)" placeholder="Type when you want to share..." />
-      <button class="btn" id="sendChat">Send</button>
+    <div class="input-footer">
+      <input id="user-input" placeholder="Type your response..." />
+      <button id="send-btn" class="btn">Send</button>
     </div>
+
+    <!-- Aura card (integrated into UI) -->
+    <div style="margin-top:8px" class="aura-card">
+      <div class="aura-header">
+        <div class="aura-icon">A</div>
+        <div class="aura-lines">
+          <div style="font-weight:900">Aura — Support Buddy</div>
+          <div style="font-size:13px;opacity:.85">Quick tips, breathing exercises, activity suggestions</div>
+        </div>
+      </div>
+      <div class="aura-actions" style="margin-top:8px">
+        <button class="chip" data-activity="breathe">Breathe</button>
+        <button class="chip" data-activity="doodle">Doodle</button>
+        <button class="chip" data-activity="game">Play mini‑game</button>
+        <button class="chip" data-activity="music">Listen</button>
+      </div>
+    </div>
+
   </div>
 </section>
 
 <!-- THEMES PANEL -->
-<div class="themes-panel glass" id="themesPanel" aria-hidden="false">
-  <div class="themes-head">
-    <div style="font-weight:900">Themes — Tahoe Library</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn" id="surpriseBtn" title="Surprise me">🎲 Surprise</button>
+<div id="themesPanel" class="themes-panel">
+  <div class="panel-shell glass" style="height:100%;padding:12px;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:900">Themes</div>
       <button class="btn" id="closeThemes">✕</button>
     </div>
-  </div>
-  <div id="themesBody">
-    <!-- categories injected here -->
+    <div class="themes-body" id="themesBody"></div>
   </div>
 </div>
 
-<!-- MINI PLAYER -->
-<div class="miniplayer glass" id="miniPlayer" role="region" aria-label="Music player">
-  <button id="miniPlay" class="btn">▶️</button>
+<!-- MINIPLAYER (3 tracks expected: bgm.mp3, bgm2.mp3, bgm3.mp3 in same repo) -->
+<div id="miniPlayer" class="miniplayer" aria-label="Background Music Player">
+  <button id="miniPlay" class="mini-btn">▶️</button>
   <div class="mini-meta">
-    <div id="miniTitle" style="font-weight:900">BGM</div>
+    <div id="miniTitle" style="font-weight:900">No track</div>
     <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
-    <div style="font-size:12px;color:var(--muted)"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
+    <div style="font-size:12px;opacity:.85"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
   </div>
 </div>
-
-<!-- TensorFlow + MobileNet loaded only if needed -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.2/dist/mobilenet.min.js"></script>
 
 <script>
-/* ---------- Helpers & initial wiring ---------- */
-const screens = { hello:document.getElementById('hello'), game:document.getElementById('game'), draw:document.getElementById('draw'), chat:document.getElementById('chat')};
-function showScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
-document.getElementById('btnPlay').onclick = ()=>{ startGame(); showScreen('game'); }
-document.getElementById('btnDraw').onclick = ()=>{ prepareDraw(); showScreen('draw'); }
-document.getElementById('btnChat').onclick = ()=>{ showScreen('chat'); }
-document.getElementById('backGame').onclick = ()=>{ showScreen('hello'); }
-document.getElementById('backDraw').onclick = ()=>{ showScreen('hello'); }
-document.getElementById('backChat').onclick = ()=>{ showScreen('hello'); }
+/* ============================
+   Utilities & sound engine
+   ============================ */
+const Sound = (() => {
+  let ctx; let muted=false;
+  function ensure(){ if(!ctx){ const A=window.AudioContext||window.webkitAudioContext; if(A) ctx=new A(); } }
+  function tone(f=440,d=0.06,t="sine",g=0.05){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), G=ctx.createGain(); o.type=t; o.frequency.value=f; G.gain.value=g; o.connect(G).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+d); }
+  return { click:()=>tone(600,0.04,"triangle",0.04), pop:()=>tone(900,0.08,"sine",0.07), scribble:()=>tone(280,0.03,"square",0.03), toggle:()=>tone(420,0.06,"sawtooth",0.05), setMuted:(v)=>muted=!!v, isMuted:()=>muted };
+})();
 
-/* ---------- THEME LIBRARY (100+ surprise themes in groups) ---------- */
-const THEMES_CATEGORIES = [
-  {title:"Metallic", items:[
-    ["Space Gray","linear-gradient(135deg,#3b3b3f,#8b8b8f)"],
-    ["Silver","linear-gradient(135deg,#f3f4f6,#d6d8db)"],
-    ["Gold","linear-gradient(135deg,#f4d58d,#c99b4c)"],
-    ["Rose Gold","linear-gradient(135deg,#ffd1dc,#c88b85)"],
-    ["Steel Blue","linear-gradient(135deg,#4b6b88,#2b445a)"],
-    ["Titanium","linear-gradient(135deg,#2f2f33,#6a6a6e)"],
-    ["Copper","linear-gradient(135deg,#b26a4a,#4e2314)"],
-    ["Chrome","linear-gradient(135deg,#e9eef2,#9aa4ad)"],
-    ["Liquid Mercury","linear-gradient(135deg,#a7a9ac,#e7e8ea)"],
-    ["Neon Metal","linear-gradient(135deg,#06f7ff,#00ff9d)"]
-  ]},
-  {title:"Gradients", items: generateGradients(22) },
-  {title:"Poster / Bold", items:[
-    ["Pure Red","#E53935"],["Pop Cyan","#00BCD4"],["Lemon Yellow","#FFEB3B"],["Magenta","#FF00A8"],
-    ["Royal Blue","#2E5CB8"],["Acid Green","#B8FF00"],["Coral","#FF6F61"],["Tangerine","#FF8C42"],
-    ["Hot Pink","#FF4FA3"],["Bright Purple","#9B5DE5"],["Electric Indigo","#6F42C1"],["Neon Punch","#FF2D95"],
-    ["Turquoise","#1ABC9C"],["Cobalt","#3B82F6"],["Sunshine","#FFD166"]
-  ]},
-  {title:"Pastels", items:[
-    ["Peach","#FFD2B8"],["Lavender","#EAD7FF"],["Mint","#CFFFE1"],["Baby Blue","#CFE9FF"],
-    ["Blush","#FFDDE2"],["Powder","#E8F0FF"],["Cream","#FFF7E6"],["Light Jade","#D8F7E8"],
-    ["Soft Coral","#FFD7D0"],["Pale Yellow","#FFF8C4"],["Pastel Lilac","#E4D7FF"],["Pastel Sky","#D6EEFF"]
-  ]},
-  {title:"Grayscale/Minimal", items:[
-    ["Black","#000000"],["Charcoal","#2C2C2E"],["Slate","#6B7280"],["Fog","#F3F4F6"],["Paper","#FFFFFF"],
-    ["Ash","#9CA3AF"],["Graphite","#374151"],["Silver Mist","#ECEFF1"],["Steel","#B0BEC5"],["Smoke","#CFD8DC"]
-  ]},
-  {title:"Artistic / Patterned", items:[
-    ["Aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)"],["Galaxy","linear-gradient(135deg,#0f0c29,#302b63)"],
-    ["Marble","linear-gradient(135deg,#f6f7fb,#e9eef6)"],["Neon Waves","linear-gradient(135deg,#ff6a88,#ff9a9e)"],
-    ["Vintage","linear-gradient(135deg,#f0d5b3,#d1b3a1)"],["Fabric","linear-gradient(135deg,#e6eef8,#cfd9ea)"],
-    ["Noise","linear-gradient(135deg,#f1f3f5,#e6e9ee)"],["Checker","linear-gradient(135deg,#fff,#eee)"]
-  ]},
-  {title:"User Upload", items:[
-    ["Custom Upload","upload://custom"]
-  ]},
-];
+/* ============================
+   Screen router
+   ============================ */
+const screens = { hello:document.getElementById('hello-screen'), game:document.getElementById('game-screen'), draw:document.getElementById('draw-screen'), chat:document.getElementById('chat-screen') };
+function switchScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); window.scrollTo(0,0); }
 
-function generateGradients(n){
-  const base = [
-    ["Aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)"],
-    ["Sunset Glow","linear-gradient(135deg,#f857a6,#ff5858)"],
-    ["Deep Ocean","linear-gradient(135deg,#2b5876,#4e4376)"],
-    ["Cotton Candy","linear-gradient(135deg,#ffb6c1,#add8e6)"],
-    ["Rainbow Loop","rainbow-loop"],
-    ["Firestorm","linear-gradient(135deg,#ff416c,#ff4b2b)"],
-    ["Galaxy Fade","linear-gradient(135deg,#512da8,#7b1fa2)"],
-    ["Mint Dream","linear-gradient(135deg,#a8ff78,#78ffd6)"],
-    ["Polar","linear-gradient(135deg,#21D4FD,#B721FF)"],
-    ["Berry","linear-gradient(135deg,#833ab4,#fd1d1d)"]
-  ];
-  const items = [];
-  for(let i=0;i<n;i++){
-    items.push(base[i%base.length]);
-  }
-  return items;
-}
+/* Bind nav */
+document.getElementById('goPlay').onclick=()=>{ Sound.click(); switchScreen('game'); startGameFlow(); };
+document.getElementById('goDraw').onclick=()=>{ Sound.click(); switchScreen('draw'); loadRandomChallenge(); };
+document.getElementById('goTalk').onclick=()=>{ Sound.click(); switchScreen('chat'); initChatExample(); };
+document.getElementById('backFromGame').onclick=()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromDraw').onclick=()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromChat').onclick=()=>{ Sound.click(); switchScreen('hello'); };
 
+/* ============================
+   THEMES (100+) build UI
+   ============================ */
 const themesBody = document.getElementById('themesBody');
-function buildThemesUI(){
-  themesBody.innerHTML = '';
-  THEMES_CATEGORIES.forEach(cat=>{
-    const g = document.createElement('div'); g.className='group';
-    const t = document.createElement('div'); t.className='group-title'; t.textContent = cat.title;
-    g.appendChild(t);
+const THEMES = [];
+// We'll create many themed swatches programmatically to reach 100+ with groups
+const themeGroups = {
+  "Glassy": [
+    ["Glassy Arctic","linear-gradient(135deg,#e6f7ff,#eaf6ff)"],
+    ["Glassy Dawn","linear-gradient(135deg,#fff1f0,#fff7e8)"],
+    ["Glassy Mint","linear-gradient(135deg,#e6fff5,#dffbf0)"]
+  ],
+  "Metallic": [
+    ["Metal Steel","linear-gradient(135deg,#c0c6cc,#9aa3ab)"],
+    ["Metal Bronze","linear-gradient(135deg,#d6b89a,#b88466)"],
+    ["Metal Chrome","linear-gradient(135deg,#e9eef2,#bfc7cc)"]
+  ],
+  "Poster": [
+    ["Poster Neon","linear-gradient(135deg,#ff007f,#7f00ff)"],
+    ["Poster Pop","linear-gradient(135deg,#ff8a00,#ff3d00)"],
+    ["Poster Retro","linear-gradient(135deg,#ffd194,#cf6e6e)"]
+  ],
+  "Pastel": [
+    ["Pastel Sky","#C7E9FF"],
+    ["Pastel Mint","#C2F5E9"],
+    ["Pastel Peach","#FFD1BA"]
+  ],
+  "Gradient": [
+    ["Sunset","linear-gradient(135deg,#FF512F,#DD2476)"],
+    ["Aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)"],
+    ["Night","linear-gradient(135deg,#141E30,#243B55)"]
+  ],
+  "Greyscale": [
+    ["Paper Gray","#F4F6F8"],
+    ["Slate","#7F8C8D"],
+    ["Charcoal","#2C3E50"]
+  ],
+};
+
+// auto-generate variants to surpass 100 entries
+function buildThemes(){
+  const names = [];
+  let counter = 1;
+  for(const [group, items] of Object.entries(themeGroups)){
+    const gdiv = document.createElement('div');
+    const gt = document.createElement('div'); gt.className='group-title'; gt.textContent = group; gdiv.appendChild(gt);
     const row = document.createElement('div'); row.className='swatch-row';
-    cat.items.forEach(([name, bg])=>{
-      const btn = document.createElement('button'); btn.className='theme-btn'; btn.title = name;
-      if(bg === 'rainbow-loop'){
-        btn.style.background = 'linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)';
-        btn.dataset.special = 'rainbow';
-      } else if(bg && bg.startsWith('upload://')){
-        btn.style.background = 'repeating-linear-gradient(45deg,#eee,#eee 10px,#fff 10px,#fff 20px)';
-        btn.innerHTML = '<div style="padding:6px 8px;font-size:12px">Upload</div>';
-        btn.dataset.theme = 'custom';
-      } else {
-        btn.style.background = bg;
-        btn.dataset.bg = bg;
+    items.forEach(([name, bg])=>{
+      for(let i=0;i<6;i++){
+        const nm = `${name}${i?(' '+(i+1)):''}`;
+        const btn = document.createElement('button'); btn.className='theme-btn';
+        btn.style.background = (typeof bg==='string' && bg.startsWith('#')) ? bg : bg;
+        btn.setAttribute('data-bg', bg);
+        btn.title = nm;
+        const tt = document.createElement('span'); tt.className='theme-tooltip'; tt.textContent = nm; btn.appendChild(tt);
+        btn.addEventListener('click', ()=>{ Sound.click(); applyTheme(btn.getAttribute('data-bg')); });
+        row.appendChild(btn);
+        THEMES.push({name:nm,bg});
+        names.push(nm);
+        counter++;
       }
-      const label = document.createElement('div'); label.className='thumb-label'; label.textContent = name; btn.appendChild(label);
-      btn.addEventListener('click', ()=>{ applyTheme(name,bg); });
-      row.appendChild(btn);
     });
-    g.appendChild(row); themesBody.appendChild(g);
-  });
-}
-function applyTheme(name,bg){
-  if(bg==='rainbow-loop'){ document.body.style.background = 'linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)'; // animated
-    document.body.style.animation = 'rainbow 8s linear infinite';
-    document.body.style.backgroundSize = '400% 400%';
-    injectRainbowKeyframes();
-  } else if(bg && bg.startsWith('linear-gradient')){
-    document.body.style.background = bg; document.body.style.animation = '';
-  } else if(name === 'Custom Upload'){
-    promptUploadBackground();
-  } else if(bg){
-    document.body.style.background = bg; document.body.style.animation = '';
+    gdiv.appendChild(row);
+    themesBody.appendChild(gdiv);
+  }
+
+  // Add special rainbow loop theme
+  const loopDiv = document.createElement('div'); loopDiv.className='group';
+  const ltitle = document.createElement('div'); ltitle.className='group-title'; ltitle.textContent='Special';
+  const lrow = document.createElement('div'); lrow.className='swatch-row';
+  const rb = document.createElement('button'); rb.className='theme-btn'; rb.style.background='linear-gradient(90deg,#ff0000,#ff8000,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)'; rb.title='Rainbow Loop';
+  const rtt = document.createElement('span'); rtt.className='theme-tooltip'; rtt.textContent='Rainbow Loop (cycles)'; rb.appendChild(rtt);
+  rb.addEventListener('click', ()=>{ Sound.click(); enableRainbowLoop(); });
+  lrow.appendChild(rb);
+  loopDiv.appendChild(ltitle); loopDiv.appendChild(lrow);
+  themesBody.appendChild(loopDiv);
+
+  // Ensure 100+ by duplication if needed
+  while(THEMES.length < 100){
+    const idx = Math.floor(Math.random()*THEMES.length);
+    const t = THEMES[idx];
+    THEMES.push({name:t.name+'+', bg:t.bg});
+    // append visual swatches too for user's theme panel
+    const row = themesBody.querySelector('.swatch-row');
+    if(row){
+      const btn = document.createElement('button'); btn.className='theme-btn'; btn.style.background = t.bg; btn.title = t.name+'+'; const tt=document.createElement('span'); tt.className='theme-tooltip'; tt.textContent=t.name+'+'; btn.appendChild(tt);
+      btn.addEventListener('click', ()=>{ Sound.click(); applyTheme(t.bg); });
+      row.appendChild(btn);
+    }
   }
 }
-function injectRainbowKeyframes(){
-  if(document.getElementById('kf-rainbow')) return;
-  const s = document.createElement('style'); s.id='kf-rainbow';
-  s.textContent = '@keyframes rainbow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}';
-  document.head.appendChild(s);
-}
-document.getElementById('closeThemes').onclick = ()=>{ document.getElementById('themesPanel').style.display='none' };
-document.getElementById('surpriseBtn').onclick = ()=>{ const cats = THEMES_CATEGORIES.flatMap(c=>c.items); const pick = cats[Math.floor(Math.random()*cats.length)]; applyTheme(pick[0],pick[1]); }
+buildThemes();
 
-/* ---------- MINI PLAYER ---------- */
-const tracks = [document.getElementById('bg1'),document.getElementById('bg2'),document.getElementById('bg3')];
-let currentTrack = 0;
-const miniPlay = document.getElementById('miniPlay'); const miniSeek = document.getElementById('miniSeek');
-const miniCur = document.getElementById('miniCur'); const miniDur = document.getElementById('miniDur'); const miniTitle = document.getElementById('miniTitle');
-function playTrack(idx){
-  tracks.forEach((t,i)=>{ try{ t.pause(); t.currentTime=0 }catch{} });
-  currentTrack = idx; const a = tracks[currentTrack];
-  a.volume = 0.35; a.play().catch(()=>{});
-  miniTitle.textContent = 'BGM ' + (currentTrack+1);
+function applyTheme(bg){
+  document.body.style.background = (bg||'').toString();
+  // basic glass modifications depending on gradient vs color
+  if(String(bg).startsWith('linear-gradient')){ document.documentElement.style.setProperty('--glass-bg','rgba(255,255,255,0.12)'); document.documentElement.style.setProperty('--glass-border','rgba(255,255,255,0.18)'); }
+  else{ document.documentElement.style.setProperty('--glass-bg','rgba(255,255,255,0.20)'); document.documentElement.style.setProperty('--glass-border','rgba(255,255,255,0.28)'); }
 }
-miniPlay.onclick = ()=>{
-  const a = tracks[currentTrack];
-  if(a.paused){ a.play(); miniPlay.textContent='⏸'; } else { a.pause(); miniPlay.textContent='▶️'; }
-}
-tracks.forEach(t=>{
-  t.addEventListener('timeupdate', ()=>{ if(t.duration){ miniSeek.value = (t.currentTime/t.duration)*100; miniCur.textContent = fmtTime(t.currentTime); miniDur.textContent = fmtTime(t.duration); }});
-  t.addEventListener('ended', ()=>{ currentTrack = (currentTrack+1) % tracks.length; playTrack(currentTrack); });
-});
-miniSeek.oninput = ()=>{ const a = tracks[currentTrack]; if(a.duration) a.currentTime = (miniSeek.value/100)*a.duration; }
-function fmtTime(s){ if(!s || isNaN(s)) return '0:00'; const m=Math.floor(s/60); const sec=Math.floor(s%60).toString().padStart(2,'0'); return m+':'+sec; }
-playTrack(0);
 
-/* ---------- DRAWING pad + 100 tasks ---------- */
-const prompts = [
-"cat","dog","house","tree","car","bicycle","boat","fish","sun","moon","star","flower","cup","cake","ice cream",
-"rocket","robot","key","chair","shoe","hat","glasses","book","phone","clock","guitar","piano","bird","butterfly","leaf","mountain",
-"castle","train","bus","truck","lamp","window","door","hand","smiley face","heart","umbrella","balloon","crown","map","island","island palm",
-"hat","camera","penguin","elephant","lion","tiger","zebra","panda","koala","dolphin","whale","shark","octopus","lighthouse","bridge",
-"cake slice","cookie","spoon","fork","knife","bottle","kite","present","ball","ring","diamond","starfish","seashell","leafy plant",
-"mushroom","ant","bee","snail","owl","fox","squirrel","hedgehog","pineapple","banana","apple","grapes","pear","strawberry","cherry",
-"lantern","compass","tent","campfire","backpack","boots","scarf","glove","parrot","peacock","candle","skate","roller skate","sword","shield",
-"wizard hat","wand","treasure chest","maple leaf","geyser","volcano","satellite","planet","telescope","hourglass","anchor","trophy","microphone",
-"headphones","paintbrush","palette"
+/* Rainbow loop */
+let rainbowInterval = null;
+function enableRainbowLoop(){
+  if(rainbowInterval){ clearInterval(rainbowInterval); rainbowInterval=null; document.body.style.transition='background .6s ease'; return; }
+  let t=0;
+  rainbowInterval = setInterval(()=>{
+    t+=0.01;
+    document.body.style.background = `conic-gradient(from ${t}turn, #ff0000,#ff8000,#ffff00,#00ff00,#0000ff,#4b0082,#9400d3)`;
+  },80);
+}
+
+/* panel toggles */
+document.getElementById('themesToggle').onclick = ()=>{ document.getElementById('themesPanel').classList.toggle('open'); Sound.click(); }
+document.getElementById('closeThemes').onclick = ()=>{ document.getElementById('themesPanel').classList.remove('open'); Sound.click(); }
+document.getElementById('musicToggle').onclick = ()=>{ toggleMiniPlayer(); Sound.click(); }
+
+/* ============================
+   Music player (3 files referenced)
+   ============================ */
+const tracks = [
+  {file:'bgm.mp3', title:'Track 1'},
+  {file:'bgm2.mp3', title:'Track 2'},
+  {file:'bgm3.mp3', title:'Track 3'}
 ];
-// ensure 100 by repeating if necessary
-while(prompts.length < 100) prompts.push(...prompts.slice(0,100-prompts.length));
-
-const taskText = document.getElementById('taskText');
-const newTaskBtn = document.getElementById('newTaskBtn');
-const askBtn = document.getElementById('askBtn');
-const autoCheckBtn = document.getElementById('autoCheckToggle');
-const clearBtn = document.getElementById('clearBtn');
-const saveBtn = document.getElementById('saveBtn');
-const freestyleBtn = document.getElementById('freestyleBtn');
-let currentTask = null;
-let autoCheck = false;
-let model = null;
-let modelLoading = false;
-
-function pickRandomTask(){ currentTask = prompts[Math.floor(Math.random()*prompts.length)]; taskText.textContent = `Try drawing a ${currentTask}? (OK / No / Later)`; }
-newTaskBtn.onclick = ()=>{ pickRandomTask(); }
-askBtn.onclick = ()=>{ showTaskChoices() }
-autoCheckBtn.onclick = ()=>{ autoCheck = !autoCheck; autoCheckBtn.textContent = autoCheck ? '✅ Auto‑Check ON' : '✅ Auto‑Check'; if(autoCheck && !model && !modelLoading){ loadModel(); } }
-
-function showTaskChoices(){
-  // integrated dialog style
-  const ok = confirm(`Try drawing a ${currentTask}?\nOK → I want to try\nCancel → No / Later (choose later in UI)`);
-  if(ok) {
-    toggleCanvasInput(true);
-  } else {
-    // ask later -> free draw
-    alert("You can freestyle anytime — opening free-style.");
-    toggleCanvasInput(true);
-  }
+const audio = new Audio();
+audio.crossOrigin = 'anonymous';
+let currentTrackIndex = 0;
+const miniPlay = document.getElementById('miniPlay');
+const miniTitle = document.getElementById('miniTitle');
+const miniSeek = document.getElementById('miniSeek');
+const miniCur = document.getElementById('miniCur');
+const miniDur = document.getElementById('miniDur');
+function loadTrack(i){
+  currentTrackIndex = i % tracks.length;
+  audio.src = tracks[currentTrackIndex].file;
+  miniTitle.textContent = tracks[currentTrackIndex].title;
+  audio.load();
+  audio.volume = 0.35;
 }
+loadTrack(0);
+miniPlay.onclick = ()=>{ if(audio.paused){ audio.play().catch(()=>{}); miniPlay.textContent='⏸'; miniPlay.classList.add('pulse'); } else { audio.pause(); miniPlay.textContent='▶️'; miniPlay.classList.remove('pulse'); } }
+miniSeek.oninput = ()=>{ if(audio.duration) audio.currentTime = (miniSeek.value/100)*audio.duration; }
+audio.addEventListener('timeupdate', ()=>{
+  if(audio.duration){ miniSeek.value = ((audio.currentTime/audio.duration)*100)||0; miniCur.textContent = formatTime(audio.currentTime); miniDur.textContent = formatTime(audio.duration); }
+});
+audio.addEventListener('ended', ()=>{ // next random track
+  loadTrack((currentTrackIndex+1)%tracks.length); audio.play().catch(()=>{}); });
+function toggleMiniPlayer(){ const el=document.getElementById('miniPlayer'); el.style.display = (el.style.display==='none' ? 'flex':'none'); }
+function formatTime(t){ if(isNaN(t)) return '0:00'; const m=Math.floor(t/60); const s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
 
-/* canvas draw */
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
-let drawing=false, lastX=0,lastY=0,brush='#1e88e5',brushSize=8,erasing=false;
-function resizeCanvas(){
-  const rect = canvas.getBoundingClientRect();
-  const dp = devicePixelRatio || 1;
-  const w = Math.floor(rect.width*dp), h = Math.floor(rect.height*dp);
-  const image = ctx.getImageData(0,0,canvas.width||1,canvas.height||1);
-  canvas.width = w; canvas.height = h;
-  ctx.setTransform(1,0,0,1,0,0); ctx.scale(dp,dp);
-  try{ ctx.putImageData(image,0,0) } catch(e){}
-}
-window.addEventListener('resize', resizeCanvas);
-setTimeout(resizeCanvas,50);
+/* Attempt autoplay — browsers block but first user interaction will start */
+document.addEventListener('pointerdown', ()=>{ audio.play().catch(()=>{}); }, {once:true});
 
-canvas.addEventListener('pointerdown', (e)=>{ drawing=true; const r=canvas.getBoundingClientRect(); lastX = (e.clientX - r.left); lastY = (e.clientY - r.top); });
-canvas.addEventListener('pointermove', (e)=>{ if(!drawing) return; const r=canvas.getBoundingClientRect(); const x = (e.clientX - r.left); const y = (e.clientY - r.top); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=brushSize; ctx.strokeStyle = erasing ? 'rgba(0,0,0,1)' : brush; if(erasing) ctx.globalCompositeOperation='destination-out'; else ctx.globalCompositeOperation='source-over'; ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); lastX=x; lastY=y; });
-canvas.addEventListener('pointerup', ()=>{ drawing=false; ctx.globalCompositeOperation='source-over'; });
-canvas.addEventListener('pointerleave', ()=>{ drawing=false; });
+/* ============================
+   Bubble Pop — level based
+   ============================ */
+const gameCanvas = document.getElementById('gameCanvas');
+let gctx, W, H, bubbles=[], score=0, level=1, lastSpawn=0, running=true, prevT=performance.now();
+function resizeGame(){
+  const rect = gameCanvas.getBoundingClientRect();
+  gameCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  gameCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  gctx = gameCanvas.getContext('2d');
+  gctx.setTransform(1,0,0,1,0,0);
+  gctx.scale(devicePixelRatio,devicePixelRatio);
+}
+window.addEventListener('resize', resizeGame);
+resizeGame();
 
-clearBtn.onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }
-saveBtn.onclick = ()=>{ const url = canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); if(autoCheck) runAutoCheck(); }
-freestyleBtn.onclick = ()=>{ currentTask = null; taskText.textContent = 'Free‑style — create whatever you like'; toggleCanvasInput(true); }
-
-/* Auto-check using MobileNet: best-effort on sketches (mobileNet classifies photographic-like input) */
-async function loadModel(){
-  if(model) return model;
-  modelLoading = true;
-  taskText.textContent = 'Auto‑Check model loading...';
-  try{
-    model = await mobilenet.load(); // from CDN
-    taskText.textContent = currentTask ? `Try drawing a ${currentTask}? (Auto‑Check ready)` : 'Free‑style';
-  }catch(e){
-    taskText.textContent = 'Auto‑Check unavailable';
-    model = null;
-  } finally { modelLoading = false; }
-}
-async function runAutoCheck(){
-  if(!currentTask){ addEncouragement("Nice free-style!"); return; }
-  if(!model){ await loadModel(); if(!model) return; }
-  // create a temporary image scaled for model
-  const temp = document.createElement('canvas'); temp.width = 224; temp.height = 224;
-  const tctx = temp.getContext('2d');
-  // fill white behind transparent drawings for better classification
-  tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,224,224);
-  tctx.drawImage(canvas,0,0,224,224);
-  const img = tf.browser.fromPixels(temp);
-  const preds = await model.classify(img);
-  img.dispose();
-  if(!preds || preds.length===0){ gentleRetry(); return; }
-  const top = preds[0].className.toLowerCase();
-  // matching heuristic: check if any word in currentTask appears in prediction string
-  const taskWords = (currentTask||'').toLowerCase().split(/[\s,-]+/);
-  const match = taskWords.some(w=> w && top.includes(w));
-  if(match){
-    addEncouragement("Wow! That looks great! 🎉 Nice job!");
-  } else {
-    gentleRetry(top);
-  }
-}
-function gentleRetry(prediction){
-  if(prediction){
-    const msg = `Nice try — model saw: "${prediction}". Wanna try again or try a new idea?`;
-    addGentle(msg);
-  } else {
-    addGentle("That was cool — want to try again? Maybe rotate, add more details or try a new idea.");
-  }
-}
-function addEncouragement(txt){ alert(txt); } // simple; can be replaced by fancier UI
-function addGentle(txt){ alert(txt); }
-
-/* toggle canvas input (open drawing mode) */
-function toggleCanvasInput(on){
-  // shows the cursor and lets user draw; this is always available; just focus
-  canvas.focus();
-}
-
-/* show initial task & pick random */
-function prepareDraw(){
-  pickRandomTask();
-  // clear canvas on open
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-
-/* ---------- GAME: bubble pop with levels ---------- */
-const gCanvas = document.getElementById('gameCanvas'), gCtx = gCanvas.getContext('2d');
-let bubbles = [], gScore=0, gLevel=1, lastSpawn=0;
-function resizeGameCanvas(){
-  const rect = gCanvas.getBoundingClientRect();
-  const dp = devicePixelRatio || 1;
-  gCanvas.width = Math.floor(rect.width * dp);
-  gCanvas.height = Math.floor(rect.height * dp);
-  gCtx.setTransform(1,0,0,1,0,0); gCtx.scale(dp,dp);
-}
-window.addEventListener('resize', resizeGameCanvas);
-setTimeout(resizeGameCanvas,50);
 function spawnBubble(){
-  const r = 18 + Math.random()*28;
-  const x = r + Math.random()*(gCanvas.clientWidth - r*2);
-  const y = gCanvas.clientHeight + r + 10;
-  const vy = (0.6 + Math.random()*1.2) * (1 + (gLevel-1)*0.04);
-  const hue = Math.floor(180 + Math.random()*160);
+  const r = 18 + Math.random()*34*(1+level/30);
+  const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
+  const y = gameCanvas.clientHeight + r + 10;
+  const vy = (0.5 + Math.random()*1.0) * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')) || 0.75) * (1 + level/40);
+  const hue = Math.floor(200 + Math.random()*120);
   bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
 }
-function updateBubbles(dt){
-  bubbles = bubbles.filter(b=>b.alpha>0);
-  for(const b of bubbles){
-    if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } }
-    else b.alpha -= 0.05;
-  }
+
+function updateBubble(b,dt){
+  if(!b.popped){
+    b.y -= b.vy * dt * 0.06;
+    if(b.y < -b.r){ b.popped=true; b.alpha=0; }
+  } else b.alpha -= 0.04;
 }
-function drawBubbles(){
-  gCtx.clearRect(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
-  const grd = gCtx.createLinearGradient(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
-  grd.addColorStop(0,'rgba(255,255,255,.24)'); grd.addColorStop(1,'rgba(255,255,255,.12)');
-  gCtx.fillStyle = grd; gCtx.fillRect(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
-  for(const b of bubbles){
-    gCtx.save(); gCtx.globalAlpha = Math.max(0,b.alpha);
-    gCtx.shadowColor = 'rgba(255,255,255,.9)'; gCtx.shadowBlur = 14; gCtx.lineWidth = 2; gCtx.strokeStyle = 'rgba(0,0,0,.16)';
-    const cx=b.x,cy=b.y,r=b.r; const grad = gCtx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r);
-    grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`);
-    gCtx.fillStyle=grad; gCtx.beginPath(); gCtx.arc(cx,cy,r,0,Math.PI*2); gCtx.fill(); gCtx.stroke();
-    gCtx.beginPath(); gCtx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); gCtx.fillStyle='rgba(255,255,255,.6)'; gCtx.fill();
-    gCtx.restore();
-  }
+
+function drawBubble(b){
+  const ctx = gctx;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0,b.alpha);
+  ctx.shadowColor = `rgba(255,255,255,0.9)`;
+  ctx.shadowBlur = 14;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = `rgba(0,0,0,0.18)`;
+  const cx=b.x, cy=b.y, r=b.r;
+  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.15, cx, cy, r);
+  grad.addColorStop(0, `hsla(${b.hue},90%,96%,.95)`);
+  grad.addColorStop(1, `hsla(${b.hue},70%,60%,.7)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx-r*0.36, cy-r*0.36, r*0.2,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill();
+  ctx.restore();
 }
-let lastPaint = performance.now();
+
 function gameLoop(t){
-  const dt = t - lastPaint; lastPaint = t;
-  if(t - lastSpawn > Math.max(2000 - gLevel*40, 400)){ spawnBubble(); lastSpawn=t; }
-  updateBubbles(dt);
-  drawBubbles();
+  const dt = t - prevT; prevT = t;
+  if(running){
+    gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    // soft background
+    const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    grd.addColorStop(0,'rgba(255,255,255,.22)');
+    grd.addColorStop(1,'rgba(255,255,255,.12)');
+    gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    // spawn slower in low levels, faster later
+    const spawnInterval = Math.max(280 - level*6, 140);
+    if(t - lastSpawn > spawnInterval){ spawnBubble(); lastSpawn = t; }
+    bubbles = bubbles.filter(b=>b.alpha>0);
+    for(const b of bubbles){ updateBubble(b,dt); drawBubble(b); }
+  }
   requestAnimationFrame(gameLoop);
 }
 requestAnimationFrame(gameLoop);
-gCanvas.addEventListener('click',(e)=>{
-  const rect = gCanvas.getBoundingClientRect(), x=e.clientX-rect.left, y=e.clientY-rect.top;
-  for(const b of bubbles){ const dx=x-b.x, dy=y-b.y; if(!b.popped && dx*dx+dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; gScore++; document.getElementById('score').textContent=gScore; SoundPop(); checkLevelUp(); break; } }
+
+gameCanvas.addEventListener('click', (e)=>{
+  const rect = gameCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  for(const b of bubbles){
+    const dx = x - b.x, dy = y - b.y;
+    if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
+      b.popped = true; b.vy = 0; score += Math.round(5 + level*1.25); document.getElementById('scoreTxt').textContent = score; Sound.pop(); checkMilestones(); checkLevelUp(); break;
+    }
+  }
 });
-function checkLevelUp(){
-  const milestones = 25;
-  if(gScore % milestones === 0){
-    gLevel = Math.min(30, gLevel+1); document.getElementById('levelNum').textContent = gLevel;
-    addBubblePraise(gScore);
+
+function checkMilestones(){
+  const milestones = [25,50,100,200,350,500,750,1000];
+  for(const m of milestones){
+    if(score >= m && (score - Math.round(5 + level*1.25)) < m){
+      showEncouragement(`Nice! You hit ${m} points — awesome!`);
+    }
   }
 }
-function addBubblePraise(score){
-  const praises = ["Nice!", "Amazing!", "You're on fire!", "Calm and steady!", "Keep going!"];
-  const idx = Math.floor(Math.min(praises.length-1, Math.log(score+1)));
-  alert(`${praises[idx]} — score ${score}`);
-}
-function SoundPop(){ try{ const o=new (window.AudioContext||window.webkitAudioContext)(); const osc=o.createOscillator(); const g=o.createGain(); osc.type='sine'; osc.frequency.value=900; g.gain.value=0.05; osc.connect(g).connect(o.destination); osc.start(); osc.stop(o.currentTime+0.08);}catch(e){} }
-document.getElementById('resetBtn').onclick = ()=>{ bubbles=[]; gScore=0; gLevel=1; document.getElementById('score').textContent=gScore; document.getElementById('levelNum').textContent=gLevel; }
 
-/* ---------- CHAT: improved responses (basic but better rules) ---------- */
-const chatBox = document.getElementById('chat-box'), chatInput=document.getElementById('chatInput'), sendChat=document.getElementById('sendChat');
-const moodButtons = document.querySelectorAll('.mood-btn');
-function addChat(text,who='bot'){ const d=document.createElement('div'); d.className='message '+(who==='bot'?'bot':'user'); d.textContent=text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight; }
-addChat("Hi! 👋 How was your day? 😊");
-sendChat.onclick = ()=>{ const t = chatInput.value.trim(); if(!t) return; addChat(t,'user'); chatInput.value=''; setTimeout(()=>{ const rep = smartReply(t); addChat(rep,'bot'); },650); }
-function smartReply(input){
-  const s = input.toLowerCase();
-  if(/(sad|upset|depressed|down)/.test(s)) return "I hear you. Do you want a small comfort idea or to talk it through?";
-  if(/(happy|great|good|awesome)/.test(s)) return "That's wonderful — tell me one thing that made you smile today.";
-  if(/(anxious|nervous|scared|afraid)/.test(s)) return "Breathing trick: inhale 4s, hold 4s, exhale 6s — want me to guide you?";
-  if(/(help|advice|support)/.test(s)) return "I’m here. Tell me a bit and we’ll make a tiny plan together.";
-  if(/(game|play)/.test(s)) return "Want to try Bubble Pop? It's calming. Open Play from the home screen.";
-  if(/(draw|doodle|sketch)/.test(s)) return "Open Draw and I'll give an idea or you can freestyle.";
-  return "Thanks for sharing — tell me more or pick an activity above.";
+function checkLevelUp(){
+  // simple: every 100 points -> level
+  const newLevel = Math.min(1 + Math.floor(score/100), 30);
+  if(newLevel > level){
+    level = newLevel; document.getElementById('levelTxt').textContent = level;
+    showEncouragement(`Level up! Welcome to level ${level} 🎉`);
+  }
 }
-moodButtons.forEach(b=>b.onclick = ()=>{
-  const m = b.dataset.mood;
-  addChat(`Mood set to ${m}`, 'user');
-  const map = {happy:"Love it — want a cheerful activity?", sad:"I'm sorry. Want a calming breathing or a small activity?", angry:"Okay — want a quick vent or grounding?", nervous:"Let's try a short grounding — name 5 things you see."};
-  addChat(map[m] || "I'm here.", 'bot');
+
+document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; level=1; document.getElementById('scoreTxt').textContent=0; document.getElementById('levelTxt').textContent=1; showEncouragement('Game reset — start fresh!'); };
+
+function showEncouragement(msg){
+  // show as small floating bot message in chat box for continuity
+  addMessage(msg,'bot');
+}
+
+/* ============================
+   Drawing Pad + TF.js recognition
+   ============================ */
+const drawCanvas = document.getElementById('drawCanvas');
+const dctx = drawCanvas.getContext('2d', {willReadFrequently:true});
+let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0, lastY=0, erasing=false;
+function sizeDraw(){
+  const rect = drawCanvas.getBoundingClientRect();
+  const prev = dctx.getImageData(0,0,drawCanvas.width||1, drawCanvas.height||1);
+  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio, devicePixelRatio);
+  try{ dctx.putImageData(prev,0,0); }catch(e){}
+}
+new ResizeObserver(sizeDraw).observe(drawCanvas);
+setTimeout(sizeDraw,0);
+
+function startDraw(x,y){ drawing=true; lastX=x; lastY=y; Sound.scribble(); }
+function moveDraw(x,y){ if(!drawing) return;
+  dctx.lineWidth = brushSize; dctx.lineJoin='round'; dctx.lineCap='round';
+  if(erasing){ dctx.globalCompositeOperation = 'destination-out'; dctx.strokeStyle='rgba(0,0,0,1)'; }
+  else { dctx.globalCompositeOperation = 'source-over'; dctx.strokeStyle = brushColor; }
+  dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
+  lastX=x; lastY=y;
+}
+function endDraw(){ drawing=false; dctx.globalCompositeOperation='source-over'; if(document.getElementById('autoCheck').checked) runAutoCheck(); }
+
+drawCanvas.addEventListener('mousedown', e=>{ const r=drawCanvas.getBoundingClientRect(); startDraw(e.clientX-r.left, e.clientY-r.top); });
+drawCanvas.addEventListener('mousemove', e=>{ const r=drawCanvas.getBoundingClientRect(); moveDraw(e.clientX-r.left,e.clientY-r.top); });
+window.addEventListener('mouseup', endDraw);
+drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX-r.left,t.clientY-r.top); e.preventDefault(); },{passive:false});
+drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX-r.left,t.clientY-r.top); e.preventDefault(); },{passive:false});
+drawCanvas.addEventListener('touchend', endDraw);
+
+/* tools */
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
+document.getElementById('brushSize').addEventListener('input', e=>{ brushSize = e.target.value; });
+document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
+document.getElementById('clearBtn').addEventListener('click', ()=>{ dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); document.getElementById('recognitionResult').textContent = 'Canvas cleared'; Sound.click(); });
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const url = drawCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); Sound.click();
 });
 
-/* ---------- Misc helpers ---------- */
-function startGame(){ /* placeholder to open game screen */ }
-function prepareDraw(){ pickRandomTask(); ctx.clearRect(0,0,canvas.width,canvas.height); }
-pickRandomTask(); buildThemesUI();
+/* rotate (visual rotate for fun) */
+let drawRotation = 0;
+document.getElementById('rotateBtn').addEventListener('click', ()=>{
+  drawRotation = (drawRotation + 90) % 360;
+  drawCanvas.style.transform = `rotate(${drawRotation}deg)`;
+  Sound.click();
+});
 
-/* ---------- Minimal UX polish: tooltips, uploads ---------- */
-function promptUploadBackground(){
-  const input = document.createElement('input'); input.type='file'; input.accept='image/*';
-  input.onchange = e=>{
-    const f = e.target.files[0];
-    if(!f) return;
-    const reader = new FileReader();
-    reader.onload = ev=>{
-      document.body.style.background = `url(${ev.target.result}) center/cover no-repeat`;
-      localStorage.setItem('aura-custom-bg', ev.target.result);
-    };
-    reader.readAsDataURL(f);
-  };
-  input.click();
+/* Free-style */
+document.getElementById('freeStyleBtn').addEventListener('click', ()=>{
+  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); document.getElementById('challengeText').textContent = 'Free‑style — create what you like'; document.getElementById('recognitionResult').textContent = 'Free style mode'; Sound.click();
+});
+
+/* Challenge list (100 items) */
+const CHALLENGES = [
+  "cat","dog","house","tree","car","boat","key","cup","pizza","sun",
+  "moon","star","flower","bird","fish","apple","banana","clock","chair","book",
+  "hat","shoe","ice cream","ball","butterfly","rocket","cloud","mountain","leaf","houseplant",
+  "cake","birdhouse","camera","lamp","umbrella","guitar","piano","glasses","phone","bottle",
+  "train","bus","bicycle","heart","diamond","crown","lion","elephant","bear","penguin",
+  "turtle","snake","bridge","door","window","windowhouse","sled","socks","scarf","treehouse",
+  "lighthouse","castle","sword","shield","robot","alien","spaceship","volcano","skyscraper","island",
+  "tent","campfire","map","compass","treasure","magic wand","wizard","princess","dragon","unicorn",
+  "kite","rollercoaster","ferris wheel","skateboard","microscope","telescope","globe","notebook","pen","paintbrush",
+  "palette","hamburger","fries","donut","cookie","bottle rocket","lantern","magnet","keycard","badge",
+  "palm tree","cactus","mushroom","owl","fox","zebra","giraffe","cow","sheep","goat"
+];
+// shuffle for variety
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+shuffle(CHALLENGES);
+
+/* Challenge state */
+let currentChallenge = null;
+let challengeIndex = 0;
+const challengeTextEl = document.getElementById('challengeText');
+const recognitionResultEl = document.getElementById('recognitionResult');
+
+function loadRandomChallenge(){
+  challengeIndex = (challengeIndex + 1) % CHALLENGES.length;
+  currentChallenge = CHALLENGES[challengeIndex];
+  challengeTextEl.textContent = `Try drawing a ${currentChallenge}`;
+  document.getElementById('challengeBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+  recognitionResultEl.textContent = 'Ready for your drawing...';
 }
-const saved = localStorage.getItem('aura-custom-bg'); if(saved){ document.body.style.background = `url(${saved}) center/cover no-repeat`; }
 
-/* ---------- Auto-check on close/save shortcut ---------- */
-document.addEventListener('keydown', (e)=>{ if(e.key==='s' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); saveBtn.click(); } });
+/* Buttons: New, OK, No, Later */
+document.getElementById('newChallengeBtn').addEventListener('click', ()=>{ loadRandomChallenge(); Sound.click(); });
+document.getElementById('okChallengeBtn').addEventListener('click', ()=>{
+  Sound.click(); addMessage(`Okay — try drawing a ${currentChallenge} 🎨`, 'bot'); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+});
+document.getElementById('noChallengeBtn').addEventListener('click', ()=>{ Sound.click(); loadRandomChallenge(); addMessage('Alright, new challenge incoming!', 'bot'); });
+document.getElementById('laterBtn').addEventListener('click', ()=>{ Sound.click(); addMessage('Free‑style unlocked — draw whatever you like!', 'bot'); document.getElementById('recognitionResult').textContent = 'Free‑style mode'; });
 
+/* Auto-check logic uses MobileNet */
+let mobilenetModel = null;
+let mobilenetReady = false;
+async function loadMobileNet(){
+  recognitionResultEl.textContent = 'Loading recognition model…';
+  try{
+    mobilenetModel = await mobilenet.load({version:2,alpha:1.0});
+    mobilenetReady = true;
+    recognitionResultEl.textContent = 'Recognition ready';
+  }catch(e){ recognitionResultEl.textContent = 'Model failed to load — check network'; mobilenetReady=false; }
+}
+loadMobileNet();
+
+async function runAutoCheck(){
+  if(!mobilenetReady || !currentChallenge) return;
+  // prepare canvas snapshot scaled to 224x224
+  const tmp = document.createElement('canvas');
+  tmp.width = 224; tmp.height = 224;
+  const tctx = tmp.getContext('2d');
+  // draw white background then the drawing (to aid model)
+  tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,224,224);
+  // draw scaled content
+  tctx.drawImage(drawCanvas, 0, 0, 224, 224);
+  // use mobilenet to classify
+  recognitionResultEl.textContent = 'Analyzing...';
+  try{
+    const preds = await mobilenetModel.classify(tmp, 5);
+    // preds: [{className, probability}, ...]
+    if(preds && preds.length){
+      const top = preds[0];
+      // fuzzy match check: normalize both
+      const foundLabel = top.className.toLowerCase();
+      const target = currentChallenge.toLowerCase();
+      // build synonyms map for likely matches
+      const synonyms = {
+        "sun":"sun",
+        "moon":"moon",
+        "dog":"dog",
+        "cat":"cat",
+        "car":"car",
+        "house":"house",
+        "pizza":"pizza",
+        "tree":"tree",
+        "bicycle":"bicycle",
+        "boat":"boat",
+        "rocket":"rocket",
+        "guitar":"guitar",
+        "piano":"piano",
+        "apple":"apple",
+        "banana":"banana",
+        "flower":"flower",
+        "bird":"bird",
+        "fish":"fish",
+        "key":"key",
+        "cup":"cup",
+        "chair":"chair",
+        "hat":"hat",
+        "shoe":"shoe",
+        "clock":"clock",
+        "lamp":"lamp",
+        "camera":"camera",
+        "umbrella":"umbrella",
+        "cake":"cake",
+        "heart":"heart",
+        "diamond":"diamond",
+        "lion":"lion",
+        "elephant":"elephant",
+        "bear":"bear",
+        "penguin":"penguin",
+        "turtle":"turtle",
+        "snake":"snake",
+        "bridge":"bridge",
+        "door":"door",
+        "window":"window",
+        "castle":"castle",
+        "robot":"robot",
+        "dragon":"dragon",
+        "unicorn":"unicorn",
+        "owl":"owl",
+        "fox":"fox",
+        "zebra":"zebra",
+        "giraffe":"giraffe",
+        "cow":"cow",
+        "sheep":"sheep",
+        "goat":"goat"
+      };
+      // fuzzy checks: exact substring, synonyms mapping, Levenshtein-ish (simple)
+      function fuzzyMatch(a,b){
+        if(a.includes(b) || b.includes(a)) return true;
+        if(synonyms[b] && a.includes(synonyms[b])) return true;
+        // simple char subsequence check
+        let i=0;
+        for(const ch of a){ if(ch===b[i]) i++; if(i===b.length) return true; }
+        return false;
+      }
+      // assemble labels string
+      const labelList = preds.map(p=>p.className.toLowerCase()).join(', ');
+      // determine success
+      const ok = fuzzyMatch(foundLabel, target) || fuzzyMatch(labelList, target);
+      if(ok && top.probability > 0.06){ // threshold very low because sketches are hard
+        recognitionResultEl.textContent = `Nice! I see "${top.className}" (${(top.probability*100).toFixed(0)}%). Great job! 🎉`;
+        addMessage(`Wow! That looks great — your ${currentChallenge} is recognizable!`, 'bot');
+      } else {
+        recognitionResultEl.textContent = `Hmm — I saw "${preds[0].className}" and "${preds[1] ? preds[1].className : ''}". Wanna try again or pick a new challenge?`;
+        addMessage(`So nice! Do you want to try again or try another?`, 'bot');
+      }
+    } else recognitionResultEl.textContent = 'No confident match — try again or free‑style.';
+  }catch(e){
+    recognitionResultEl.textContent = 'Recognition error — try again later.';
+  }
+}
+
+/* Public runAutoCheck trigger */
+async function runAutoCheckPublic(){ if(document.getElementById('autoCheck').checked) await runAutoCheck(); }
+
+/* Expose runAutoCheck on demand (e.g., after a big stroke) */
+window.runAutoCheck = runAutoCheck;
+
+/* ============================
+   Chatbot — Aura (improved)
+   ============================ */
+const chatBox = document.getElementById('chat-box');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const moodButtons = document.querySelectorAll('.mood-btn');
+
+function addMessage(text, sender='bot'){
+  const d = document.createElement('div'); d.className='message '+sender+' fadein'; d.textContent = text;
+  chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* seed conversation examples — 10 lines for sad/nervous */
+const sadConversation = [
+  "Hi, I'm here with you. Tell me one small thing that happened today.",
+  "I hear you — that sounds heavy. Do you want a small comfort idea?",
+  "Maybe wrap up in a blanket or play a soft song for 2 minutes.",
+  "You're doing well just by sharing that. Would a breathing exercise help?",
+  "Let's try: breathe in 4s, hold 4s, out 6s — three times with me.",
+  "How did that feel? Even a little better?",
+  "If you want, we can doodle something calming together.",
+  "You're not alone — small steps are still steps. I'm proud of you.",
+  "Would you like a short distraction — a simple game or a drawing challenge?",
+  "Whenever you're ready, I'm here."
+];
+
+const nervousConversation = [
+  "Hey — I notice tension in your voice. Want to name that worry?",
+  "Naming it can make it feel smaller. What's one word to describe it?",
+  "Okay. That's a lot. Want to do a grounding exercise?",
+  "Look around: name 5 things you can see, 4 things you can touch...",
+  "Now breathe with me for 30 seconds. Slow and easy.",
+  "Good. Sometimes the body needs a moment to reset.",
+  "Would music help or a small game to shift focus?",
+  "We can try a drawing prompt that's simple and fun.",
+  "You did something brave just by checking in — well done.",
+  "I'm right here, whenever you need."
+];
+
+function initChatExample(){
+  addMessage("Hi! 👋 How was your day? 😊", 'bot');
+}
+
+sendBtn.addEventListener('click', ()=>{
+  const txt = userInput.value.trim();
+  if(!txt) return;
+  addMessage(txt,'user'); userInput.value='';
+  Sound.click();
+  processChat(txt);
+});
+
+/* quick fuzzy intent helpers */
+function norm(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim(); }
+function containsAny(s, arr){ const n=norm(s); return arr.some(a=>n.includes(a)); }
+
+function processChat(text){
+  const n = norm(text);
+  if(containsAny(n, ['draw','doodle','sketch','paint'])){ addMessage("Want a challenge or free‑style? Click Doodle above.", 'bot'); return; }
+  if(containsAny(n, ['game','play','bubble','pop'])){ addMessage("Ready for Bubble Pop — calming levels await. Tap Play.", 'bot'); return; }
+  if(containsAny(n, ['music','song','listen'])){ addMessage("I can play some background music. Use the music player to start.", 'bot'); return; }
+  // gratitude / thanks
+  if(containsAny(n, ['thank','thanks','thx'])){ addMessage("Always here — glad to help 💙", 'bot'); return; }
+  // mood detection
+  if(containsAny(n, ['sad','down','depressed','unhappy'])){ sadConversation.forEach((line, i)=> setTimeout(()=>addMessage(line,'bot'), 400*(i+1))); return; }
+  if(containsAny(n, ['anxious','nervous','scared','afraid','worried'])){ nervousConversation.forEach((line,i)=> setTimeout(()=>addMessage(line,'bot'), 400*(i+1))); return; }
+  // fallback: empathetic reflection + activity suggestions
+  addMessage("Thanks for telling me. I'm listening. Would you like a small activity — breathe, doodle, or play a calm game?", 'bot');
+}
+
+/* mood buttons direct flows */
+moodButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const mood = btn.getAttribute('data-mood');
+    if(mood==='happy'){ addMessage("That's wonderful — tell me more about what made you smile today!",'bot'); }
+    else if(mood==='sad'){ sadConversation.forEach((line,i)=> setTimeout(()=>addMessage(line,'bot'),400*(i+1))); }
+    else if(mood==='nervous'){ nervousConversation.forEach((line,i)=> setTimeout(()=>addMessage(line,'bot'),400*(i+1))); }
+    else if(mood==='angry'){ addMessage("I hear you. Want a 60s outlet — deep breaths or a physical release like punching a pillow safely?", 'bot'); }
+    Sound.click();
+  });
+});
+
+/* activity chips */
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    const a = c.dataset.activity;
+    if(a==='breathe'){ addMessage("Let's breathe: In 4s — Hold 4s — Out 6s — 3×", 'bot'); }
+    if(a==='doodle'){ addMessage("Opening drawing pad with a fresh challenge.", 'bot'); switchScreen('draw'); loadRandomChallenge(); }
+    if(a==='game'){ addMessage("Launching Bubble Pop — calming levels.", 'bot'); switchScreen('game'); startGameFlow(); }
+    if(a==='music'){ addMessage("Opening music player. Click play to begin.", 'bot'); toggleMiniPlayer(); }
+    Sound.click();
+  });
+});
+
+/* init */
+initChatExample();
+
+/* ============================
+   Flow helpers for Game/Draw
+   ============================ */
+function startGameFlow(){ // small optional card prompt for game
+  addMessage("Want a guided calm session? Pop slowly and breathe. Good luck!", 'bot');
+}
+
+/* ============================
+   UI polish: ensure draw challenge loaded initially
+   ============================ */
+loadRandomChallenge();
+
+/* ============================
+   Small helpers: keyboard shortcuts
+   ============================ */
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape'){ document.getElementById('themesPanel').classList.remove('open'); }
+  if(e.key==='g'){ switchScreen('game'); }
+  if(e.key==='d'){ switchScreen('draw'); }
+  if(e.key==='c'){ switchScreen('chat'); }
+});
+
+/* ============================
+   Expose some debug utilities
+   ============================ */
+window.DEBUG = { CHALLENGES, THEMES, runAutoCheckPublic };
+
+/* ============================
+   End of file
+   ============================ */
 </script>
 </body>
 </html>
