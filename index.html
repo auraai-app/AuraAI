@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>AuraAI</title>
 <!--
  Single-file Aura App updated with:
-  - 100 categorized themes (Metallic, Gradient, Animated, Pastel, Poster)
+  - 100 categorized themes (Grayscale, Metallic, Gradient, Animated, Pastel, Poster)
   - New 'Gallery' and 'Upload' features for custom themes
   - drawing pad
   - bubble pop game
   - music player (plays bgm1.mp3, bgm2.mp3, bgm3.mp3)
   - chatbot with validating, direct responses
   - Fix for the drawing pad functionality
+  - Fix for the chatbot to remove the initial hardcoded message
+  - Updated 'Welcome' screen gradient and text shadow for better visibility
+  - Replaced the green 'Welcome' text with a darker gradient as requested.
+  - **REWRITTEN CHATBOT LOGIC to be more robust and reliably handle loading states.**
+  - **FIXED: Improved chatbot error handling for network and API response issues.**
 -->
 <style>
 :root{
@@ -38,7 +43,7 @@ body.animated-theme { background: linear-gradient(270deg, #f7b7b9, #a8cdf1, #a8c
 .btn:hover{transform:translateY(-2px);filter:brightness(.95)}
 /* main hello */
 .hello-wrap{width:min(980px,92vw);padding:28px;text-align:center;border-radius:18px}
-.hello-text{font-weight:900;font-size:clamp(36px,7vw,72px);margin:6px 0;background:linear-gradient(90deg,#fff,#f7b7b9,#a8cdf1,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
+.hello-text{font-weight:900;font-size:clamp(36px,7vw,72px);margin:6px 0;background:linear-gradient(90deg, #5f7587, #c18f92);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none; text-shadow: 0 2px 4px rgba(0,0,0,0.25);}
 .hello-sub{font-size:clamp(15px,2.4vw,20px);opacity:.9;margin-bottom:16px}
 .hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .hint{margin-top:12px;font-size:13px;opacity:.8}
@@ -151,7 +156,7 @@ body.animated-theme { background: linear-gradient(270deg, #f7b7b9, #a8cdf1, #a8c
     </div>
     <canvas id="game-canvas" class="draw-canvas"></canvas>
     <div class="draw-bottom">
-        <button class="btn" id="start-game-btn" onclick="startGame()">Start Game 🚀</button>
+        <button class="btn" id="start-game-btn">Start Game 🚀</button>
         <button class="btn" onclick="showScreen('hello')">Back Home 🏠</button>
     </div>
   </div>
@@ -214,10 +219,43 @@ body.animated-theme { background: linear-gradient(270deg, #f7b7b9, #a8cdf1, #a8c
 <script>
 // --- Core App Logic ---
 let activeScreenId = 'hello';
-let currentTheme = { category: 'gradient', name: 'Aurora' };
+let currentTheme = { category: 'grayscale', name: 'Charcoal' };
 const screens = {};
 const savedGalleryThemesKey = 'aura-gallery-themes';
 const themes = {
+  // New Grayscale category
+  'Grayscale': [
+    { name: 'Pure White', type: 'color', bg: '#ffffff', grad: '#f0f0f0', text: '#000000' },
+    { name: 'White Smoke', type: 'color', bg: '#F5F5F5', grad: '#E8E8E8', text: '#3c3c3c' },
+    { name: 'Light Gray', type: 'color', bg: '#d3d3d3', grad: '#c0c0c0', text: '#3c3c3c' },
+    { name: 'Silver Mist', type: 'color', bg: '#b0b0b0', grad: '#a0a0a0', text: '#fff' },
+    { name: 'Steel Gray', type: 'color', bg: '#708090', grad: '#6c7a89', text: '#fff' },
+    { name: 'Slate', type: 'color', bg: '#405d72', grad: '#3c586b', text: '#fff' },
+    { name: 'Gunmetal', type: 'color', bg: '#2c3539', grad: '#364044', text: '#fff' },
+    { name: 'Charcoal', type: 'color', bg: '#36454f', grad: '#2c3539', text: '#fff' },
+    { name: 'Dark Slate', type: 'color', bg: '#2f4f4f', grad: '#243c3c', text: '#fff' },
+    { name: 'Jet Black', type: 'color', bg: '#000000', grad: '#1a1a1a', text: '#fff' },
+    { name: 'White', type: 'color', bg: '#ffffff', text: '#000000' },
+    { name: 'Gray', type: 'color', bg: '#808080', text: '#fff' },
+    { name: 'Black', type: 'color', bg: '#000000', text: '#fff' },
+    { name: 'Off White', type: 'color', bg: '#fafafa', text: '#3c3c3c' },
+    { name: 'Dim Gray', type: 'color', bg: '#696969', text: '#fff' },
+    { name: 'Dark Gray', type: 'color', bg: '#a9a9a9', text: '#fff' },
+    { name: 'Slate Gray', type: 'color', bg: '#708090', text: '#fff' },
+    { name: 'Light Slate Gray', type: 'color', bg: '#778899', text: '#fff' },
+    { name: 'Dark Slate Gray', type: 'color', bg: '#2f4f4f', text: '#fff' },
+    { name: 'Snow', type: 'color', bg: '#FFFAFA', text: '#3c3c3c' },
+    { name: 'Ivory', type: 'color', bg: '#FFFFF0', text: '#3c3c3c' },
+    { name: 'Gainsboro', type: 'color', bg: '#DCDCDC', text: '#3c3c3c' },
+    { name: 'Alice Blue', type: 'color', bg: '#F0F8FF', text: '#3c3c3c' },
+    { name: 'Ghost White', type: 'color', bg: '#F8F8FF', text: '#3c3c3c' },
+    { name: 'Dark White', type: 'color', bg: '#F1F1F1', text: '#3c3c3c' },
+    { name: 'Midnight Blue', type: 'color', bg: '#191970', text: '#fff' },
+    { name: 'Dark Blue', type: 'color', bg: '#00008b', text: '#fff' },
+    { name: 'Steel Blue', type: 'color', bg: '#4682b4', text: '#fff' },
+    { name: 'Dark Steel Blue', type: 'color', bg: '#483d8b', text: '#fff' },
+    { name: 'Light Steel Blue', type: 'color', bg: '#b0c4de', text: '#3c3c3c' }
+  ],
   // 100 THEMES IN TOTAL, organized by category
   'Gradient': [
     { name: 'Aurora', type: 'color', bg: '#a8cdf1', grad: '#f7b7b9', text: '#0b3c61' },
@@ -346,8 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize all sections
   initMusicPlayer();
   initThemeSwitcher();
-  initDrawingPadLogic(); // Note: Changed to Logic
-  initBubbleGameLogic(); // Note: Changed to Logic
+  initDrawingPadLogic();
+  initBubbleGameLogic();
   initChatbot();
 
   // Handle back button on mobile
@@ -472,9 +510,10 @@ function showMessageBox(title, message, buttonText) {
 function initThemeSwitcher() {
   const themesGrid = document.getElementById('themes-grid');
   const categoryTabs = document.getElementById('theme-category-tabs');
-  const categories = ['Gradient', 'Pastel', 'Metallic', 'Animated', 'Poster', 'Gallery', 'Upload'];
+  const themesPanel = document.getElementById('themes-panel');
+  const categories = ['Grayscale', 'Gradient', 'Pastel', 'Metallic', 'Animated', 'Poster', 'Gallery', 'Upload'];
   
-  let currentCategory = 'Gradient';
+  let currentCategory = 'Grayscale';
 
   // Load saved gallery themes from local storage
   let savedGalleryThemes = JSON.parse(localStorage.getItem(savedGalleryThemesKey)) || [];
@@ -521,418 +560,524 @@ function initThemeSwitcher() {
       const themeLabel = document.createElement('div');
       themeLabel.className = 'theme-box-label';
       themeLabel.textContent = theme.name;
+      box.appendChild(themeLabel);
 
       if (theme.type === 'color') {
-        box.style.background = `linear-gradient(90deg, ${theme.bg} 0%, ${theme.grad} 100%)`;
-        box.onclick = () => applyTheme(theme);
+        const bgDiv = document.createElement('div');
+        bgDiv.style.background = `linear-gradient(135deg, ${theme.bg} 0%, ${theme.grad || theme.bg} 100%)`;
+        bgDiv.style.width = '100%';
+        bgDiv.style.height = '100%';
+        box.appendChild(bgDiv);
       } else if (theme.type === 'animated') {
-        box.style.background = `linear-gradient(90deg, ${theme.grad})`;
-        box.onclick = () => applyTheme(theme);
+        box.style.background = `linear-gradient(270deg, ${theme.grad})`;
+        box.style.backgroundSize = '400% 400%';
+        box.style.animation = 'gradientAnimation 10s ease infinite';
       } else if (theme.type === 'gallery') {
         box.classList.add('gallery-theme');
         box.style.backgroundImage = `url(${theme.dataUrl})`;
         box.style.backgroundSize = 'cover';
         box.style.backgroundPosition = 'center';
-        box.onclick = () => applyTheme(theme);
       } else if (theme.type === 'gallery-save') {
-        box.style.background = 'repeating-linear-gradient(45deg, #eee, #eee 10px, #ccc 10px, #ccc 20px)';
-        box.onclick = () => {
-          showMessageBox('Heads Up!', 'Go to the Drawing Pad and press the "Save as Theme" button to add your masterpiece here.🖼️', 'Got it!')
-        };
+        box.textContent = '+';
+        box.style.fontSize = '40px';
+        box.style.display = 'flex';
+        box.style.justifyContent = 'center';
+        box.style.alignItems = 'center';
+        box.style.backgroundColor = 'rgba(0,0,0,0.05)';
+        box.style.border = '2px dashed rgba(0,0,0,0.2)';
       } else if (theme.type === 'upload') {
-        box.style.background = 'repeating-linear-gradient(45deg, #eee, #eee 10px, #ccc 10px, #ccc 20px)';
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.position = 'absolute';
-        fileInput.style.inset = '0';
-        fileInput.style.opacity = '0';
-        fileInput.style.cursor = 'pointer';
-        fileInput.onchange = (e) => handleUpload(e);
-        box.appendChild(fileInput);
+        box.classList.add('upload-theme');
       }
-      
-      box.appendChild(themeLabel);
+
+      box.onclick = () => {
+        if (theme.type === 'gallery-save') {
+          toggleThemes();
+          showScreen('draw');
+          showMessageBox('Draw a Theme', 'Use the drawing pad to create a custom background, then click "Save as Theme".', 'OK');
+        } else if (theme.type === 'upload') {
+          // Trigger file input for upload
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const dataUrl = event.target.result;
+                savedGalleryThemes.unshift(dataUrl); // Add to the beginning
+                localStorage.setItem(savedGalleryThemesKey, JSON.stringify(savedGalleryThemes));
+                // Immediately apply the new theme
+                applyTheme({ type: 'gallery', dataUrl: dataUrl });
+                // Re-render gallery with new theme
+                renderThemes('Gallery');
+              };
+              reader.readAsDataURL(file);
+            }
+          };
+          fileInput.click();
+        } else {
+          applyTheme(theme);
+          // Highlight the active theme box
+          document.querySelectorAll('.theme-box').forEach(b => b.classList.remove('active'));
+          box.classList.add('active');
+        }
+      };
       themesGrid.appendChild(box);
     });
   }
 
-  function handleUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      applyTheme({ type: 'upload', dataUrl: event.target.result });
-    };
-    reader.readAsDataURL(file);
-  }
-
-  window.applyTheme = function(theme) {
+  function applyTheme(theme) {
     const root = document.documentElement;
     const body = document.body;
-    body.style.backgroundImage = 'none';
+
+    // Reset properties and classes
+    root.style.removeProperty('--accent-grad');
+    root.style.removeProperty('--text');
+    root.style.removeProperty('--muted');
+    root.style.removeProperty('--glass-bg');
+    root.style.removeProperty('--glass-border');
+    body.style.background = '';
     body.classList.remove('animated-theme');
 
     if (theme.type === 'color') {
-      root.style.setProperty('--accent-grad', `linear-gradient(90deg, ${theme.bg} 0%, ${theme.grad} 100%)`);
-      root.style.setProperty('--glass-bg', theme.text.startsWith('#fff') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.20)');
-      root.style.setProperty('--glass-border', theme.text.startsWith('#fff') ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.28)');
+      root.style.setProperty('--accent-grad', `linear-gradient(90deg, ${theme.grad || theme.bg} 0%, ${theme.bg} 100%)`);
       root.style.setProperty('--text', theme.text);
-      root.style.setProperty('--muted', theme.text.startsWith('#fff') ? 'rgba(255,255,255,0.65)' : 'rgba(11,60,97,0.65)');
+      root.style.setProperty('--muted', hexToRgba(theme.text, 0.65));
       body.style.backgroundColor = theme.bg;
     } else if (theme.type === 'animated') {
-      root.style.setProperty('--accent-grad', `linear-gradient(90deg, ${theme.grad})`);
-      root.style.setProperty('--glass-bg', theme.text.startsWith('#fff') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.20)');
-      root.style.setProperty('--glass-border', theme.text.startsWith('#fff') ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.28)');
-      root.style.setProperty('--text', theme.text);
-      root.style.setProperty('--muted', theme.text.startsWith('#fff') ? 'rgba(255,255,255,0.65)' : 'rgba(11,60,97,0.65)');
       body.classList.add('animated-theme');
-    } else if (theme.type === 'gallery' || theme.type === 'upload') {
-      const defaultText = '#0b3c61'; // A color that works well on most images
-      root.style.setProperty('--accent-grad', `linear-gradient(90deg, #a8cdf1 0%, #f7b7b9 100%)`);
-      root.style.setProperty('--text', defaultText);
-      root.style.setProperty('--glass-bg', 'rgba(255,255,255,0.20)');
-      root.style.setProperty('--glass-border', 'rgba(255,255,255,0.28)');
+      body.style.backgroundImage = `linear-gradient(270deg, ${theme.grad})`;
+      root.style.setProperty('--text', theme.text);
+      root.style.setProperty('--muted', hexToRgba(theme.text, 0.65));
+      root.style.setProperty('--accent-grad', `linear-gradient(90deg, #fff, ${theme.grad.split(',')[0].trim()})`);
+    } else if (theme.type === 'gallery') {
+      root.style.setProperty('--accent-grad', 'linear-gradient(90deg, #a8cdf1 0%,#f7b7b9 100%)');
+      root.style.setProperty('--text', '#0b3c61');
       root.style.setProperty('--muted', 'rgba(11,60,97,0.65)');
       body.style.backgroundImage = `url(${theme.dataUrl})`;
       body.style.backgroundSize = 'cover';
       body.style.backgroundPosition = 'center';
-      body.style.backgroundAttachment = 'fixed';
+      body.style.backgroundRepeat = 'no-repeat';
+      body.style.transition = 'none'; // Disable transition for images
     }
+
+    // Set glass properties for gallery themes
+    if (theme.type === 'gallery') {
+      root.style.setProperty('--glass-bg', 'rgba(255,255,255,0.4)');
+      root.style.setProperty('--glass-border', 'rgba(255,255,255,0.5)');
+    } else {
+      root.style.setProperty('--glass-bg', 'rgba(255,255,255,0.20)');
+      root.style.setProperty('--glass-border', 'rgba(255,255,255,0.28)');
+    }
+
+    currentTheme = theme;
+    
+    // Update active state of button
+    const activeCategoryButton = document.querySelector('.theme-category-tabs button.active');
+    if (activeCategoryButton) {
+        activeCategoryButton.classList.remove('active');
+    }
+    document.querySelector(`.theme-category-tabs button:first-child`).classList.add('active');
+  }
   
-    // Update active theme box
-    document.querySelectorAll('.theme-box').forEach(box => box.classList.remove('active'));
-    // This part is tricky for dynamic themes, but we can do it by theme name/type for now.
-    // In a real app, you would use a unique ID.
-    document.querySelector(`.theme-box[data-theme-name="${theme.name}"]`)?.classList.add('active');
-  };
-
   window.toggleThemes = function() {
-    const panel = document.getElementById('themes-panel');
-    panel.classList.toggle('active');
-    if (panel.classList.contains('active')) {
-      renderCategories();
-      renderThemes(currentCategory);
-    }
+    themesPanel.classList.toggle('active');
   };
 
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  
   renderCategories();
   renderThemes(currentCategory);
 }
 
+
 // --- Drawing Pad ---
 function initDrawingPadLogic() {
-    const canvas = document.getElementById('draw-canvas');
-    const ctx = canvas.getContext('2d');
-    const brushSizeInput = document.getElementById('brush-size');
-    const brushColorInput = document.getElementById('brush-color');
-    const eraserToggle = document.getElementById('eraser-toggle');
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
+  const canvas = document.getElementById('draw-canvas');
+  const ctx = canvas.getContext('2d');
+  const brushSizeInput = document.getElementById('brush-size');
+  const brushColorInput = document.getElementById('brush-color');
+  const eraserToggle = document.getElementById('eraser-toggle');
+  
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
 
-    function resizeCanvas() {
-        const rect = canvas.parentNode.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+  // Set initial canvas size
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.lineCap = 'round';
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function draw(e) {
+    if (!isDrawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    [lastX, lastY] = [x, y];
+  }
+
+  // Mouse event listeners
+  canvas.addEventListener('mousedown', (e) => {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+  });
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', () => isDrawing = false);
+  canvas.addEventListener('mouseout', () => isDrawing = false);
+
+  // Touch event listeners
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent scrolling
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+  });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault(); // Prevent scrolling
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    draw({ clientX: x, clientY: y });
+  });
+  canvas.addEventListener('touchend', () => isDrawing = false);
+
+  brushSizeInput.addEventListener('input', () => {
+    ctx.lineWidth = brushSizeInput.value;
+  });
+
+  brushColorInput.addEventListener('input', () => {
+    ctx.strokeStyle = brushColorInput.value;
+    eraserToggle.checked = false;
+    ctx.globalCompositeOperation = 'source-over';
+  });
+
+  eraserToggle.addEventListener('change', () => {
+    if (eraserToggle.checked) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+      ctx.lineWidth = brushSizeInput.value;
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = brushColorInput.value;
     }
+  });
+  
+  // Set initial drawing properties
+  ctx.lineWidth = brushSizeInput.value;
+  ctx.strokeStyle = brushColorInput.value;
+  
+  // Expose global functions
+  window.clearCanvas = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  window.saveDrawingAsTheme = function() {
+    const dataUrl = canvas.toDataURL('image/png');
+    const savedThemes = JSON.parse(localStorage.getItem(savedGalleryThemesKey)) || [];
+    // Add the new image to the front of the array
+    savedThemes.unshift(dataUrl);
+    // Limit to 10 saved themes
+    if (savedThemes.length > 10) {
+      savedThemes.pop();
+    }
+    localStorage.setItem(savedGalleryThemesKey, JSON.stringify(savedThemes));
+    showMessageBox('Drawing Saved!', 'Your drawing has been saved as a new theme in the "Gallery" tab.', 'Awesome!');
     
-    function startDrawing(e) {
-        isDrawing = true;
-        [lastX, lastY] = getCoords(e);
+    // Change to gallery tab and apply the new theme
+    const galleryTab = document.querySelector('.theme-category-tabs button:nth-child(7)'); // 'Gallery' is the 7th button
+    if (galleryTab) {
+      galleryTab.click();
     }
-
-    function draw(e) {
-        if (!isDrawing) return;
-        e.preventDefault();
-
-        const [currentX, currentY] = getCoords(e);
-
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(currentX, currentY);
-        ctx.lineWidth = brushSizeInput.value;
-
-        if (eraserToggle.checked) {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.strokeStyle = 'rgba(255,255,255,1)';
-        } else {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColorInput.value;
-        }
-
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        [lastX, lastY] = [currentX, currentY];
-    }
-
-    function stopDrawing() {
-        isDrawing = false;
-    }
-
-    function getCoords(e) {
-        const rect = canvas.getBoundingClientRect();
-        let x, y;
-        if (e.touches) {
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
-        } else {
-            x = e.clientX - rect.left;
-            y = e.clientY - rect.top;
-        }
-        return [x, y];
-    }
-
-    function startDrawingPad() {
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-    }
-
-    function stopDrawingPad() {
-        window.removeEventListener('resize', resizeCanvas);
-        canvas.removeEventListener('mousedown', startDrawing);
-        canvas.removeEventListener('mousemove', draw);
-        canvas.removeEventListener('mouseup', stopDrawing);
-        canvas.removeEventListener('mouseout', stopDrawing);
-        canvas.removeEventListener('touchstart', startDrawing);
-        canvas.removeEventListener('touchmove', draw);
-        canvas.removeEventListener('touchend', stopDrawing);
-    }
-
-    window.clearCanvas = function() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
-    
-    window.saveDrawingAsTheme = function() {
-        const drawingDataUrl = canvas.toDataURL('image/png');
-        let savedThemes = JSON.parse(localStorage.getItem(savedGalleryThemesKey)) || [];
-        savedThemes.push(drawingDataUrl);
-        localStorage.setItem(savedGalleryThemesKey, JSON.stringify(savedThemes));
-        showMessageBox('Saved!', 'Your drawing is now a theme in the "Gallery" section. 🖼️', 'Awesome!');
-    };
-
-    // Use a MutationObserver to manage drawing pad lifecycle
-    const drawScreen = document.getElementById('draw');
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class' && drawScreen.classList.contains('active')) {
-                startDrawingPad();
-            } else if (mutation.attributeName === 'class' && !drawScreen.classList.contains('active')) {
-                stopDrawingPad();
-            }
-        });
-    });
-    observer.observe(drawScreen, { attributes: true });
+  };
 }
+
 
 // --- Bubble Pop Game ---
 function initBubbleGameLogic() {
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
-  const scoreDisplay = document.getElementById('score');
+  const scoreEl = document.getElementById('score');
   const startGameBtn = document.getElementById('start-game-btn');
-  let bubbles = [];
+  
   let score = 0;
-  let gameInterval;
-  let bubbleCreationInterval;
-  let gameRunning = false;
+  let bubbles = [];
+  let isGameOver = false;
+  let lastFrameTime = 0;
+  const bubbleSpawnInterval = 1000; // milliseconds
+  let timeSinceLastBubble = 0;
 
-  function resizeCanvas() {
-    const rect = canvas.parentNode.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+  class Bubble {
+    constructor(x, y, r, color, speed) {
+      this.x = x;
+      this.y = y;
+      this.r = r;
+      this.color = color;
+      this.speed = speed;
+      this.isPopped = false;
+    }
+    
+    draw() {
+      if (this.isPopped) return;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = this.color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.closePath();
+    }
+    
+    update() {
+      this.y -= this.speed;
+    }
+    
+    isOffScreen() {
+      return this.y + this.r < 0;
+    }
+  }
+
+  function spawnBubble() {
+    const r = Math.random() * 20 + 15; // Radius between 15 and 35
+    const x = Math.random() * (canvas.width - 2 * r) + r;
+    const y = canvas.height + r;
+    const color = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.6)`;
+    const speed = Math.random() * 2 + 1; // Speed between 1 and 3
+    bubbles.push(new Bubble(x, y, r, color, speed));
   }
   
-  function createBubble() {
-    const radius = 15 + Math.random() * 20;
-    const x = Math.random() * (canvas.width - radius * 2) + radius;
-    const y = canvas.height + radius;
-    const speed = 1 + Math.random() * 2;
-    const color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-    bubbles.push({ x, y, radius, speed, color });
-  }
-
-  function updateGame() {
-    if (!gameRunning) return;
-
+  function updateAndDrawBubbles(deltaTime) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Update and draw bubbles
     for (let i = bubbles.length - 1; i >= 0; i--) {
-      const bubble = bubbles[i];
-      bubble.y -= bubble.speed;
-
-      ctx.beginPath();
-      ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-      ctx.fillStyle = bubble.color;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.closePath();
+      bubbles[i].update();
+      bubbles[i].draw();
       
-      if (bubble.y + bubble.radius < 0) {
+      if (bubbles[i].isOffScreen()) {
         bubbles.splice(i, 1);
+        if (!isGameOver) {
+          endGame();
+        }
       }
     }
   }
 
-  function popBubble(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  function gameLoop(timestamp) {
+    if (isGameOver) return;
+    
+    const deltaTime = timestamp - lastFrameTime;
+    lastFrameTime = timestamp;
+    
+    timeSinceLastBubble += deltaTime;
+    if (timeSinceLastBubble > bubbleSpawnInterval) {
+      spawnBubble();
+      timeSinceLastBubble = 0;
+    }
 
+    updateAndDrawBubbles(deltaTime);
+    
+    requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    isGameOver = true;
+    showMessageBox('Game Over!', `You missed a bubble. Your final score is: ${score}`, 'Play Again');
+    bubbles = [];
+    startGameBtn.textContent = 'Play Again 🚀';
+    startGameBtn.style.display = 'block';
+  }
+
+  window.startGame = function() {
+    score = 0;
+    scoreEl.textContent = score;
+    bubbles = [];
+    isGameOver = false;
+    startGameBtn.style.display = 'none';
+    lastFrameTime = performance.now();
+    requestAnimationFrame(gameLoop);
+  }
+  
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    if (!isGameOver) {
+      updateAndDrawBubbles();
+    }
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function handleInteraction(x, y) {
+    if (isGameOver) return;
+    
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const bubble = bubbles[i];
       const dist = Math.sqrt((x - bubble.x) ** 2 + (y - bubble.y) ** 2);
-      if (dist < bubble.radius) {
-        score++;
-        scoreDisplay.textContent = score;
+      if (dist < bubble.r) {
+        // Bubble is "popped"
+        bubble.isPopped = true;
         bubbles.splice(i, 1);
+        score++;
+        scoreEl.textContent = score;
         break;
       }
     }
   }
 
-  window.startGame = function() {
-    if (gameRunning) return;
-    gameRunning = true;
-    score = 0;
-    scoreDisplay.textContent = score;
-    bubbles = [];
-    gameInterval = setInterval(updateGame, 1000 / 60);
-    bubbleCreationInterval = setInterval(createBubble, 800);
-    canvas.addEventListener('click', popBubble);
-    startGameBtn.style.display = 'none';
-  };
-  
-  window.stopGame = function() {
-    gameRunning = false;
-    clearInterval(gameInterval);
-    clearInterval(bubbleCreationInterval);
-    canvas.removeEventListener('click', popBubble);
-    startGameBtn.style.display = 'block';
-  };
-
-  // Use a MutationObserver to manage game lifecycle
-  const gameScreen = document.getElementById('game');
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.attributeName === 'class' && gameScreen.classList.contains('active')) {
-        // Game starts only when the user clicks 'Start Game'
-        stopGame(); // Ensures a clean state
-      } else if (mutation.attributeName === 'class' && !gameScreen.classList.contains('active')) {
-        stopGame();
-      }
-    });
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    handleInteraction(x, y);
   });
-  observer.observe(gameScreen, { attributes: true });
+  
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleInteraction(x, y);
+  });
+  
+  startGameBtn.addEventListener('click', () => {
+    startGame();
+  });
 }
-
 
 // --- Chatbot ---
 function initChatbot() {
-  const chatBox = document.getElementById('chat-box');
-  const chatInput = document.getElementById('chat-input');
-  const moodHeader = document.getElementById('current-mood-header');
-  const apiKey = "";
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    const chatInput = document.getElementById('chat-input');
+    const chatBox = document.getElementById('chat-box');
+    const sendButton = document.querySelector('.chat-input-container button');
+    
+    let chatHistory = [];
 
-  let currentMood = 'default';
+    window.sendMessage = async function() {
+        const text = chatInput.value.trim();
+        if (text === '') return;
 
-  const defaultResponses = {
-    'default': "Hello! I'm here to help you. What's on your mind? ✨",
-    'happy': "That's wonderful! I'm so happy for you. 😄",
-    'sad': "I'm sorry you feel this way. It's okay to be sad. 😔",
-    'angry': "I hear that you're angry. That's a valid feeling. 😡",
-    'nervous': "I understand you feel nervous. Take a deep breath. 😥"
-  };
+        addMessage('user', text);
+        chatHistory.push({ role: 'user', parts: [{ text: text }] });
+        
+        chatInput.value = '';
+        chatInput.disabled = true;
+        sendButton.disabled = true;
+        
+        const loadingMessage = addMessage('bot', 'AuraAI is thinking...');
 
-  window.setMood = function(mood) {
-    currentMood = mood;
-    const moodBtns = document.querySelectorAll('.mood-btn');
-    moodBtns.forEach(btn => btn.style.transform = 'translateY(0)');
-    const selectedBtn = document.querySelector(`.mood-btn.${mood}`);
-    if (selectedBtn) {
-      selectedBtn.style.transform = 'scale(1.1) translateY(-2px)';
-      moodHeader.textContent = defaultResponses[mood];
+        try {
+            const payload = {
+                contents: chatHistory
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const response = await fetchWithRetry(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            removeMessage(loadingMessage);
+
+            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                const botResponse = result.candidates[0].content.parts[0].text;
+                addMessage('bot', botResponse);
+                chatHistory.push({ role: 'model', parts: [{ text: botResponse }] });
+            } else {
+                console.error('API response was malformed:', result);
+                const fallbackMessage = "Hmm, I'm having a little trouble thinking right now. Could you please try asking in a different way?";
+                addMessage('bot', fallbackMessage);
+                chatHistory.push({ role: 'model', parts: [{ text: fallbackMessage }] });
+            }
+
+        } catch (error) {
+            console.error('API Error:', error);
+            removeMessage(loadingMessage);
+            const errorMessage = "It looks like there's a problem with the connection right now. Let's try again in a bit!";
+            addMessage('bot', errorMessage);
+            chatHistory.push({ role: 'model', parts: [{ text: errorMessage }] });
+        } finally {
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            chatInput.focus();
+        }
+    };
+    
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    function addMessage(sender, text, isTemp = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message', sender);
+        msgDiv.textContent = text;
+        if (isTemp) {
+            msgDiv.dataset.temp = 'true';
+        }
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return msgDiv;
     }
-  };
-
-  async function sendMessage() {
-    const userMessage = chatInput.value.trim();
-    if (userMessage === '') return;
-
-    // Add user message to chat box
-    addMessage(userMessage, 'user');
-    chatInput.value = '';
-    chatInput.disabled = true;
-
-    // Show a loading message
-    const botMessageElement = addMessage('...', 'bot');
-
-    try {
-      const prompt = `Based on the user's message and their current mood, provide a short, supportive, and direct response. The user's mood is '${currentMood}'. The user says: '${userMessage}'`;
-      const payload = {
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      };
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      let botResponse = "I'm sorry, I couldn't generate a response right now. Please try again.";
-      if (result.candidates && result.candidates.length > 0 &&
-          result.candidates[0].content && result.candidates[0].content.parts &&
-          result.candidates[0].content.parts.length > 0) {
-        botResponse = result.candidates[0].content.parts[0].text;
-      }
-      
-      // Update the loading message with the real response
-      botMessageElement.textContent = botResponse;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    } catch (error) {
-      console.error("Error calling Gemini API:", error);
-      botMessageElement.textContent = "I'm having trouble connecting right now. Let's try again in a bit.";
-    } finally {
-      chatInput.disabled = false;
-      chatInput.focus();
+    
+    function removeMessage(msgDiv) {
+        if (msgDiv && msgDiv.parentNode) {
+            msgDiv.parentNode.removeChild(msgDiv);
+        }
     }
-  }
-
-  function addMessage(text, sender) {
-    const msgElement = document.createElement('div');
-    msgElement.className = `message ${sender}`;
-    msgElement.textContent = text;
-    chatBox.appendChild(msgElement);
-    chatBox.scrollTop = chatBox.scrollHeight;
-    return msgElement;
-  }
-
-  window.sendMessage = sendMessage;
-
-  chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
+    
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        let retries = 0;
+        while (true) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429) {
+                    if (retries < maxRetries) {
+                        retries++;
+                        const delay = Math.pow(2, retries) * 1000;
+                        await new Promise(res => setTimeout(res, delay));
+                        continue;
+                    }
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries < maxRetries) {
+                    retries++;
+                    const delay = Math.pow(2, retries) * 1000;
+                    await new Promise(res => setTimeout(res, delay));
+                    continue;
+                }
+                throw error;
+            }
+        }
     }
-  });
-
-  // Initial greeting
-  addMessage(defaultResponses['default'], 'bot');
 }
 </script>
 </body>
