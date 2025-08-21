@@ -1,634 +1,741 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Aura AI — All in One</title>
+<title>AuraAI — All‑In‑One</title>
+
+<!-- TF.js + MobileNet (client will fetch these from CDN at runtime) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
+
 <style>
-/* (Style kept compact to preserve your look) */
-:root{
-  --bot-bg:#d6e6fb; --bot-fg:#074279;
-  --user-bg:#517fc4; --user-fg:#e8f3fc;
-  --glass-bg: rgba(255,255,255,0.20);
-  --glass-border: rgba(255,255,255,0.28);
-  --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
-  --glass-blur: blur(18px);
-  --pad:20px; --radius:18px; --motion-scale:0.75;
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{
-  margin:0;font-family:"Comic Neue",Arial,sans-serif;color:#0b3c61;
-  background:#a8cdf1;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;
-}
-/* screens */
-.screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
-.screen.active{display:grid}
-.glass{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
-.btn{border:0;cursor:pointer;border-radius:14px;padding:14px 18px;font-weight:800;font-size:16px;color:#0b3c61;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.7);transition:filter .18s,transform .18s}
-.btn:hover{filter:brightness(.92);transform:translateY(-1px)}
+  /* ========== macOS Tahoe - inspired glass UI ========== */
+  :root{
+    --glass-bg: rgba(255,255,255,0.18);
+    --glass-border: rgba(255,255,255,0.28);
+    --accent: #1e88e5;
+    --radius: 22px;
+    --pad: 18px;
+    --muted: #6b7a90;
+    --text: #07203a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, "SF Pro Text", "San Francisco", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  body{
+    background: linear-gradient(180deg,#e6f0ff 0%, #f7eef7 100%);
+    display:flex;align-items:center;justify-content:center;
+    padding:28px;color:var(--text);-webkit-font-smoothing:antialiased;
+  }
+  /* Root container keeps your original three-app layout */
+  .app-shell{ width:min(1160px,96vw); height:min(820px,92vh); position:relative; border-radius:28px; overflow:hidden; box-shadow:0 20px 60px rgba(9,30,66,.18); display:grid; grid-template-columns: 1fr; grid-auto-rows:1fr; }
 
-/* Hello */
-.hello-wrap{width:min(980px,92vw);border-radius:var(--radius);padding:28px;text-align:center}
-.hello-text{font-weight:900;line-height:1;user-select:none;margin:14px 0 8px;font-size:clamp(42px,8vw,92px);letter-spacing:1px;background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:hueflow 12s linear infinite;filter:saturate(.9)}
-@keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
-.hello-sub{font-size:clamp(16px,2.6vw,22px);opacity:.9;margin-bottom:18px}
-.hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.hint{margin-top:14px;font-size:14px;opacity:.8}
+  /* Top navigation area */
+  .topbar{ height:84px; display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08)); border-bottom:1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+  .brand{ font-weight:800; font-size:20px; letter-spacing:0.6px; display:flex; gap:12px; align-items:center; }
+  .brand .logo{ width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#ffffff,#e6f0ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--accent); box-shadow:0 6px 18px rgba(30,136,229,.12) }
+  .nav{ margin-left:auto; display:flex; gap:8px; align-items:center; }
 
-/* Game */
-.game-wrap{width:min(1000px,95vw);height:min(70vh,680px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.left-group,.right-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.title{font-weight:900;font-size:20px}
-.game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.55)}
-#gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5)}
+  /* Main content area with three 'apps' stacked like before (keeps original screens) */
+  .main{ position:relative; height:calc(100% - 84px); background:transparent; display:grid; place-items:center; }
 
-/* Draw */
-.draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px}
-.brush{display:flex;align-items:center;gap:8px;font-weight:800;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px}
-.swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-.picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
-.draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.65);outline:2px solid rgba(255,255,255,.5)}
-.draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+  .screen{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; padding:var(--pad); }
+  .screen.active{ display:flex; }
+  .glass{
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius);
+    padding:18px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
 
-/* Chat */
-.chat-container{width:min(980px,92vw);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px}
-.header-controls{display:flex;gap:10px;align-items:center}
-.mood-header{flex:1;text-align:center;font-weight:900;font-size:22px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.4)}
-.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.mood-selector{display:flex;gap:10px;flex-wrap:wrap}
-.mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:16px;transition:transform .18s,box-shadow .18s}
-.mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
-#moodHint{opacity:.85;font-size:14px}
-#chat-box{flex:1;min-height:280px;max-height:52vh;overflow-y:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.55)}
-.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;border:2px solid transparent;font-size:18px}
-.message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right;border:1px solid rgba(255,255,255,0.25)}
-.input-footer{position:relative;display:none}
-#user-input{width:100%;padding:16px 120px 16px 14px;border-radius:12px;border:1px solid #a9c8e8;background:rgba(255,255,255,.72);font-size:18px;color:#0b3c61;outline:none}
-#send-btn{position:absolute;right:6px;top:6px;bottom:6px;width:108px;color:#fff;background:#88b7e5}
+  /* Hello card */
+  .hello-card{ width:100%; max-width:980px; text-align:center; border-radius:20px; padding:28px; }
+  .hello-title{ font-size:44px; font-weight:900; margin:6px 0; background:linear-gradient(90deg,#fff,#fde7f0,#dff0ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hello-sub{ font-size:16px; margin-bottom:18px; color:var(--muted) }
 
-/* Themes */
-.themes-panel{position:fixed;top:0;right:0;height:100%;width:0;opacity:0;pointer-events:none;z-index:1000;transition:width .28s,opacity .2s;display:flex;flex-direction:column}
-.themes-panel.open{width:320px;opacity:1;pointer-events:auto}
-.panel-shell{height:100%;display:flex;flex-direction:column}
-.themes-head{display:flex;align-items:center;justify-content:space-between;padding:12px;font-weight:900}
-.themes-body{padding:12px;overflow-y:auto;flex:1}
-.swatch-strip{display:flex;flex-direction:column;gap:12px}
-.group-title{font-weight:900;font-size:14px;opacity:.85;padding-left:4px}
-.swatch-row{display:flex;gap:10px;flex-wrap:wrap}
-.theme-btn{width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18);transition:transform .12s}
-.theme-btn:hover{transform:scale(1.08)}
+  .actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
+  .btn{ background:linear-gradient(90deg,#eaf5ff,#fff0f6); padding:12px 18px; border-radius:12px; border:0; cursor:pointer; font-weight:800; box-shadow:0 6px 18px rgba(15,80,170,.08); color:var(--text) }
+  .btn:active{ transform:translateY(1px) }
 
-.miniplayer{position:fixed;right:14px;bottom:14px;z-index:1200;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px}
-.mini-btn{border:0;cursor:pointer;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:rgba(255,255,255,.6);box-shadow:0 4px 8px rgba(0,0,0,.15)}
-.mini-meta{display:flex;flex-direction:column;gap:4px;min-width:170px;max-width:240px}
-.mini-progress{appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(255,255,255,.6);outline:none;cursor:pointer}
+  /* Game UI — keep the same proportions as your original */
+  .game-wrap{ width:min(1000px,96%); height:min(680px,74vh); display:flex; flex-direction:column; gap:12px; }
+  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .title{ font-weight:900 }
+  canvas#gameCanvas{ width:100%; height:100%; border-radius:14px; display:block; background:linear-gradient(135deg,#eaf6ff,#f6f0ff); outline:2px solid rgba(255,255,255,.5) }
 
-/* Flow overlay (challenge UI) */
-.flow-pad{position:absolute;left:16px;bottom:16px;z-index:900;display:flex;flex-direction:column;gap:8px;max-width:min(560px,80vw);padding:10px 12px;border-radius:14px}
-.flow-q{font-weight:900;font-size:16px}
-.flow-actions{display:flex;gap:8px;flex-wrap:wrap}
-.chip{border:0;cursor:pointer;border-radius:12px;padding:10px 14px;font-weight:800;background:rgba(255,255,255,.65)}
-.chip:hover{filter:brightness(.95)}
+  .game-stats{ display:flex; gap:10px; align-items:center; }
+  .stat{ background:rgba(255,255,255,.6); padding:8px 12px; border-radius:12px; font-weight:800; }
 
-@media(max-width:880px){
-  .mood-selector{flex-wrap:wrap}
-  .header-controls{flex-wrap:wrap}
-  .miniplayer{right:10px;left:10px;bottom:10px}
-}
+  /* Level UI */
+  .level-panel{ display:flex; gap:8px; align-items:center }
+  .badge{ background:linear-gradient(90deg,#ffefc7,#ffd9a8); padding:8px 12px;border-radius:10px;font-weight:800 }
+
+  /* Drawing UI */
+  .draw-wrap{ width:min(1100px,96%); height:min(740px,80vh); display:flex; flex-direction:column; gap:12px; }
+  .draw-toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+  .draw-canvas{ flex:1; border-radius:14px; background:rgba(255,255,255,.92); outline:2px solid rgba(0,0,0,.06); }
+  .draw-bottom{ display:flex; justify-content:space-between; gap:8px; align-items:center }
+
+  /* Challenge card integrated into UI (no bottom-left hack) */
+  .challenge-card{
+    display:flex; gap:12px; align-items:center; padding:12px; border-radius:14px; background:rgba(255,255,255,.6);
+    box-shadow:0 8px 24px rgba(17,24,39,.06); min-width:360px;
+  }
+  .challenge-title{ font-weight:900; font-size:14px }
+  .chips{ display:flex; gap:8px }
+  .chip{ padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.9); font-weight:800; border:1px solid rgba(0,0,0,.04); cursor:pointer }
+
+  /* Chat UI — app-like bubble card */
+  .chat-wrap{ width:min(980px,96%); height:min(740px,80vh); display:flex; flex-direction:column; gap:12px; border-radius:18px; overflow:hidden }
+  .chat-top{ display:flex; align-items:center; gap:10px; padding:10px; background:linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.12)); }
+  .mood-dock{ display:flex; gap:8px; align-items:center }
+  .mood-btn{ border-radius:12px; padding:8px 10px; border:0; cursor:pointer; font-weight:800 }
+  .chat-body{ flex:1; padding:14px; overflow:auto; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); }
+  .bubble{ max-width:76%; padding:12px 14px; border-radius:14px; margin:8px 0; display:inline-block; line-height:1.35; box-shadow: 0 8px 20px rgba(6,18,38,.06) }
+  .bubble.bot{ background: linear-gradient(90deg,#f6f9ff,#eaf6ff); color:#052239; border-radius:16px 16px 16px 4px; }
+  .bubble.user{ background:linear-gradient(90deg,#1e88e5,#1358a6); color:white; align-self:flex-end; border-radius:16px 16px 4px 16px; }
+  .bubble.fade-in{ animation:fadeIn .28s ease both }
+  @keyframes fadeIn{ from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+
+  .chat-input-row{ display:flex; gap:8px; padding:12px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)) }
+  .text-field{ flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:white }
+
+  /* Mini player */
+  .mini-player{ position:fixed; right:20px; bottom:20px; z-index:2400; display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.88); box-shadow:0 18px 40px rgba(10,20,40,.08) }
+  .progress{ width:220px; appearance:none; height:6px; border-radius:6px; background:linear-gradient(90deg,#e6f0ff,#ffdede) }
+
+  /* Themes panel (system preferences style) */
+  .themes-panel{ position:fixed; left:20px; top:20px; width:320px; max-height:84vh; overflow:auto; padding:12px; border-radius:14px; background:rgba(255,255,255,.8); box-shadow:0 20px 60px rgba(7,20,40,.12) }
+  .theme-group{ margin-bottom:12px }
+  .theme-grid{ display:flex; gap:8px; flex-wrap:wrap }
+  .theme-swatch{ width:64px; height:48px; border-radius:10px; cursor:pointer; border:1px solid rgba(0,0,0,.04); box-shadow:0 8px 20px rgba(0,0,0,.04); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:12px }
+
+  /* Misc */
+  .small{ font-size:13px; color:var(--muted) }
+  .hidden{ display:none }
+
+  @media (max-width:980px){
+    .app-shell{ width:96vw; height:92vh }
+    .themes-panel{ display:none }
+  }
 </style>
 </head>
 <body>
+  <div class="app-shell">
 
-<!-- HELLO -->
-<section id="hello-screen" class="screen active">
-  <div class="hello-wrap glass">
-    <div class="hello-text">AuraAI</div>
-    <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
-    <div class="hello-actions">
-      <button class="btn" id="goPlay">🎮 Play a Game</button>
-      <button class="btn" id="goDraw">🎨 Draw Something</button>
-      <button class="btn" id="goTalk">💬 Talk</button>
+    <!-- top bar -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <div style="font-size:13px;color:var(--muted)">Project</div>
+          <div style="font-weight:900">AuraAI</div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="small">macOS Tahoe • Self-contained</div>
+      </div>
     </div>
-    <div class="hint">You can always go back here from any screen.</div>
+
+    <!-- main area -->
+    <div class="main">
+      <!-- HELLO -->
+      <section id="hello" class="screen active">
+        <div class="glass hello-card">
+          <div class="hello-title">Hello — AuraAI</div>
+          <div class="hello-sub">Welcome. Pick an app: Bubble Pop (game), Draw (canvas challenge), or Talk (support bot).</div>
+          <div class="actions">
+            <button class="btn" id="btnPlay">🎮 Bubble Pop</button>
+            <button class="btn" id="btnDraw">🎨 Drawing Pad</button>
+            <button class="btn" id="btnChat">💬 Talk to Aura</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section id="game" class="screen">
+        <div class="glass game-wrap">
+          <div class="bar">
+            <div class="title">🫧 Bubble Pop — Level Mode</div>
+            <div class="game-stats">
+              <div class="stat">Level: <span id="levelTxt">1</span></div>
+              <div class="stat">Score: <span id="scoreTxt">0</span></div>
+              <div class="stat">Bubbles Popped: <span id="poppedTxt">0</span></div>
+              <div class="stat"><button class="btn" id="btnBackGame">⬅ Back</button></div>
+            </div>
+          </div>
+          <canvas id="gameCanvas"></canvas>
+
+          <div style="display:flex;gap:10px;margin-top:8px;align-items:center;justify-content:space-between">
+            <div class="small">Milestones: 25, 50, 100, 200, 500, 1000 — earn cheers & level unlocks</div>
+            <div>
+              <button class="btn" id="resetGame">Reset</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DRAW -->
+      <section id="draw" class="screen">
+        <div class="glass draw-wrap">
+          <div class="draw-toolbar">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="title">🎨 Drawing Pad — Challenges</div>
+              <div class="small">Choose "Try" or FreeStyle anytime</div>
+            </div>
+
+            <!-- integrated challenge card -->
+            <div style="margin-left:auto">
+              <div id="challengeCard" class="challenge-card" title="Try/No/Later controls">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div class="challenge-title" id="challengeText">Try drawing a cat</div>
+                  <div class="small">Auto-check: <span id="autoCheckState">ON</span></div>
+                </div>
+                <div class="chips" style="margin-left:12px">
+                  <button class="chip" id="btnOk">✅ OK</button>
+                  <button class="chip" id="btnNo">❌ No</button>
+                  <button class="chip" id="btnLater">⏭ Later</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <canvas id="drawCanvas" class="draw-canvas"></canvas>
+
+          <div class="draw-bottom">
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn" id="clearDraw">Clear</button>
+              <button class="btn" id="saveDraw">Save</button>
+              <button class="btn" id="newChallenge">🔄 New</button>
+              <label style="display:flex;align-items:center;gap:8px;margin-left:10px"><input type="checkbox" id="autoCheck" checked/> Auto‑Check</label>
+            </div>
+            <div class="small">Tip: Press OK to auto-check your drawing against the challenge</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section id="chat" class="screen">
+        <div class="glass chat-wrap">
+          <div class="chat-top">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#fff,#e6f0ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--accent)">A</div>
+              <div>
+                <div style="font-weight:900">AuraAI</div>
+                <div class="small">Support buddy • quick coping tools</div>
+              </div>
+            </div>
+            <div style="margin-left:auto" class="mood-dock">
+              <!-- Four emotions always present -->
+              <button class="mood-btn" id="mHappy">😊</button>
+              <button class="mood-btn" id="mSad">😢</button>
+              <button class="mood-btn" id="mAngry">😠</button>
+              <button class="mood-btn" id="mNerv">😰</button>
+              <button class="btn" id="btnBackChat">⬅ Back</button>
+            </div>
+          </div>
+
+          <div id="chatBody" class="chat-body"></div>
+
+          <div class="chat-input-row">
+            <input id="chatInput" class="text-field" placeholder="Type to Aura — or choose a mood" />
+            <button class="btn" id="sendChat">Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Themes panel -->
+      <div class="themes-panel glass" id="themesPanel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:900">Themes</div>
+          <div class="small">macOS Tahoe picker</div>
+        </div>
+
+        <!-- grouped themes -->
+        <div class="theme-group">
+          <div style="font-weight:800;margin-bottom:8px">Glassy</div>
+          <div class="theme-grid" id="themeGridGlassy"></div>
+        </div>
+        <div class="theme-group">
+          <div style="font-weight:800;margin-bottom:8px">Metallic</div>
+          <div class="theme-grid" id="themeGridMetallic"></div>
+        </div>
+        <div class="theme-group">
+          <div style="font-weight:800;margin-bottom:8px">Pastels</div>
+          <div class="theme-grid" id="themeGridPastel"></div>
+        </div>
+        <div class="theme-group">
+          <div style="font-weight:800;margin-bottom:8px">Poster & Gradient</div>
+          <div class="theme-grid" id="themeGridPoster"></div>
+        </div>
+        <div class="small">Hover for tooltip. Click to apply.</div>
+      </div>
+
+      <!-- Mini Player -->
+      <div class="mini-player" id="miniPlayer">
+        <button class="btn" id="playPause">▶️</button>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-weight:900">Background music</div>
+          <input id="prog" class="progress" type="range" min="0" max="100" value="0" />
+        </div>
+      </div>
+
+    </div>
   </div>
-  <div style="position:fixed;right:18px;bottom:18px;display:flex;gap:10px">
-    <button class="btn" id="openThemesGlobal">🎨 Themes</button>
-    <button class="btn" id="toggleMusicGlobal">🎶 Music</button>
-  </div>
-</section>
 
-<!-- GAME -->
-<section id="game-screen" class="screen">
-  <div class="game-wrap glass">
-    <div class="bar">
-      <div class="left-group"><div class="title">🫧 Bubble Pop — calm your mind</div></div>
-      <div class="right-group">
-        <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
-        <button class="btn" id="resetGame">Reset</button>
-        <button class="btn" id="themeBtnGame">🎨 Themes</button>
-        <button class="btn" id="muteBtnGame">🔇 Mute</button>
-        <button class="btn" id="backFromGame">⬅ Back</button>
-      </div>
-    </div>
-    <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
-
-    <div id="flowGame" class="flow-pad glass" style="display:none">
-      <div class="flow-q" id="flowGameQ"></div>
-      <div class="flow-actions">
-        <button class="chip" id="flowGameOK">OK</button>
-        <button class="chip" id="flowGameNo">No</button>
-        <button class="chip" id="flowGameLater">Later</button>
-        <button class="chip" id="flowGameClose">Close</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DRAW -->
-<section id="draw-screen" class="screen">
-  <div class="draw-wrap glass">
-    <div class="bar">
-      <div class="left-group">
-        <div class="title">🎨 Doodle — express or doodle</div>
-        <div class="brush">Brush <input id="brushSize" type="range" min="2" max="50" value="10" /></div>
-        <button class="swatch" style="background:#000" data-color="#000" title="Black"></button>
-        <button class="swatch" style="background:#fff" data-color="#fff" title="White"></button>
-        <label class="toggle"><input id="eraserToggle" type="checkbox" /> Eraser</label>
-        <div class="picker">Color <input id="colorPicker" type="color" value="#1e88e5" /></div>
-      </div>
-      <div class="right-group">
-        <button class="btn" id="themeBtnDraw">🎨 Themes</button>
-        <button class="btn" id="muteBtnDraw">🔇 Mute</button>
-        <button class="btn" id="backFromDraw">⬅ Back</button>
-      </div>
-    </div>
-
-    <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
-
-    <div class="draw-bottom">
-      <div class="left">
-        <button class="btn" id="clearDraw">Clear</button>
-        <button class="btn" id="saveDraw">Save</button>
-        <button class="btn" id="newChallengeBtn">🔄 New</button>
-        <button class="btn" id="autoCheckToggle" aria-pressed="true">✅ Auto‑Check</button>
-      </div>
-      <div class="right"><div id="drawStatus" style="opacity:.9"></div></div>
-    </div>
-
-    <div id="flowDraw" class="flow-pad glass" style="display:flex">
-      <div class="flow-q" id="challengeText">Try drawing a <strong id="challengeWord">cat</strong>. (OK / No / Later)</div>
-      <div class="flow-actions">
-        <button class="chip" id="challengeOK">OK</button>
-        <button class="chip" id="challengeNo">No</button>
-        <button class="chip" id="challengeLater">Later</button>
-        <button class="chip" id="challengeClose">Close</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CHAT -->
-<section id="chat-screen" class="screen">
-  <div class="chat-container glass">
-    <div class="header-controls">
-      <div class="mood-header glass">How do you feel?</div>
-      <div class="header-buttons">
-        <button class="btn" id="voice-mode-btn">🎤 Voice</button>
-        <button class="btn" id="speak-reply-btn">🔊 Speak</button>
-        <button class="btn" id="themeBtnChat">🎨 Themes</button>
-        <button class="btn" id="muteBtnChat">🔇 Mute</button>
-        <button class="btn" id="backFromChat">⬅ Back</button>
-      </div>
-    </div>
-
-    <div class="mood-selector">
-      <button class="mood-btn happy">😊 Happy</button>
-      <button class="mood-btn sad">😢 Sad</button>
-      <button class="mood-btn angry">😠 Angry</button>
-      <button class="mood-btn nervous">😰 Nervous</button>
-    </div>
-
-    <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
-
-    <div class="input-footer">
-      <input id="user-input" type="text" placeholder="Type your response..." autocomplete="off" />
-      <button class="btn" id="send-btn">Send</button>
-    </div>
-
-    <div id="flowChat" class="flow-pad glass" style="display:none">
-      <div class="flow-q" id="flowChatQ"></div>
-      <div class="flow-actions">
-        <button class="chip" id="flowChatYes">Yes</button>
-        <button class="chip" id="flowChatNo">No</button>
-        <button class="chip" id="flowChatClose">Close</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- THEMES PANEL -->
-<aside id="themesPanel" class="themes-panel" aria-hidden="true">
-  <div class="panel-shell glass">
-    <div class="themes-head glass">
-      <div>🎨 Themes</div>
-      <button class="close-btn btn" id="closeThemes">✕</button>
-    </div>
-    <div class="themes-body">
-      <div class="swatch-strip" id="themeStrip"></div>
-    </div>
-  </div>
-</aside>
-
-<!-- MINI MUSIC PLAYER -->
-<div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
-  <button id="miniPlayPause" class="mini-btn">⏸</button>
-  <div class="mini-meta">
-    <div class="mini-title" id="miniTitle">BGM</div>
-    <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
-    <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
-  </div>
-</div>
-
-<!-- Audio elements (sources must be in repo) -->
-<audio id="bgm1" src="bgm.mp3" crossorigin="anonymous"></audio>
-<audio id="bgm2" src="bgm2.mp3" crossorigin="anonymous"></audio>
-<audio id="bgm3" src="bgm3.mp3" crossorigin="anonymous"></audio>
-
-<!-- TensorFlow & MobileNet CDN (for auto-check) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.2/dist/mobilenet.min.js"></script>
-
+<!-- Scripts: All logic in-page -->
 <script>
-/* ---------------------- Utilities & sound ---------------------- */
+/* ---------------------------
+  Util & sound (simple beeps)
+--------------------------- */
 const Sound = (() => {
   let ctx, muted=false;
-  function ensure(){ if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) ctx = new AC(); } }
-  function tone(f=440,d=0.06,t='sine',g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=t; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
-  return { click:()=>tone(600,0.04,'triangle',0.04), pop:()=>tone(900,0.07,'sine',0.07), scribble:()=>tone(280,0.03,'square',0.03), toggle:()=>tone(420,0.05,'sawtooth',0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
+  const ensure = ()=>{ if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) ctx=new AC(); } };
+  function tone(f=440,t=0.06,type='sine',g=0.04){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(); const gg=ctx.createGain(); o.type=type; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+t); }
+  return { click:()=>tone(600,0.04,'triangle',0.04), pop:()=>tone(900,0.06,'sine',0.06), scribble:()=>tone(260,0.02,'square',0.02), toggle:()=>tone(420,0.06,'sawtooth',0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
 })();
 
-/* ---------------------- Screen router ---------------------- */
-const screens = { hello:document.getElementById('hello-screen'), game:document.getElementById('game-screen'), draw:document.getElementById('draw-screen'), chat:document.getElementById('chat-screen') };
-function switchScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
+/* ---------------------------
+  Simple screen router
+--------------------------- */
+const screens = { hello:document.getElementById('hello'), game:document.getElementById('game'), draw:document.getElementById('draw'), chat:document.getElementById('chat') };
+function show(screen){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[screen].classList.add('active'); }
 
-/* Start/back */
-document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); };
-document.getElementById('goTalk').onclick = ()=>{ Sound.click(); switchScreen('chat'); };
-document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
-document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
-document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+/* wire top buttons */
+document.getElementById('btnPlay').onclick = ()=>{ Sound.click(); show('game'); initGameIfNeeded(); };
+document.getElementById('btnDraw').onclick = ()=>{ Sound.click(); show('draw'); initDrawIfNeeded(); nextChallengeIfFirst(); };
+document.getElementById('btnChat').onclick = ()=>{ Sound.click(); show('chat'); initChatIfNeeded(); };
 
-/* ---------------------- Themes (50+ + rainbow loop) ---------------------- */
-const themeStrip = document.getElementById('themeStrip');
-const THEMES = [
-  {name:"Classic", bg:"linear-gradient(90deg,#a8cdf1,#f7b7b9)", bot:["#d6e6fb","#074279"], user:["#517fc4","#e8f3fc"]},
-  {name:"Poster Black", bg:"#000000", bot:["#2b2b2b","#ffffff"], user:["#0a0a0a","#ffffff"]},
-  {name:"Deep Charcoal", bg:"#2C3E50", bot:["#3e5368","#ffffff"], user:["#1c2a36","#ffffff"]},
-  {name:"Sky Blue", bg:"#87CEEB", bot:["#eef9ff","#08345a"], user:["#6dbfe1","#08345a"]},
-  {name:"Ocean", bg:"#2980B9", bot:["#c8e3f8","#082b45"], user:["#1f6592","#ffffff"]},
-  {name:"Sunset Orange", bg:"linear-gradient(135deg,#FF8008,#FFC837)", bot:["#ffe3a6","#4a3a00"], user:["#f39b10","#2a1e00"]},
-  {name:"Aurora", bg:"linear-gradient(135deg,#00d2ff,#3a7bd5)", bot:["#e6f8ff","#0a2a4a"], user:["#4aa0ef","#0a2a4a"]},
-  {name:"Berry", bg:"linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)", bot:["#f7dfff","#26123a"], user:["#f36f52","#ffffff"]},
-  {name:"Cotton Candy", bg:"linear-gradient(135deg,#ffb6c1,#add8e6)", bot:["#ffe6f0","#552a4e"], user:["#b0e0e6","#552a4e"]},
-  {name:"Galaxy", bg:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)", bot:["#2e2e4a","#ffffff"], user:["#5a5a7f","#ffffff"]},
-  {name:"Mint Pastel", bg:"#C2F5E9", bot:["#eafffa","#0f2a20"], user:["#9edfcf","#0f2a20"]},
-  {name:"Neon Cyan", bg:"#00F5FF", bot:["#d4fdff","#002a2e"], user:["#00c8d0","#00181b"]},
-  {name:"Earth Clay", bg:"#B5651D", bot:["#e7c39d","#2a1807"], user:["#8e4a12","#ffffff"]},
-  // add more programmatically to exceed 50
+document.getElementById('btnBackGame').onclick = ()=>{ Sound.click(); show('hello'); };
+document.getElementById('btnBackChat').onclick = ()=>{ Sound.click(); show('hello'); };
+
+/* ---------------------------
+  Themes — many swatches, tooltips
+--------------------------- */
+const glassy = [
+  {name:'Tahoe Glass', bg:'linear-gradient(135deg,#f8fbff,#eef6ff)'},
+  {name:'Aurora Mist', bg:'linear-gradient(135deg,#e6f8ff,#e6f0ff)'},
+  {name:'Calm Sky', bg:'linear-gradient(135deg,#dff1ff,#f7eefc)'},
+  {name:'Frost', bg:'linear-gradient(135deg,#ffffff,#e6f1ff)'},
+  {name:'Peach Glass', bg:'linear-gradient(135deg,#fff7f6,#fff2f0)'}
 ];
-/* programmatically add shades to reach many themes */
-for(let i=0;i<40;i++){
-  const h = (i*17)%360;
-  THEMES.push({name:`Shade ${i+1}`, bg:`linear-gradient(135deg,hsl(${h} 70% 70%), hsl(${(h+40)%360} 70% 60%))`, bot:["#ffffff","#08345a"], user:["#517fc4","#e8f3fc"]});
-}
-/* special rainbow loop theme (cycles) */
-THEMES.unshift({name:"Rainbow Loop", bg:"linear-gradient(90deg,#ff0000,#ff8000,#ffff00,#00a000,#0000ff,#4b0082,#9400d3)", bot:["#ffffff","#000000"], user:["#000000","#ffffff"], rainbow:true});
+const metallic = [
+  {name:'Space Gray', bg:'#0f1720'}, {name:'Brushed Steel', bg:'linear-gradient(135deg,#bfc8d6,#8d98a6)'}, {name:'Chrome', bg:'linear-gradient(135deg,#e6eef6,#d7dfe9)'}
+];
+const pastels = [
+  {name:'Mint', bg:'linear-gradient(135deg,#dffaf1,#e6fff7)'}, {name:'Lavender', bg:'linear-gradient(135deg,#f2e9ff,#efe7ff)'}, {name:'Peach', bg:'linear-gradient(135deg,#fff0e6,#fff8f2)'}
+];
+const poster = [
+  {name:'Poster Red', bg:'#E53935'}, {name:'Sunset', bg:'linear-gradient(135deg,#FF8008,#FFC837)'}, {name:'Rainbow Loop', bg:'linear-gradient(135deg,#ff0000,#ff8000,#ffff00,#008000,#0000ff,#4b0082,#9400d3)'}
+];
 
-function isDarkBackground(bg){
-  if(!bg) return false;
-  if(bg.startsWith("linear-gradient")) return true;
-  if(bg[0]==='#' && bg.length===7){ const r=parseInt(bg.slice(1,3),16), g=parseInt(bg.slice(3,5),16), b=parseInt(bg.slice(5,7),16); const L=0.2126*r+0.7152*g+0.0722*b; return L<128; }
-  return false;
-}
-function applyTheme(t){
-  document.body.style.background = t.bg;
-  document.documentElement.style.setProperty('--bot-bg', t.bot[0]);
-  document.documentElement.style.setProperty('--bot-fg', t.bot[1]);
-  document.documentElement.style.setProperty('--user-bg', t.user[0]);
-  document.documentElement.style.setProperty('--user-fg', t.user[1]);
-  const dark = isDarkBackground(t.bg);
-  document.documentElement.style.setProperty('--glass-bg', dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.20)");
-  document.documentElement.style.setProperty('--glass-border', dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.28)");
-  document.documentElement.style.setProperty('--glass-shadow', dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
-  if(t.rainbow){
-    // gently animate background hue rotate
-    document.body.animate([{filter:'hue-rotate(0deg)'},{filter:'hue-rotate(360deg)'}],{duration:20000,iterations:Infinity});
-  } else {
-    document.body.getAnimations().forEach(a=>a.cancel());
-  }
-}
-
-/* build swatches */
-function buildSwatches(){
-  themeStrip.innerHTML='';
-  THEMES.forEach(t=>{
-    const btn=document.createElement('button');
-    btn.className='theme-btn';
-    btn.title=t.name;
-    btn.style.background = t.bg;
-    btn.addEventListener('click', ()=>{ Sound.toggle(); applyTheme(t); localStorage.setItem('aura-theme', t.name); });
-    // tooltip via title already
-    themeStrip.appendChild(btn);
+function buildThemeGrid(containerId, list){
+  const cont = document.getElementById(containerId);
+  list.forEach(t=>{
+    const sw = document.createElement('div');
+    sw.className='theme-swatch';
+    sw.title=t.name;
+    sw.style.background=t.bg;
+    sw.textContent=''; // no name overlay
+    sw.onclick=()=>{
+      document.body.style.background=t.bg;
+      Sound.click();
+    };
+    cont.appendChild(sw);
   });
 }
-buildSwatches();
-document.getElementById('closeThemes').onclick = ()=>{ Sound.click(); document.getElementById('themesPanel').classList.remove('open'); };
-document.getElementById('openThemesGlobal').onclick = ()=>{ Sound.click(); document.getElementById('themesPanel').classList.add('open'); };
-document.querySelectorAll('#themeBtnGame,#themeBtnDraw,#themeBtnChat').forEach(b=>b.addEventListener('click', ()=>{ Sound.click(); document.getElementById('themesPanel').classList.add('open'); }));
+buildThemeGrid('themeGridGlassy', glassy);
+buildThemeGrid('themeGridMetallic', metallic);
+buildThemeGrid('themeGridPastel', pastels);
+buildThemeGrid('themeGridPoster', poster);
 
-/* apply saved theme */
-(function(){
-  const saved = localStorage.getItem('aura-theme');
-  if(saved){
-    const t = THEMES.find(x=>x.name===saved);
-    if(t) applyTheme(t);
-  }
-})();
-
-/* ---------------------- Music player (mini) ---------------------- */
-const tracks = [document.getElementById('bgm1'), document.getElementById('bgm2'), document.getElementById('bgm3')];
-let currentTrack = 0;
-const mini = { btn:document.getElementById('miniPlayPause'), seek:document.getElementById('miniSeek'), cur:document.getElementById('miniCur'), dur:document.getElementById('miniDur'), title:document.getElementById('miniTitle') };
-function fmt(t){ if(isNaN(t)) return '0:00'; const m=Math.floor(t/60), s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
-function setTrack(i){
-  tracks.forEach((tr,idx)=>{ if(idx===i) tr.volume=0.45; else { tr.pause(); tr.currentTime=0 }});
-  currentTrack = i;
-  mini.title.textContent = `BGM ${i+1}`;
-  tracks[i].addEventListener('timeupdate', ()=>{ if(tracks[i].duration){ mini.seek.value = (tracks[i].currentTime / tracks[i].duration) * 100; mini.cur.textContent = fmt(tracks[i].currentTime); mini.dur.textContent = fmt(tracks[i].duration);} });
-}
-setTrack(0);
-mini.btn.onclick = ()=>{ const tr = tracks[currentTrack]; if(tr.paused){ tr.play(); mini.btn.textContent='⏸'; } else { tr.pause(); mini.btn.textContent='▶️'; } };
-document.getElementById('toggleMusicGlobal').onclick = ()=>{ Sound.click(); const tr=tracks[currentTrack]; if(tr.paused){ tr.play(); mini.btn.textContent='⏸'; } else { tr.pause(); mini.btn.textContent='▶️'; } };
-
-/* allow clicking any mini progress to seek */
-mini.seek.addEventListener('input', ()=>{ const tr = tracks[currentTrack]; if(tr.duration) tr.currentTime = (mini.seek.value/100)*tr.duration; });
-
-/* ---------------------- Mute buttons ---------------------- */
-function bindMute(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.onclick = ()=>{ Sound.toggle(); };
-}
-bindMute('muteBtnGame'); bindMute('muteBtnDraw'); bindMute('muteBtnChat');
-
-/* ---------------------- Bubble pop (level-ish) ---------------------- */
-const gameCanvas = document.getElementById('gameCanvas'); const gctx = gameCanvas.getContext('2d');
-let bubbles=[],score=0,lastSpawn=0,prevT=performance.now(),running=true,level=1;
-function resizeGame(){ const r=gameCanvas.getBoundingClientRect(); gameCanvas.width=Math.floor(r.width*devicePixelRatio); gameCanvas.height=Math.floor(r.height*devicePixelRatio); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
-window.addEventListener('resize', resizeGame); resizeGame();
-function spawnBubble(){ const r=12 + Math.random()*36; const x=r+Math.random()*(gameCanvas.clientWidth - r*2); const y=gameCanvas.clientHeight + r +10; const vy=(0.4+Math.random()*1.2) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')); const hue=Math.floor(200+Math.random()*100); bubbles.push({x,y,r,vy,alpha:1,hue,popped:false}); }
-function updateBubble(b,dt){ if(!b.popped){ b.y -= b.vy * dt * 0.06 * (1 + (level-1)*0.03); if(b.y < -b.r){ b.popped=true; b.alpha=0;} } else b.alpha -= 0.04; }
-function drawBubble(b){ gctx.save(); gctx.globalAlpha=Math.max(0,b.alpha); gctx.shadowColor='rgba(255,255,255,0.9)'; gctx.shadowBlur=12; gctx.lineWidth=2; gctx.strokeStyle='rgba(0,0,0,0.25)'; const cx=b.x,cy=b.y,r=b.r; const grad=gctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r); grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`); gctx.fillStyle=grad; gctx.beginPath(); gctx.arc(cx,cy,r,0,Math.PI*2); gctx.fill(); gctx.stroke(); gctx.beginPath(); gctx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); gctx.fillStyle='rgba(255,255,255,.6)'; gctx.fill(); gctx.restore(); }
-function gameLoop(t){ const dt = t - prevT; prevT=t; if(running){ gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); const grd=gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)'); gctx.fillStyle=grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); if(t-lastSpawn > Math.max(220,900 - level*10)){ spawnBubble(); lastSpawn = t; } bubbles = bubbles.filter(b=>b.alpha>0); for(const b of bubbles){ updateBubble(b,dt); drawBubble(b); } } requestAnimationFrame(gameLoop); }
-requestAnimationFrame(gameLoop);
-
-gameCanvas.addEventListener('click',(e)=>{ const rect=gameCanvas.getBoundingClientRect(); const x=e.clientX-rect.left, y=e.clientY-rect.top; for(const b of bubbles){ const dx=x-b.x, dy=y-b.y; if(!b.popped && dx*dx+dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; score+=1; document.getElementById('scoreTxt').textContent = score; Sound.pop(); checkMilestones(); level = Math.min(30,1 + Math.floor(score/10)); break; } } });
-document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; level=1; document.getElementById('scoreTxt').textContent=0; };
-
-function checkMilestones(){
-  const milestones = [5,10,25,50,75,100,150,250,500,1000];
-  for(const m of milestones){
-    if(score === m){
-      addBubbleHint(`Nice — ${m} popped! You're doing great 🎉`);
-    }
-  }
-}
-function addBubbleHint(text){
-  addMessage(text,'bot'); // reuse chat message style in chat-box (separate)
-}
-
-/* ---------------------- Drawing canvas ---------------------- */
-const drawCanvas = document.getElementById('drawCanvas'); const dctx = drawCanvas.getContext('2d',{willReadFrequently:true});
-let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0,lastY=0,erasing=false;
-function sizeDrawCanvas(){
-  const rect = drawCanvas.getBoundingClientRect();
-  const prev = (()=>{try{return dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);}catch(e){return null;}})();
-  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
-  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
-  dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio);
-  if(prev) try{ dctx.putImageData(prev,0,0); }catch(e){}
-}
-new ResizeObserver(sizeDrawCanvas).observe(drawCanvas); setTimeout(sizeDrawCanvas,0);
-function startDraw(x,y){ drawing=true; lastX=x; lastY=y; Sound.scribble(); }
-function moveDraw(x,y){ if(!drawing) return; dctx.lineWidth = brushSize; dctx.lineCap='round'; dctx.lineJoin='round'; if(erasing){ dctx.globalCompositeOperation='destination-out'; dctx.strokeStyle='rgba(0,0,0,1)'; } else { dctx.globalCompositeOperation='source-over'; dctx.strokeStyle = brushColor; } dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke(); lastX=x; lastY=y; }
-function endDraw(){ drawing=false; dctx.globalCompositeOperation='source-over'; }
-drawCanvas.addEventListener('mousedown', e=>{ const r=drawCanvas.getBoundingClientRect(); startDraw(e.clientX - r.left, e.clientY - r.top); });
-drawCanvas.addEventListener('mousemove', e=>{ const r=drawCanvas.getBoundingClientRect(); moveDraw(e.clientX - r.left, e.clientY - r.top); });
-window.addEventListener('mouseup', endDraw);
-drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0], r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
-drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0], r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
-document.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click', e=>{ brushColor = e.currentTarget.dataset.color; erasing=false; document.getElementById('eraserToggle').checked=false; Sound.click(); }));
-document.getElementById('brushSize').addEventListener('input', e=>brushSize = +e.target.value);
-document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
-document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
-document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); document.getElementById('drawStatus').textContent=''; };
-document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='doodle.png'; a.click(); };
-
-/* ---------------------- 100 challenges (embedded) ---------------------- */
-const CHALLENGES = [
- "cat","dog","house","tree","sun","moon","star","flower","car","bicycle","boat","fish","bird","apple","banana","cup","cake","hat","shoe","clock",
- "book","chair","telephone","key","lock","umbrella","cloud","mountain","rocket","train","rocketship","guitar","piano","drum","balloon","leaf","grass","bridge","lamp","eye",
- "hand","foot","clock-face","map","camera","glass","spoon","fork","knife","truck","motorbike","penguin","panda","elephant","lion","tiger","bear","hippo","whale","octopus",
- "house-plant","teapot","mushroom","jellyfish","crown","diamond","ring","sword","shield","anchor","compass","paper-boat","kite","stairs","door","window","keyhole","owl","fox","squirrel",
- "lollipop","icecream","donut","sandwich","pencil","marker","eraser","paperclip","magnet","globe","tent","campfire","saxophone","violin","microphone","starfish","seahorse","shell","feather","scroll"
-];
-/* synonyms map for better matching (a few common ones) */
-const SYNONYMS = {
-  "cat":["cat","kitten","kitty","feline"],
-  "dog":["dog","puppy","hound","canine"],
-  "house":["house","home","cabin"],
-  "tree":["tree","oak","pine"],
-  "car":["car","automobile","vehicle"],
-  "bicycle":["bicycle","bike","cycle"],
-  "cup":["cup","mug","glass"],
-  "cake":["cake","birthday cake"],
-  "key":["key"],
-  "star":["star"],
-  "sun":["sun"],
-  "moon":["moon"],
-  "fish":["fish"],
-  "bird":["bird"],
-  "umbrella":["umbrella"],
-  "rocket":["rocket","rocketship","spaceship"],
-  "guitar":["guitar"],
-  "piano":["piano","keyboard"],
-  "balloon":["balloon"],
-  "snowman":["snowman"],
-  "penguin":["penguin"],
-  "elephant":["elephant"],
-  // leave rest free-form
+/* ---------------------------
+  Mini BGM player (local files in repo)
+--------------------------- */
+const tracks = ['bgm.mp3','bgm2.mp3','bgm3.mp3'];
+let trackIdx = 0;
+const audio = new Audio();
+audio.loop=false; audio.preload='auto';
+audio.src = tracks[trackIdx];
+const playPauseBtn = document.getElementById('playPause');
+const prog = document.getElementById('prog');
+playPauseBtn.onclick = ()=>{
+  if(audio.paused){ audio.play().catch(()=>{}); playPauseBtn.textContent='⏸'; } else { audio.pause(); playPauseBtn.textContent='▶️'; }
 };
+audio.addEventListener('timeupdate', ()=>{ if(audio.duration){ prog.value = (audio.currentTime/audio.duration)*100; } });
+prog.addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (prog.value/100)*audio.duration; });
+audio.addEventListener('ended', ()=>{ trackIdx = (trackIdx+1)%tracks.length; audio.src=tracks[trackIdx]; audio.play().catch(()=>{}); });
 
-/* UI wiring for challenges */
-let currentChallengeIndex = Math.floor(Math.random()*CHALLENGES.length);
-const challengeWordEl = document.getElementById('challengeWord');
-const drawStatusEl = document.getElementById('drawStatus');
-function showChallenge(i){
-  currentChallengeIndex = i % CHALLENGES.length;
-  const word = CHALLENGES[currentChallengeIndex];
-  challengeWordEl.textContent = word;
-  drawStatusEl.textContent = '';
+/* ---------------------------
+  Bubble Pop — level based (30 levels)
+--------------------------- */
+let gameInited=false;
+function initGameIfNeeded(){
+  if(gameInited) return;
+  gameInited=true;
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  let dpr = devicePixelRatio || 1;
+  function resize(){ canvas.width = Math.floor(canvas.clientWidth*dpr); canvas.height = Math.floor(canvas.clientHeight*dpr); ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr); }
+  new ResizeObserver(resize).observe(canvas); setTimeout(resize,50);
+
+  let bubbles=[],score=0,popped=0,level=1,spawnRate=900,lastSpawn=0, lastT=performance.now();
+
+  function spawn(){
+    const r = 16 + Math.random()*30;
+    const x = r + Math.random()*(canvas.clientWidth - r*2);
+    const y = canvas.clientHeight + r + 10;
+    const vy = (0.6 + Math.random()*1.1) * (1 + level*0.02);
+    const hue = Math.floor(160 + Math.random()*160);
+    bubbles.push({x,y,r,vy,hue,alpha:1,popped:false});
+  }
+  function drawBubble(b){
+    ctx.save();
+    ctx.globalAlpha = b.alpha;
+    ctx.shadowColor = `rgba(255,255,255,0.9)`; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.18)';
+    const cx=b.x, cy=b.y, r=b.r;
+    const grad = ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r);
+    grad.addColorStop(0,`hsla(${b.hue},90%,95%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,60%,.65)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill();
+    ctx.restore();
+  }
+
+  function levelForScore(s){
+    // simple: every 50 score + small boost
+    return Math.min(30, 1 + Math.floor(s / 50));
+  }
+
+  function loop(t){
+    const dt = t-lastT; lastT=t;
+    ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+    // soft background
+    let g = ctx.createLinearGradient(0,0,canvas.clientWidth,canvas.clientHeight); g.addColorStop(0,'rgba(255,255,255,.28)'); g.addColorStop(1,'rgba(255,255,255,.18)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+
+    if(t - lastSpawn > Math.max(200, spawnRate - level*10)){ spawn(); lastSpawn=t; }
+    bubbles = bubbles.filter(b=>b.alpha>0.02);
+    for(let b of bubbles){
+      if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } }
+      else b.alpha -= 0.02;
+      drawBubble(b);
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  canvas.addEventListener('click', (ev)=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+    for(let b of bubbles){
+      const dx = x-b.x, dy = y-b.y;
+      if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
+        b.popped=true; b.alpha=1; score+=1; popped+=1; Sound.pop();
+        document.getElementById('scoreTxt').textContent=score;
+        document.getElementById('poppedTxt').textContent=popped;
+        const newLevel = levelForScore(score);
+        if(newLevel>level){
+          level=newLevel; document.getElementById('levelTxt').textContent=level;
+          celebrateLevel(level);
+        }
+        checkMilestones(score);
+        break;
+      }
+    }
+  });
+
+  document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; popped=0; level=1; document.getElementById('scoreTxt').textContent=0; document.getElementById('poppedTxt').textContent=0; document.getElementById('levelTxt').textContent=1; };
+
+  function celebrateLevel(lvl){
+    addChatBotTip('Game','Level up! You reached level '+lvl+' — awesome! 🎉');
+  }
+  const milestones = [25,50,100,150,250,400,600,1000];
+  function checkMilestones(s){
+    for(let m of milestones){ if(s===m){ addChatBotTip('Game','Milestone: '+m+' popped! Keep going — you rock! 🌟'); } }
+  }
 }
-function nextChallenge(){ showChallenge((currentChallengeIndex+1)%CHALLENGES.length); }
-function randomChallenge(){ showChallenge(Math.floor(Math.random()*CHALLENGES.length)); }
-document.getElementById('newChallengeBtn').addEventListener('click', ()=>{ Sound.click(); randomChallenge(); });
-document.getElementById('challengeClose').addEventListener('click', ()=>{ Sound.click(); document.getElementById('flowDraw').style.display='none'; });
-document.getElementById('challengeLater').addEventListener('click', ()=>{ Sound.click(); document.getElementById('flowDraw').style.display='none'; addMessage("Free mode: doodle however you like!", 'bot'); toggleChatInput(false); });
-document.getElementById('challengeNo').addEventListener('click', ()=>{ Sound.click(); nextChallenge(); addMessage("Okay, here's a different one — try this!", 'bot'); });
-document.getElementById('challengeOK').addEventListener('click', ()=>{ Sound.click(); autoCheckAndScore(); });
 
-/* also OK/No/Later for small chips in other screens—kept simple */
-document.getElementById('challengeClose').onclick = ()=>document.getElementById('flowDraw').style.display='none';
+/* ---------------------------
+  Drawing pad + 100 challenge list + TF auto-check
+--------------------------- */
+let drawInited=false;
+const challenges = [
+  "cat","dog","house","tree","sun","moon","star","car","bicycle","cup",
+  "mug","apple","banana","chair","table","key","lock","book","open book",
+  "castle","rocket","boat","fish","butterfly","flower","mountain","cloud","rain","umbrella",
+  "hat","glasses","mask","shoe","sock","cake","ice cream","cookie","ball","leaf",
+  "penguin","owl","lion","tiger","elephant","giraffe","panda","horse","sheep","cow",
+  "duck","chicken","piano","guitar","violin","drum","camera","phone","computer","lamp",
+  "clock","watch","map","train","bus","truck","plane","kite","flag","ring",
+  "gift","heart","diamond","starfish","shell","anchor","crown","torch","keycard","laptop",
+  "microphone","telescope","binoculars","sword","shield","hammer","wrench","spoon","fork","knife",
+  "umbrella","basket","paintbrush","palette","scissors","leaf","pear","orange","grapes","strawberry",
+  "saxophone","radio","teapot","lantern","nest","owl mask","mask","wizard hat","potion","scroll"
+];
+// shuffle utility
+function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-/* set initial challenge on load */
-showChallenge(currentChallengeIndex);
-
-/* ---------------------- TensorFlow MobileNet (auto-check) ---------------------- */
+/* MobileNet model variable */
 let mobilenetModel = null;
-async function loadMobilenet(){
+async function loadMobileNet(){
+  if(mobilenetModel) return mobilenetModel;
   try{
     mobilenetModel = await mobilenet.load({version:2,alpha:1.0});
-    console.log('mobilenet loaded');
-  }catch(e){ console.warn('mobilenet load failed',e); mobilenetModel=null; }
-}
-loadMobilenet();
-
-/* helper: get canvas image resized to 224x224 */
-function getCanvasImageTensor(){
-  // capture drawCanvas scaled into an offscreen canvas
-  const off = document.createElement('canvas');
-  off.width = 224; off.height = 224;
-  const octx = off.getContext('2d');
-  // white background for better classification
-  octx.fillStyle = '#fff'; octx.fillRect(0,0,off.width,off.height);
-  // fit drawn canvas into off canvas preserving aspect
-  const src = drawCanvas;
-  const sr = src.getBoundingClientRect();
-  octx.drawImage(src, 0, 0, off.width, off.height);
-  return off;
-}
-
-/* check: compares classifier labels to current challenge with synonyms and fuzzy includes */
-async function autoCheckAndScore(){
-  const auto = document.getElementById('autoCheckToggle').getAttribute('aria-pressed') === 'true';
-  if(!auto){ addMessage("Auto-check is off — you're in freestyle mode. Save or share your art!", 'bot'); return; }
-  if(!mobilenetModel){ addMessage("Recognition model still loading — try again in a moment.", 'bot'); return; }
-  addMessage("Checking your doodle... 🔎", 'bot');
-  const img = getCanvasImageTensor();
-  try{
-    const results = await mobilenetModel.classify(img);
-    console.log(results);
-    // decide match: use synonyms if available or check if any result includes the challenge term
-    const challenge = CHALLENGES[currentChallengeIndex];
-    const syns = SYNONYMS[challenge] || [challenge];
-    const found = results.find(r=>{
-      const lab = r.className.toLowerCase();
-      for(const s of syns){
-        if(lab.includes(s.toLowerCase())) return true;
-        // also compare by tokens, e.g., 'digital clock' vs 'clock'
-        const tokens = s.toLowerCase().split(/[\s\-_]+/);
-        if(tokens.every(tok => lab.includes(tok))) return true;
-      }
-      return false;
-    });
-    // apply threshold
-    if(found && found.probability > 0.12){
-      // success
-      addMessage(["Wow! That looks great!","Nice job — that really looks like a " + challenge + "!","Fantastic — you nailed it!"][Math.floor(Math.random()*3)], 'bot');
-      Sound.pop();
-      document.getElementById('drawStatus').textContent = `Match: ${found.className} (${(found.probability*100).toFixed(1)}%)`;
-      // offer new challenge after short delay
-      setTimeout(()=>{ nextChallenge(); }, 1200);
-    } else {
-      // gentle retry
-      addMessage(["Lovely! Want to try again for a little reward?","So nice — maybe try again to make it even clearer?","Great attempt! Fancy another try or switch to free-draw?"][Math.floor(Math.random()*3)], 'bot');
-      Sound.toggle();
-      if(results && results.length) document.getElementById('drawStatus').textContent = `Top guess: ${results[0].className} (${(results[0].probability*100).toFixed(1)}%)`;
-    }
   }catch(e){
-    console.error(e);
-    addMessage("Oops — recognition failed. Try again or freestyle. (Model may not detect every doodle.)", 'bot');
+    console.warn('MobileNet load failed',e);
+  }
+  return mobilenetModel;
+}
+
+function initDrawIfNeeded(){
+  if(drawInited) return;
+  drawInited=true;
+  // canvas setup
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  let dpr = devicePixelRatio || 1;
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const prev = ctx.getImageData(0,0,canvas.width||1,canvas.height||1);
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr);
+    try{ ctx.putImageData(prev,0,0); }catch(e){}
+  }
+  new ResizeObserver(resize).observe(canvas); setTimeout(resize,50);
+  ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=10; ctx.strokeStyle='#1e88e5';
+
+  let painting=false, lastX=0, lastY=0, brush=8;
+  canvas.addEventListener('pointerdown', (e)=>{ painting=true; const r=canvas.getBoundingClientRect(); lastX=e.clientX-r.left; lastY=e.clientY-r.top; Sound.scribble(); });
+  canvas.addEventListener('pointermove', (e)=>{ if(!painting) return; const r=canvas.getBoundingClientRect(); const x = e.clientX-r.left, y=e.clientY-r.top; ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.lineWidth=brush; ctx.stroke(); lastX=x; lastY=y; });
+  canvas.addEventListener('pointerup', ()=>{ painting=false; });
+  canvas.addEventListener('pointerleave', ()=>{ painting=false; });
+
+  // toolbar wiring
+  document.getElementById('clearDraw').onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); Sound.click(); };
+  document.getElementById('saveDraw').onclick = ()=>{
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); Sound.click();
+  };
+
+  // challenge logic
+  let currentChallenge=null;
+  const challengeText = document.getElementById('challengeText');
+  const autoCheckBox = document.getElementById('autoCheck');
+
+  function pickRandomChallenge(){
+    const ch = randChoice(challenges);
+    currentChallenge = ch;
+    challengeText.textContent = `Try drawing a ${ch}`;
+    return ch;
+  }
+
+  document.getElementById('newChallenge').onclick = ()=>{ pickRandomChallenge(); Sound.click(); };
+
+  document.getElementById('btnOk').onclick = async ()=>{
+    Sound.click();
+    if(!currentChallenge) pickRandomChallenge();
+    const shouldAuto = autoCheckBox.checked;
+    if(shouldAuto){
+      await ensureModelAndCheck();
+    } else {
+      addChatBotTip('Draw','OK pressed — you can choose to auto-check in settings.');
+    }
+  };
+  document.getElementById('btnNo').onclick = ()=>{
+    Sound.click();
+    // if no, give another challenge
+    const alt = pickRandomChallenge();
+    addChatBotTip('Draw','Cool — new challenge: '+alt);
+  };
+  document.getElementById('btnLater').onclick = ()=>{
+    Sound.click();
+    challengeText.textContent = 'FreeStyle mode — draw anything';
+    currentChallenge = null;
+    addChatBotTip('Draw','No problem — freedraw mode active.');
+  };
+
+  // first challenge on open
+  function nextChallengeIfFirst(){ if(!currentChallenge) pickRandomChallenge(); }
+  window.nextChallengeIfFirst = nextChallengeIfFirst;
+
+  async function ensureModelAndCheck(){
+    const model = await loadMobileNet();
+    if(!model){ addChatBotTip('Draw','Auto-check failed to load model — try again later'); return; }
+    // capture a smaller thumbnail of canvas for classification
+    const thumbW = 224, thumbH = 224;
+    const temp = document.createElement('canvas'); temp.width = thumbW; temp.height = thumbH;
+    const tctx = temp.getContext('2d');
+    // draw original canvas scaled to thumb
+    tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,thumbW,thumbH);
+    tctx.drawImage(canvas, 0, 0, thumbW, thumbH);
+    // classify
+    addChatBotTip('Draw','Checking your drawing…');
+    const predictions = await model.classify(temp);
+    // predictions array: {className,probability}
+    console.log('preds',predictions);
+    handlePredictions(predictions);
+  }
+
+  // synonyms map to match common labels to challenges
+  const synonyms = {
+    'cat':['cat','kitten','tabby','persian'], 'dog':['dog','puppy'], 'car':['car','vehicle'], 'bicycle':['bicycle','bike'], 'cup':['cup','mug'],
+    'apple':['apple','fruit'], 'tree':['tree','oak','pine','fir'], 'house':['house','home','cabin'], 'boat':['boat','ship'],
+    'bird':['bird','sparrow','parrot','penguin','owl'], 'flower':['flower','daisy','rose','tulip'], 'fish':['fish','goldfish']
+    // extend as needed
+  };
+  function matchesChallenge(preds, challenge){
+    const target = (challenge||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').split(' ')[0];
+    // check direct substring in predictions
+    for(let p of preds){
+      const label = p.className.toLowerCase();
+      if(label.includes(target)) return true;
+      // synonyms
+      if(synonyms[target]){
+        for(let s of synonyms[target]) if(label.includes(s)) return true;
+      }
+    }
+    return false;
+  }
+
+  function handlePredictions(predictions){
+    const ok = matchesChallenge(predictions, currentChallenge);
+    if(ok){
+      // success
+      const tips = ["Wow! That looks great! 🎉","Nice job — that looks like a match! ✨","Amazing — you nailed it!"];
+      addChatBotTip('Draw', tips[Math.floor(Math.random()*tips.length)]);
+    } else {
+      // gentle retry message with playful tone
+      const tips = [
+        "So close — it's got the vibe! Want to try again or keep going?",
+        "Omg that's lovely — maybe a little tweak? Try emphasizing the shape!",
+        "Nice strokes! Wanna try once more for a perfect match, or free-draw?"
+      ];
+      addChatBotTip('Draw', tips[Math.floor(Math.random()*tips.length)]);
+    }
   }
 }
 
-/* Auto-check toggle */
-document.getElementById('autoCheckToggle').addEventListener('click', function(){
-  const p = this.getAttribute('aria-pressed') === 'true';
-  this.setAttribute('aria-pressed', String(!p));
-  this.textContent = !p ? "✅ Auto‑Check" : "❌ Auto‑Check";
-  Sound.click();
-});
+/* ---------------------------
+  Chatbot — improved rule-based with varied responses
+--------------------------- */
+let chatInited=false;
+function initChatIfNeeded(){
+  if(chatInited) return;
+  chatInited=true;
+  const chatBody = document.getElementById('chatBody');
+  const input = document.getElementById('chatInput');
+  const send = document.getElementById('sendChat');
 
-/* ---------------------- Chat (local, friend‑style) ---------------------- */
-const chatBox = document.getElementById('chat-box');
-function addMessage(text, sender){
-  const d = document.createElement('div'); d.className = `message ${sender}`; d.textContent = text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight;
-  if(sender === 'bot') { /* optionally speak */ }
+  function pushBubble(text,who='bot'){
+    const b = document.createElement('div');
+    b.className = 'bubble '+who+' fade-in';
+    b.textContent = text;
+    chatBody.appendChild(b);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  // initial friendly lines
+  pushBubble("Hi! 👋 How was your day? 😊",'bot');
+
+  // mood quick conversations (10 lines-ish)
+  function moodConversation(mood){
+    const lines = {
+      sad:[
+        "I’m really sorry you’re feeling low — I’m here. 💙",
+        "Want to tell me what happened, or would you prefer a calming exercise?",
+        "If it helps, try naming three small good things around you—I'll wait.",
+        "You're brave for sharing. Should we try a 4‑4‑6 breathing now?",
+        "Sometimes tiny steps stack into big change. Do you want a suggestion?"
+      ],
+      nervous:[
+        "Feeling nervous is valid — you’re not alone. 💙",
+        "Would a grounding game help? Name 5 things you can see.",
+        "Try breathing with me: in 4, hold 4, out 6. Want me to pace you?",
+        "We can practice a short script if you have to talk to someone.",
+        "Okay — want tips to reduce sensory overload right now?"
+      ],
+      happy:[
+        "Yay! I love hearing that ✨ What made you smile today?",
+        "Share the good vibes — tell me one tiny win from today!",
+        "That's wonderful. Hold onto that feeling — want a celebratory GIF idea?"
+      ],
+      angry:[
+        "It's okay to be angry — your feelings matter. Want to vent?",
+        "Let's do a 60‑second cool-down: stomp, breathe, count, release.",
+        "If you want, we can plan a calm response together."
+      ]
+    };
+    const seq = lines[mood] || ["I'm here if you want to share."];
+    // push a short ~5-line exchange with small delays to simulate "live" chat
+    seq.slice(0,5).forEach((ln,i)=> setTimeout(()=> pushBubble(ln,'bot'), 300*i + 120));
+  }
+
+  // mood buttons
+  document.getElementById('mHappy').onclick = ()=>{ Sound.click(); pushBubble("😊", 'user'); moodConversation('happy'); };
+  document.getElementById('mSad').onclick = ()=>{ Sound.click(); pushBubble("😢", 'user'); moodConversation('sad'); };
+  document.getElementById('mAngry').onclick = ()=>{ Sound.click(); pushBubble("😠", 'user'); moodConversation('angry'); };
+  document.getElementById('mNerv').onclick = ()=>{ Sound.click(); pushBubble("😰", 'user'); moodConversation('nervous'); };
+
+  // send handler (smarter-ish)
+  send.onclick = ()=>{ const txt = input.value.trim(); if(!txt) return; Sound.click(); pushBubble(txt,'user'); input.value=''; respondToUser(txt); };
+  input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') send.click(); });
+
+  function respondToUser(text){
+    const s = text.toLowerCase();
+    // quick intent detection
+    const intents = [
+      {k:'thanks', pat:/(thanks|thank you|ty|thx)/i, replies:["You're welcome! 😊","Anytime — I'm here.","Glad to help."]},
+      {k:'help', pat:/(help|support|advice|need help)/i, replies:["Tell me what feels hardest right now.","We can break it into tiny steps — wanna try?","Would you like breathing or grounding first?"]},
+      {k:'breathe', pat:/(breath|breathe|breathing|relax)/i, replies:["Let's breathe: in 4, hold 4, out 6. Ready?","I'll pace you: inhale... hold... exhale... repeat 3×."]},
+      {k:'music', pat:/(music|song|play)/i, replies:["You can try soft ambient music. Want me to start a track?","Music can help — press the mini player ▶️ to start."]},
+      {k:'draw', pat:/(draw|doodle|sketch)/i, replies:["Head to the Draw app — try 'Try' to get a challenge, or free style.","When you're done press OK to auto-check your drawing."]}
+    ];
+    for(let it of intents){
+      if(it.pat.test(s)){ const r = it.replies[Math.floor(Math.random()*it.replies.length)]; pushBubble(r,'bot'); return; }
+    }
+    // fallback: empathetic and probing
+    const fallback = [
+      "I'm listening. Tell me more — small steps are fine.",
+      "Thanks for sharing. What's one tiny next step you can do?",
+      "I won't rush you. Want a short exercise or to chat more?",
+      "I might not be perfect but I'm trying. Want a coping tool suggestion?"
+    ];
+    pushBubble(fallback[Math.floor(Math.random()*fallback.length)],'bot');
+  }
 }
-addMessage("Hi! 👋 How was your day? 😊", "bot");
 
-const moodButtons = document.querySelectorAll('.mood-btn');
-const suggestions = {
-  happy:["That's wonderful—what made your day shine?","Amazing! Share one happy moment."],
-  sad:["I'm sorry you're feeling sad. Want to tell me more?","I hear you. Do you want a small comfort idea?"],
-  angry:["It's okay to be angry. Want a breathing trick?","I can listen. Tell me what happened."],
-  nervous:["Take a slow breath. Want to talk about what's making you nervous?","I got you — want a 4-4-6 breathing exercise?"]
-};
-moodButtons.forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    moodButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
-    btn.setAttribute('aria-pressed','true');
-    const mood = btn.classList[1];
-    addMessage(suggestions[mood][Math.floor(Math.random()*suggestions[mood].length)], 'bot');
-    // show chat flow UI optionally
-    document.getElementById('flowChat').style.display = 'flex';
-    document.getElementById('flowChatQ').textContent = "Want to tell more?";
-    document.getElementById('flowChatYes').onclick = ()=>{ Sound.click(); document.querySelector('.input-footer').style.display='block'; addMessage("I'm listening. 💬",'bot'); document.getElementById('flowChat').style.display='none'; };
-    document.getElementById('flowChatNo').onclick = ()=>{ Sound.click(); document.getElementById('flowChat').style.display='none'; addMessage("All good — I'm here when you need me. 💙",'bot'); };
-    document.getElementById('flowChatClose').onclick = ()=>{ Sound.click(); document.getElementById('flowChat').style.display='none'; };
-  });
+/* ---------------------------
+  Small helpers / tips
+--------------------------- */
+function addChatBotTip(area, text){
+  // show as bot bubble in chat if chat exists, otherwise quick system hint
+  const cb = document.getElementById('chatBody');
+  if(cb){
+    const b = document.createElement('div');
+    b.className='bubble bot fade-in';
+    b.textContent = `[${area}] ${text}`;
+    cb.appendChild(b); cb.scrollTop = cb.scrollHeight;
+  } else {
+    // fallback: console + toast (toast not implemented)
+    console.log('TIP',area,text);
+  }
+}
+
+/* ---------------------------
+  Init shortcuts
+--------------------------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // lazy-load model but do not block UI
+  loadMobileNet().then(()=>console.log('mobilenet loaded')).catch(()=>console.log('mobilenet load error'));
+  // initial UI state
+  // show hello (already active)
 });
 
-document.getElementById('send-btn').addEventListener('click', ()=>{
-  const v=document.getElementById('user-input');
-  if(!v.value.trim()) return;
-  addMessage(v.value.trim(),'user');
-  const userText = v.value.trim().toLowerCase();
-  v.value='';
-  // simple local intent responses
-  if(/thank|thanks|thx/.test(userText)){ addMessage("You're welcome! 😊",'bot'); return; }
-  if(/sad|upset|cry|bad/.test(userText)){ addMessage("I'm sorry — that sounds heavy. Want a 3-step breathing exercise?","bot"); return; }
-  if(/happy|good|great|amazing/.test(userText)){ addMessage("Love to hear that! Want a small celebration idea? 🎉",'bot'); return; }
-  addMessage("Thanks for sharing — tell me a bit more or choose an activity above. 💙",'bot');
-});
+/* expose a helper to pick challenge on first open */
+function nextChallengeIfFirst(){ /* placeholder */ }
 
-/* ---------------------- small helpers ---------------------- */
-function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block' : 'none'; }
-
-/* ---------------------- keyboard/touches ---------------------- */
-document.addEventListener('keydown', e=>{ if(e.key === "Escape"){ document.getElementById('themesPanel').classList.remove('open'); document.getElementById('flowDraw').style.display='none'; document.getElementById('flowGame').style.display='none'; } });
-
-/* ---------------------- initial UI tweaks ---------------------- */
-document.getElementById('flowDraw').style.display='flex';
-document.getElementById('flowChat').style.display='none';
-document.getElementById('miniPlayer').style.display='flex';
-document.getElementById('miniPlayPause').textContent = '▶️';
-document.getElementById('autoCheckToggle').setAttribute('aria-pressed','true');
-
-/* ---------------------- end of main script ---------------------- */
 </script>
 </body>
 </html>
