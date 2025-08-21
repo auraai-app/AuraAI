@@ -16,15 +16,19 @@
   - Fix for the chatbot to remove the initial hardcoded message
   - Updated 'Welcome' screen gradient and text shadow for better visibility
   - Replaced the green 'Welcome' text with a darker gradient as requested.
-  - **REWRITTEN CHATBOT LOGIC to be more robust and reliably handle loading states.**
-  - **FIXED: Improved chatbot error handling for network and API response issues.**
+  - REWRITTEN CHATBOT LOGIC to be fully OFFLINE with a hardcoded conversation.
+  - FIXED: Removed all API calls and network dependencies for the chatbot.
+  - UPDATED CHATBOT LOGIC for direct and literal conversation flow.
+  - **NEW: Updated chatbot to support a multi-step, directed conversation as requested by the user.**
+  - **NEW: Added safe and appropriate advice for a user discussing bullying.**
+  - **NEW: Increased the 'glassiness' of all elements with more blur and transparency.**
 -->
 <style>
 :root{
   --pad:20px; --radius:16px;
-  --glass-bg: rgba(255,255,255,0.20);
-  --glass-border: rgba(255,255,255,0.28);
-  --glass-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  --glass-bg: rgba(255,255,255,0.40); /* Increased transparency */
+  --glass-border: rgba(255,255,255,0.5); /* Increased border visibility */
+  --glass-shadow: 0 24px 50px rgba(0,0,0,0.18); /* More prominent shadow */
   --accent-grad: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
   --text: #0b3c61;
   --muted: rgba(11,60,97,0.65);
@@ -38,7 +42,7 @@ body.animated-theme { background: linear-gradient(270deg, #f7b7b9, #a8cdf1, #a8c
 @keyframes gradientAnimation { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 .screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
 .screen.active{display:grid}
-.glass{background:var(--glass-bg);backdrop-filter: blur(14px);-webkit-backdrop-filter: blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);border-radius:var(--radius)}
+.glass{background:var(--glass-bg);backdrop-filter: blur(20px);-webkit-backdrop-filter: blur(20px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);border-radius:var(--radius)}
 .btn{border:0;cursor:pointer;border-radius:12px;padding:12px 14px;font-weight:800;font-size:15px;background:var(--accent-grad);color:var(--text);box-shadow:0 6px 16px rgba(168,205,241,.6);transition:transform .2s ease, filter .2s ease;}
 .btn:hover{transform:translateY(-2px);filter:brightness(.95)}
 /* main hello */
@@ -72,8 +76,8 @@ body.animated-theme { background: linear-gradient(270deg, #f7b7b9, #a8cdf1, #a8c
 .mood-btn:hover{transform:translateY(-2px)}
 .mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
 #mood-strip{display:flex;gap:8px}
-#chat-box{flex:1;min-height:260px;max-height:52vh;overflow:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.65);display:flex;flex-direction:column}
-.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;font-size:16px}
+#chat-box{flex:1;min-height:260px;max-height:52vh;overflow:auto;padding:14px;border-radius:14px;background:rgba(255,255,255,0.7);backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);display:flex;flex-direction:column}
+.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;font-size:16px;box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
 .message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;backdrop-filter:blur(6px);align-self:flex-start} .message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right}
 .chat-input-container{display:flex;gap:8px;width:100%}
 .chat-input-container input{flex:1;padding:10px;border-radius:12px;border:1px solid #ddd;font-size:16px;background:rgba(255,255,255,.6)}
@@ -582,7 +586,7 @@ function initThemeSwitcher() {
         box.style.fontSize = '40px';
         box.style.display = 'flex';
         box.style.justifyContent = 'center';
-        box.style.alignItems = 'center';
+        box.style.align-items = 'center';
         box.style.backgroundColor = 'rgba(0,0,0,0.05)';
         box.style.border = '2px dashed rgba(0,0,0,0.2)';
       } else if (theme.type === 'upload') {
@@ -970,61 +974,103 @@ function initChatbot() {
     const chatBox = document.getElementById('chat-box');
     const sendButton = document.querySelector('.chat-input-container button');
     
-    let chatHistory = [];
+    // Conversation States
+    const STATES = {
+        IDLE: 'idle',
+        WAITING_FOR_MOOD: 'waiting_for_mood',
+        WAITING_FOR_EXPLANATION: 'waiting_for_explanation',
+        WAITING_FOR_ACTION_REQUEST: 'waiting_for_action_request',
+        PROVIDING_ADVICE: 'providing_advice'
+    };
+    let currentState = STATES.IDLE;
+    
+    // A mapping of mood to a specific bot response
+    const moodResponses = {
+      happy: "You have selected 'happy'. Why are you feeling happy?",
+      sad: "You have selected 'sad'. Why are you feeling sad?",
+      angry: "You have selected 'angry'. Why are you feeling angry?",
+      nervous: "You have selected 'nervous'. Why are you feeling nervous?"
+    };
+
+    // Initial greeting
+    addMessage('bot', "Hello. You can greet me by typing 'hello'.");
 
     window.sendMessage = async function() {
-        const text = chatInput.value.trim();
+        const text = chatInput.value.trim().toLowerCase();
         if (text === '') return;
 
         addMessage('user', text);
-        chatHistory.push({ role: 'user', parts: [{ text: text }] });
-        
         chatInput.value = '';
         chatInput.disabled = true;
         sendButton.disabled = true;
-        
-        const loadingMessage = addMessage('bot', 'AuraAI is thinking...');
 
-        try {
-            const payload = {
-                contents: chatHistory
-            };
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        let botResponse = "I do not recognize that input. Please provide a clear and direct response as requested by the current conversation topic.";
+        let nextState = currentState;
 
-            const response = await fetchWithRetry(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-            
-            removeMessage(loadingMessage);
-
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
-                const botResponse = result.candidates[0].content.parts[0].text;
-                addMessage('bot', botResponse);
-                chatHistory.push({ role: 'model', parts: [{ text: botResponse }] });
-            } else {
-                console.error('API response was malformed:', result);
-                const fallbackMessage = "Hmm, I'm having a little trouble thinking right now. Could you please try asking in a different way?";
-                addMessage('bot', fallbackMessage);
-                chatHistory.push({ role: 'model', parts: [{ text: fallbackMessage }] });
-            }
-
-        } catch (error) {
-            console.error('API Error:', error);
-            removeMessage(loadingMessage);
-            const errorMessage = "It looks like there's a problem with the connection right now. Let's try again in a bit!";
-            addMessage('bot', errorMessage);
-            chatHistory.push({ role: 'model', parts: [{ text: errorMessage }] });
-        } finally {
-            chatInput.disabled = false;
-            sendButton.disabled = false;
-            chatInput.focus();
+        // Logic based on the current state
+        switch (currentState) {
+            case STATES.IDLE:
+                if (text.includes("hello") || text.includes("hi")) {
+                    botResponse = "HOW ARE YOU FEELING? Please select one of the moods below to continue.";
+                    nextState = STATES.WAITING_FOR_MOOD;
+                }
+                break;
+            case STATES.WAITING_FOR_EXPLANATION:
+                // User's explanation for their mood
+                botResponse = "Understood. The described situation can be difficult. Would you like me to provide some possible courses of action? Please reply 'yes' or 'no'.";
+                nextState = STATES.WAITING_FOR_ACTION_REQUEST;
+                break;
+            case STATES.WAITING_FOR_ACTION_REQUEST:
+                if (text.includes("yes")) {
+                    botResponse = "Here are two options to consider. Option 1: Tell a trusted adult, such as a teacher or parent. Option 2: Try to avoid the individual. Would you like to restart the conversation? Please type 'yes' or 'no'.";
+                    nextState = STATES.PROVIDING_ADVICE;
+                } else if (text.includes("no")) {
+                    botResponse = "Understood. The topic will not be discussed further. Would you like to restart the conversation? Please type 'yes' or 'no'.";
+                    nextState = STATES.PROVIDING_ADVICE;
+                } else {
+                    botResponse = "Your input was not 'yes' or 'no'. Please provide a clear response.";
+                    // Stay in the same state
+                }
+                break;
+            case STATES.PROVIDING_ADVICE:
+                if (text.includes("yes")) {
+                    botResponse = "Conversation restarted. Hello. You can greet me by typing 'hello'.";
+                    nextState = STATES.IDLE;
+                } else if (text.includes("no")) {
+                    botResponse = "Understood. You have ended the conversation. You can restart at any time by typing 'hello'.";
+                    nextState = STATES.IDLE;
+                }
+                break;
+            default:
+                // This case should not be reached but handles any unexpected state.
+                botResponse = "An unexpected error occurred. Restarting conversation. Hello. You can greet me by typing 'hello'.";
+                nextState = STATES.IDLE;
+                break;
         }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        addMessage('bot', botResponse);
+        currentState = nextState;
+        
+        chatInput.disabled = false;
+        sendButton.disabled = false;
+        chatInput.focus();
     };
+    
+    window.setMood = async function(mood) {
+      if (currentState !== STATES.WAITING_FOR_MOOD) {
+        addMessage('bot', "The correct input for this stage is a response to the current question.");
+        return;
+      }
+      
+      const botResponse = moodResponses[mood] || "Please select one of the four provided moods.";
+      addMessage('bot', botResponse);
+      currentState = STATES.WAITING_FOR_EXPLANATION;
+      
+      chatInput.disabled = false;
+      sendButton.disabled = false;
+      chatInput.focus();
+    }
     
     chatInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -1032,51 +1078,13 @@ function initChatbot() {
         }
     });
 
-    function addMessage(sender, text, isTemp = false) {
+    function addMessage(sender, text) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender);
         msgDiv.textContent = text;
-        if (isTemp) {
-            msgDiv.dataset.temp = 'true';
-        }
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
         return msgDiv;
-    }
-    
-    function removeMessage(msgDiv) {
-        if (msgDiv && msgDiv.parentNode) {
-            msgDiv.parentNode.removeChild(msgDiv);
-        }
-    }
-    
-    async function fetchWithRetry(url, options, maxRetries = 5) {
-        let retries = 0;
-        while (true) {
-            try {
-                const response = await fetch(url, options);
-                if (response.status === 429) {
-                    if (retries < maxRetries) {
-                        retries++;
-                        const delay = Math.pow(2, retries) * 1000;
-                        await new Promise(res => setTimeout(res, delay));
-                        continue;
-                    }
-                }
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response;
-            } catch (error) {
-                if (retries < maxRetries) {
-                    retries++;
-                    const delay = Math.pow(2, retries) * 1000;
-                    await new Promise(res => setTimeout(res, delay));
-                    continue;
-                }
-                throw error;
-            }
-        }
     }
 }
 </script>
