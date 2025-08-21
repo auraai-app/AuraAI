@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +16,7 @@
 
     --pad: 20px;
     --radius: 18px;
-    --motion-scale: 0.75;
+    --motion-scale: 0.9;
   }
 
   *{ box-sizing: border-box }
@@ -69,11 +68,11 @@
     font-weight:900; line-height:1; user-select:none;
     margin: 14px 0 8px;
     font-size: clamp(42px, 8vw, 92px); letter-spacing: 1px;
-    background: linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);
+    background: linear-gradient(90deg,#dfe7ff,#f09dad,#86bff5,#e8f1ff);
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: hueflow 12s linear infinite; filter: saturate(.9);
+    animation: hueflow 12s linear infinite; filter: saturate(.9) brightness(.9);
   }
-  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) } 100%{ filter:hue-rotate(360deg) } }
+  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) saturate(.9) brightness(.9) } 100%{ filter:hue-rotate(360deg) saturate(.9) brightness(.9) } }
   .hello-sub{ font-size: clamp(16px, 2.6vw, 22px); opacity:.9; margin-bottom: 18px; }
   .hello-actions{ display:flex; gap:12px; justify-content:center; flex-wrap: wrap; }
   .hello-actions .btn{ min-width:160px }
@@ -124,7 +123,7 @@
   .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border: 2px solid transparent; font-size:18px; }
   .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .input-footer{ position:relative; display:none; } /* hidden until flow asks to type */
+  .input-footer{ position:relative; display:none; }
   #user-input{ width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none; }
   #send-btn{ position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5 }
 
@@ -165,7 +164,7 @@
     background: rgba(255,255,255,.6); outline:none; cursor:pointer;
   }
 
-  /* Flow Overlay (non-intrusive; no layout shifts) */
+  /* Flow Overlay */
   .flow-pad{
     position:absolute; left:16px; bottom:16px; z-index:900;
     display:flex; flex-direction:column; gap:8px; max-width:min(560px, 80vw);
@@ -175,6 +174,13 @@
   .flow-actions{ display:flex; gap:8px; flex-wrap:wrap }
   .chip{ border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65) }
   .chip:hover{ filter:brightness(.95) }
+
+  /* Level badge */
+  .level-badge{
+    position:absolute; right:16px; top:64px; z-index:800;
+    padding:8px 12px; border-radius:12px; font-weight:900;
+    background: rgba(255,255,255,.65);
+  }
 
   @media (max-width: 880px){
     .mood-selector{ flex-wrap:wrap }
@@ -208,15 +214,17 @@
         </div>
         <div class="right-group">
           <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
+          <span class="game-ind">Level: <span id="levelTxt">1</span>/30</span>
           <button class="btn" id="resetGame">Reset</button>
           <button class="btn" id="themeBtnGame" title="Themes">🎨 Themes</button>
           <button class="btn" id="muteBtnGame" title="Mute / Unmute">🔇 Mute</button>
           <button class="btn" id="backFromGame">⬅ Back</button>
         </div>
       </div>
+      <div id="levelBadge" class="level-badge glass" style="display:none"></div>
       <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
 
-      <!-- Flow overlay for Game (non-blocking) -->
+      <!-- Flow overlay for Game -->
       <div id="flowGame" class="flow-pad glass" role="group" aria-label="Game Flow" style="display:none">
         <div class="flow-q" id="flowGameQ"></div>
         <div class="flow-actions">
@@ -232,13 +240,14 @@
   <section id="draw-screen" class="screen">
     <div class="draw-wrap glass">
       <div class="bar">
-        <div class="left-group">
+        <div class="left-group draw-tools">
           <div class="title">🎨 Draw Something — express or doodle</div>
           <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
           <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
           <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
           <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
           <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/></div>
+          <button class="btn" id="rotateCanvasBtn" title="Rotate Canvas">↻ Rotate</button>
         </div>
         <div class="right-group">
           <button class="btn" id="themeBtnDraw" title="Themes">🎨 Themes</button>
@@ -246,21 +255,28 @@
           <button class="btn" id="backFromDraw">⬅ Back</button>
         </div>
       </div>
+
       <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
+
       <div class="draw-bottom">
         <div class="left">
           <button class="btn" id="clearDraw">Clear</button>
           <button class="btn" id="saveDraw">Save</button>
         </div>
-        <div class="right"></div>
+        <div class="right">
+          <button class="btn" id="askPrompt">🧠 Prompt</button>
+          <button class="btn" id="switchPrompt">🔄 New Prompt</button>
+          <button class="btn" id="judgeToggle">✅ Auto‑Check</button>
+        </div>
       </div>
 
-      <!-- Flow overlay for Draw (non-blocking) -->
+      <!-- Flow overlay for Draw -->
       <div id="flowDraw" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
         <div class="flow-q" id="flowDrawQ"></div>
         <div class="flow-actions">
-          <button class="chip" id="flowDrawYes">Yes</button>
+          <button class="chip" id="flowDrawYes">OK</button>
           <button class="chip" id="flowDrawNo">No</button>
+          <button class="chip" id="flowDrawLater">Later</button>
           <button class="chip" id="flowDrawClose">Close</button>
         </div>
       </div>
@@ -295,7 +311,7 @@
         <button class="btn" id="send-btn">Send</button>
       </div>
 
-      <!-- Flow overlay for Chat (non-blocking) -->
+      <!-- Flow overlay for Chat -->
       <div id="flowChat" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
         <div class="flow-q" id="flowChatQ"></div>
         <div class="flow-actions">
@@ -322,7 +338,9 @@
 
   <!-- BGM Mini Player -->
   <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
+    <button id="miniPrev" class="mini-btn" title="Prev">⏮</button>
     <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
+    <button id="miniNext" class="mini-btn" title="Next">⏭</button>
     <div class="mini-meta">
       <div class="mini-title">Music</div>
       <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
@@ -373,7 +391,7 @@ function switchScreen(key){
   screens[key].classList.add('active');
 }
 document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); startGameFlow(); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlow(); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlowIntro(); };
 document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); startChatFlow(); };
 document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
@@ -381,107 +399,38 @@ document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); closeAllF
 
 /* ------------------------------ THEMES -------------------------------- */
 const themesPanel = document.getElementById("themesPanel");
-const closeThemes = document.getElementById("closeThemes");
 const themeStrip = document.getElementById("themeStrip");
-
-/* 50+ Themes */
+/* Extra themes added to the original set */
 const THEMES = {
-  "Black & White (solid)": [
-    ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
-    ["deep-charcoal","#2C3E50",["#3e5368","#ffffff"],["#1c2a36","#ffffff"]],
-    ["slate-gray","#7F8C8D",["#a1adae","#1e2b30"],["#5e6a6b","#ffffff"]],
+  "Core": [
+    ["auraaqua","linear-gradient(135deg,#bfe3ff,#ffd6e0)",["#d6e6fb","#074279"],["#517fc4","#e8f3fc"]],
     ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
-    ["silver-mist","linear-gradient(135deg,#ECEFF1,#B0BEC5)",["#f5f8fa","#0a3358"],["#d6e3ee","#0b2a47"]],
+    ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
   ],
-  "Red (solid)": [
-    ["poster-red","#E53935",["#f6b6b4","#6c0b0b"],["#b9221f","#ffffff"]],
-    ["rose-red","#FF6F61",["#ffd0ca","#5c1713"],["#e2574a","#ffffff"]],
-    ["crimson","#B71C1C",["#d86464","#ffffff"],["#8f1414","#ffffff"]],
-    ["wine-red","#8B0000",["#a43b3b","#ffffff"],["#5b0000","#ffffff"]],
-  ],
-  "Orange (solid)": [
-    ["poster-orange","#F57C00",["#ffc07e","#4b2a00"],["#d66700","#ffffff"]],
-    ["pumpkin","#D35400",["#f0a870","#3d2300"],["#b94900","#ffffff"]],
-    ["amber","#FFB300",["#ffe18a","#4a3a00"],["#e2a200","#231d00"]],
-  ],
-  "Yellow (solid)": [
-    ["poster-yellow","#FDD835",["#fff6b0","#3c3600"],["#eacb2f","#2a2300"]],
-    ["sun-yellow","#FFEB3B",["#fff7a6","#3a3400"],["#ecd835","#231e00"]],
-    ["goldenrod","#DAA520",["#f0d584","#2d2500"],["#c0911c","#ffffff"]],
-  ],
-  "Green (solid)": [
-    ["poster-green","#43A047",["#bfe6c3","#0f2a12"],["#2f7a33","#ffffff"]],
-    ["mint","#98FF98",["#e4ffe4","#0f2a12"],["#7be47b","#0f2a12"]],
-    ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
-    ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
-  ],
-  "Blue (solid)": [
-    ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
-    ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
-    ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
-    ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
-  ],
-  "Purple/Pink (solid)": [
-    ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
-    ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
-    ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
-    ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
-  ],
-  "Gradients — Sunset": [
+  "Sunset": [
     ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
-    ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
     ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
   ],
-  "Gradients — Ice/Dream": [
+  "Ice/Dream": [
     ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
     ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
-    ["cotton-candy","linear-gradient(135deg,#f6d365,#fda085)",["#fff0cf","#3a2e0a"],["#f18c6a","#2a1408"]],
   ],
-  "Gradients — Forest/Jade": [
+  "Forest & Earth": [
     ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
-    ["moss","linear-gradient(135deg,#134E5E,#71B280)",["#cfe7db","#0a2a1f"],["#4a9b7a","#ffffff"]],
+    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
   ],
-  "Gradients — Steel": [
-    ["steel","linear-gradient(135deg,#4b79a1,#283e51)",["#d6e6ff","#0a2a4a"],["#3a6287","#ffffff"]],
-    ["smoke","linear-gradient(135deg,#bdc3c7,#2c3e50)",["#e9edf0","#0a2a4a"],["#53697f","#ffffff"]],
-  ],
-  "Gradients — Aurora": [
-    ["aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)",["#e6f8ff","#0a2a4a"],["#4aa0ef","#0a2a4a"]],
-    ["polar","linear-gradient(135deg,#21D4FD,#B721FF)",["#eaf3ff","#0a2a4a"],["#8e6bff","#ffffff"]],
-  ],
-  "Gradients — Berry": [
+  "Berries": [
     ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
     ["mulberry","linear-gradient(135deg,#a044ff,#6a3093)",["#ead9ff","#23123a"],["#7e45c7","#ffffff"]],
   ],
-  "Gradients — Night": [
-    ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
-    ["midnight","linear-gradient(135deg,#0f2027,#203a43,#2c5364)",["#c8d7e0","#0a2a3a"],["#2d5a74","#ffffff"]],
-  ],
-  /* New groups to exceed 50 */
-  "Pastels": [
+  "Soft": [
     ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
-    ["pastel-peach","#FFD1BA",["#fff1ea","#2a1a0f"],["#ffb899","#2a1a0f"]],
-    ["pastel-lilac","#D9C2FF",["#f6efff","#211a2a"],["#c1a3ff","#211a2a"]],
     ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
   ],
-  "Neons": [
-    ["neon-cyan","#00F5FF",["#d4fdff","#002a2e"],["#00c8d0","#00181b"]],
-    ["neon-magenta","#FF00E5",["#ffd4fb","#2a0025"],["#d100bf","#2a0025"]],
-    ["neon-lime","#B6FF00",["#f0ffd4","#1a2a00"],["#8be000","#1a2a00"]],
-    ["neon-blue","#00A2FF",["#d9f0ff","#0a2740"],["#0087d1","#0a2740"]],
-  ],
-  "Earth Tones": [
-    ["earth-clay","#B5651D",["#e7c39d","#2a1807"],["#8e4a12","#ffffff"]],
-    ["earth-sand","#C2B280",["#f5edd4","#2a240f"],["#a99a65","#2a240f"]],
-    ["earth-olive","#556B2F",["#cfe0a8","#0f1a06"],["#3f4f22","#ffffff"]],
-    ["earth-ocean","#2E8B57",["#bfe7d0","#0a2a1f"],["#226b43","#ffffff"]],
-    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
-  ],
 };
-
 function isDarkBackground(bg){
   if(!bg || typeof bg !== "string") return false;
-  if(bg.startsWith("linear-gradient")) return true; // darker glass for gradients
+  if(bg.startsWith("linear-gradient")) return true;
   const hex = bg.replace("#","").trim();
   if(hex.length !== 6) return false;
   const r = parseInt(hex.slice(0,2),16);
@@ -524,32 +473,26 @@ document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openTheme
 
 /* ------------------------------ BGM ----------------------------------- */
 const BGM = (() => {
-  const audio = new Audio('bgm.mp3');
-  audio.loop = true;
-  audio.preload = 'auto';
-  audio.crossOrigin = 'anonymous';
+  const playlist = [
+    { src: 'bgm.mp3',  title: 'Flow 1' },
+    { src: 'bgm2.mp3', title: 'Flow 2' },
+    { src: 'bgm3.mp3', title: 'Flow 3' },
+  ];
+  let index = Math.floor(Math.random()*playlist.length);
+  const audio = new Audio(playlist[index].src);
+  audio.loop = true; audio.preload = 'auto'; audio.crossOrigin = 'anonymous';
   let started = false;
-  let userWantedPlay = true; // unmuted by default → play when allowed
+  let userWantedPlay = true;
 
-  const play = async () => {
-    try {
-      await audio.play();
-      started = true;
-      setMiniState();
-    } catch (e) {
-    }
-  };
-  const pause = () => { audio.pause(); setMiniState(); };
-  const resumeIfWanted = () => { if(userWantedPlay) play(); };
-  const setWantedPlay = (v) => { userWantedPlay = v; };
-
-  // Mini Player wiring
-  const mini = {
+  const ui = {
     root: document.getElementById('miniPlayer'),
     playPause: document.getElementById('miniPlayPause'),
+    prev: document.getElementById('miniPrev'),
+    next: document.getElementById('miniNext'),
     seek: document.getElementById('miniSeek'),
     cur: document.getElementById('miniCur'),
     dur: document.getElementById('miniDur'),
+    title: document.querySelector('.mini-title'),
   };
 
   function fmt(t){
@@ -559,36 +502,40 @@ const BGM = (() => {
     return `${m}:${s}`;
   }
   function setMiniState(){
-    mini.playPause.textContent = audio.paused ? "▶️" : "⏸";
+    ui.playPause.textContent = audio.paused ? "▶️" : "⏸";
+    ui.title.textContent = `Music — ${playlist[index].title}`;
   }
-  mini.playPause.addEventListener('click', () => {
-    Sound.click();
-    if(audio.paused){ setWantedPlay(true); play(); }
-    else { setWantedPlay(false); pause(); }
-  });
-  mini.seek.addEventListener('input', () => {
-    if(audio.duration) audio.currentTime = (mini.seek.value/100) * audio.duration;
-  });
-  audio.addEventListener('timeupdate', () => {
+  const load = (i) => {
+    index = (i+playlist.length)%playlist.length;
+    const wasPlaying = !audio.paused;
+    audio.src = playlist[index].src;
+    audio.load();
+    setMiniState();
+    if(wasPlaying) play();
+  };
+  const play = async () => {
+    try { await audio.play(); started = true; setMiniState(); } catch(e){}
+  };
+  const pause = () => { audio.pause(); setMiniState(); };
+  const resumeIfWanted = () => { if(userWantedPlay) play(); };
+  const setWantedPlay = (v) => { userWantedPlay = v; };
+
+  ui.playPause.addEventListener('click', ()=>{ Sound.click(); if(audio.paused){ setWantedPlay(true); play(); } else { setWantedPlay(false); pause(); } });
+  ui.prev.addEventListener('click', ()=>{ Sound.click(); load(index-1); });
+  ui.next.addEventListener('click', ()=>{ Sound.click(); load(index+1); });
+  ui.seek.addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (ui.seek.value/100) * audio.duration; });
+  audio.addEventListener('timeupdate', ()=>{
     if(audio.duration){
-      mini.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
-      mini.cur.textContent = fmt(audio.currentTime);
-      mini.dur.textContent = fmt(audio.duration);
+      ui.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
+      ui.cur.textContent = fmt(audio.currentTime);
+      ui.dur.textContent = fmt(audio.duration);
     }
     setMiniState();
   });
-  audio.addEventListener('loadedmetadata', () => {
-    mini.dur.textContent = fmt(audio.duration);
-  });
+  audio.addEventListener('loadedmetadata', ()=>{ ui.dur.textContent = fmt(audio.duration); setMiniState(); });
 
-  // Public API
-  return {
-    audio, play, pause, resumeIfWanted, setWantedPlay,
-    isPaused: () => audio.paused
-  };
+  return { audio, play, pause, resumeIfWanted, setWantedPlay, isPaused:()=>audio.paused };
 })();
-
-// Start on first user interaction if autoplay was blocked
 let firstInteractionBound = false;
 function startBGMOnFirstInteraction(){
   if(firstInteractionBound) return;
@@ -596,7 +543,6 @@ function startBGMOnFirstInteraction(){
   const kick = () => { document.removeEventListener('pointerdown', kick); BGM.play(); };
   document.addEventListener('pointerdown', kick, { once:true });
 }
-// Try autoplay immediately; if blocked, the first click will start it
 BGM.play();
 
 /* ------------------------------ MUTE ---------------------------------- */
@@ -604,18 +550,12 @@ function bindMute(btnId){
   const el = document.getElementById(btnId);
   const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
   setLabel();
-  el.onclick = async ()=>{
+  el.onclick = ()=>{
     const willMute = !Sound.isMuted();
     Sound.setMuted(willMute);
     setLabel();
     Sound.toggle();
-
-    if(willMute){
-      BGM.setWantedPlay(true);
-      BGM.pause();
-    }else{
-      BGM.resumeIfWanted();
-    }
+    if(willMute){ BGM.setWantedPlay(true); BGM.pause(); } else { BGM.resumeIfWanted(); }
   };
 }
 bindMute("muteBtnGame");
@@ -625,8 +565,23 @@ bindMute("muteBtnChat");
 /* ------------------------------ GAME ---------------------------------- */
 const gameCanvas = document.getElementById('gameCanvas');
 const scoreTxt = document.getElementById('scoreTxt');
+const levelTxt = document.getElementById('levelTxt');
 const resetGameBtn = document.getElementById('resetGame');
-let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true;
+const levelBadge = document.getElementById('levelBadge');
+let gctx, W, H, bubbles = [], score = 0, running = true;
+let lastSpawn = 0;
+let level = 1;
+const MAX_LEVEL = 30;
+const levelCfg = Array.from({length:MAX_LEVEL}, (_,i)=>{
+  const n = i+1;
+  return {
+    spawnMs: Math.max(780 - n*18, 220), // faster spawns every level
+    speed: 0.45 + n*0.03,               // rising speed
+    maxOnScreen: Math.min(6 + n, 40),
+    goal: 10 + Math.floor(n*6.5),       // pops to level up
+  };
+});
+let levelProgress = 0;
 
 function resizeGame(){
   const rect = gameCanvas.getBoundingClientRect();
@@ -640,11 +595,36 @@ function resizeGame(){
 window.addEventListener('resize', resizeGame);
 resizeGame();
 
-function spawnBubble(){
-  const r = 22 + Math.random()*26;
+function encouragement(){
+  const msgs = [
+    "Nice & steady 🌊",
+    "Smooth pops! 🫧",
+    "You’re in the zone ✨",
+    "Great pace 💫",
+    "Breathe & pop 🌬️",
+    "Love the focus 🔆",
+  ];
+  addTip("Game", msgs[Math.floor(Math.random()*msgs.length)]);
+}
+function milestone(s){
+  const lines = [
+    `Woo! ${s} pops! 🎉`,
+    `You hit ${s}! 🔥`,
+    `Power moves at ${s}! 💪`,
+    `${s} — keep shining! ✨`,
+  ];
+  addTip("Game", lines[Math.floor(Math.random()*lines.length)]);
+}
+
+function spawnBubble(t){
+  const cfg = levelCfg[level-1];
+  if(bubbles.length >= cfg.maxOnScreen) return;
+  if(t - lastSpawn < cfg.spawnMs) return;
+  lastSpawn = t;
+  const r = 20 + Math.random()*26;
   const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
   const y = gameCanvas.clientHeight + r + 10;
-  const vy = (0.5 + Math.random()*0.9) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')) ;
+  const vy = (cfg.speed + Math.random()*0.7) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')) ;
   const hue = Math.floor(200 + Math.random()*100);
   bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
 }
@@ -684,7 +664,8 @@ function gameLoop(t){
     grd.addColorStop(1,'rgba(255,255,255,.18)');
     gctx.fillStyle = grd;
     gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    if(t - lastSpawn > 700){ spawnBubble(); lastSpawn = t; }
+
+    spawnBubble(t);
     bubbles = bubbles.filter(b => b.alpha > 0);
     for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
   }
@@ -700,17 +681,37 @@ gameCanvas.addEventListener('click', (e)=>{
     const dx = x - b.x, dy = y - b.y;
     if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
       b.popped = true; b.vy = 0; score += 1; scoreTxt.textContent = score; Sound.pop();
+      levelProgress += 1;
+      if(score % 8 === 0) encouragement();
+      if([25,50,100,150,200,300,400,500,700,1000].includes(score)) milestone(score);
+      checkLevelUp();
       break;
     }
   }
 });
-resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; };
+function checkLevelUp(){
+  const cfg = levelCfg[level-1];
+  if(levelProgress >= cfg.goal && level < MAX_LEVEL){
+    level += 1;
+    levelTxt.textContent = level;
+    levelProgress = 0;
+    showLevelBadge(`Level ${level} — spawns faster ✨`);
+  }else if(level === MAX_LEVEL && levelProgress >= cfg.goal){
+    showLevelBadge(`Max level! You’re unstoppable ⭐`);
+  }
+}
+function showLevelBadge(text){
+  levelBadge.textContent = text;
+  levelBadge.style.display = 'block';
+  setTimeout(()=> levelBadge.style.display='none', 2000);
+}
+resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; level=1; levelTxt.textContent=1; levelProgress=0; lastSpawn=0; };
 
 /* ------------------------------ DRAW ---------------------------------- */
 const drawCanvas = document.getElementById('drawCanvas');
 const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
 let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
-
+let rotation = 0; // 0, 90, 180, 270
 function sizeDrawCanvas(){
   const rect = drawCanvas.getBoundingClientRect();
   const prev = dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);
@@ -723,9 +724,16 @@ function sizeDrawCanvas(){
 new ResizeObserver(sizeDrawCanvas).observe(drawCanvas);
 setTimeout(sizeDrawCanvas, 0);
 
+function getPointerPos(e){
+  const r = drawCanvas.getBoundingClientRect();
+  if(e.touches && e.touches[0]) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
 function startDraw(x,y){ drawing = true; lastX=x; lastY=y; Sound.scribble(); }
 function moveDraw(x,y){
   if(!drawing) return;
+  dctx.save();
+  applyRotationTransform();
   dctx.lineWidth = brushSize;
   dctx.lineCap = 'round'; dctx.lineJoin = 'round';
   if(erasing){
@@ -736,30 +744,17 @@ function moveDraw(x,y){
     dctx.strokeStyle = brushColor;
   }
   dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
+  dctx.restore();
   lastX=x; lastY=y;
+  if(autoJudgeOn && activePrompt) debounceJudge();
 }
 function endDraw(){ drawing = false; dctx.globalCompositeOperation = 'source-over'; }
 
-drawCanvas.addEventListener('mousedown', e=>{
-  const r = drawCanvas.getBoundingClientRect();
-  startDraw(e.clientX - r.left, e.clientY - r.top);
-});
-drawCanvas.addEventListener('mousemove', e=>{
-  const r = drawCanvas.getBoundingClientRect();
-  moveDraw(e.clientX - r.left, e.clientY - r.top);
-});
+drawCanvas.addEventListener('mousedown', e=>{ const p = getPointerPos(e); startDraw(p.x,p.y); });
+drawCanvas.addEventListener('mousemove', e=>{ const p = getPointerPos(e); moveDraw(p.x,p.y); });
 window.addEventListener('mouseup', endDraw);
-
-drawCanvas.addEventListener('touchstart', e=>{
-  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
-  startDraw(t.clientX - r.left, t.clientY - r.top);
-  e.preventDefault();
-},{passive:false});
-drawCanvas.addEventListener('touchmove', e=>{
-  const t = e.touches[0]; const r = drawCanvas.getBoundingClientRect();
-  moveDraw(t.clientX - r.left, t.clientY - r.top);
-  e.preventDefault();
-},{passive:false});
+drawCanvas.addEventListener('touchstart', e=>{ const p = getPointerPos(e); startDraw(p.x,p.y); e.preventDefault();},{passive:false});
+drawCanvas.addEventListener('touchmove', e=>{ const p = getPointerPos(e); moveDraw(p.x,p.y); e.preventDefault();},{passive:false});
 drawCanvas.addEventListener('touchend', endDraw);
 
 document.querySelectorAll('.swatch').forEach(btn=>{
@@ -769,26 +764,241 @@ document.querySelectorAll('.swatch').forEach(btn=>{
     Sound.click();
   });
 });
-document.getElementById('brushSize').addEventListener('input', e=>{
-  brushSize = +e.target.value;
-});
-document.getElementById('colorPicker').addEventListener('input', e=>{
-  brushColor = e.target.value; erasing = false; document.getElementById('eraserToggle').checked=false;
-});
-document.getElementById('eraserToggle').addEventListener('change', e=>{
-  erasing = e.target.checked; Sound.toggle();
-});
-document.getElementById('clearDraw').onclick = ()=>{
-  Sound.click();
-  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-};
-document.getElementById('saveDraw').onclick = ()=>{
-  Sound.click();
-  const url = drawCanvas.toDataURL('image/png');
-  const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click();
+document.getElementById('brushSize').addEventListener('input', e=>{ brushSize = +e.target.value; });
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing = false; document.getElementById('eraserToggle').checked=false; });
+document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
+document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.setTransform(1,0,0,1,0,0); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); rotation=0; };
+document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click(); };
+document.getElementById('rotateCanvasBtn').onclick = ()=>{ Sound.click(); rotation = (rotation + 90) % 360; redrawRotated(); };
+
+function applyRotationTransform(){
+  const w = drawCanvas.width / devicePixelRatio;
+  const h = drawCanvas.height / devicePixelRatio;
+  if(rotation === 0) return;
+  if(rotation === 90){ dctx.translate(w,0); dctx.rotate(Math.PI/2); }
+  if(rotation === 180){ dctx.translate(w,h); dctx.rotate(Math.PI); }
+  if(rotation === 270){ dctx.translate(0,h); dctx.rotate(3*Math.PI/2); }
+}
+function redrawRotated(){
+  const w = drawCanvas.width; const h = drawCanvas.height;
+  const img = dctx.getImageData(0,0,w,h);
+  const off = document.createElement('canvas'); off.width = w; off.height = h; const ox = off.getContext('2d');
+  ox.putImageData(img,0,0);
+  dctx.setTransform(1,0,0,1,0,0);
+  dctx.clearRect(0,0,w,h);
+  dctx.save();
+  applyRotationTransform();
+  dctx.drawImage(off,0,0,w/devicePixelRatio,h/devicePixelRatio);
+  dctx.restore();
+}
+
+/* Prompt engine */
+const PROMPTS = [
+  "a star", "a heart", "a house", "a tree", "a sun", "a moon", "a cloud", "a flower", "a car", "a boat",
+  "a fish", "a bird", "a cat", "a dog", "a butterfly", "a smiley face", "a pizza", "an ice cream cone",
+  "a donut", "a cupcake", "a mug", "a book", "a key", "a lock", "a clock", "a phone", "a guitar", "a balloon",
+  "a rocket", "a mountain", "a river", "a rainbow", "a leaf", "a starfish", "a turtle", "a dolphin", "a whale",
+  "a robot", "a dinosaur", "a crown", "a lightning bolt", "a cactus", "a chair", "a table", "a backpack",
+  "a kite", "a snowman", "a penguin", "a dragon", "a castle", "a treasure chest", "a sword", "a shield",
+  "a ladder", "a bicycle", "a skateboard", "a basketball", "a soccer ball", "a baseball bat", "a tennis racket",
+  "a ring", "a necklace", "a glasses frame", "a camera", "a TV", "a laptop", "a mouse", "a cookie",
+  "a sandwich", "a burger", "a banana", "an apple", "a pear", "a pineapple", "a watermelon slice",
+  "a strawberry", "a carrot", "a mushroom", "a teapot", "a candle", "a lamp", "a rocket ship", "a satellite",
+  "a planet with rings", "a comet", "a galaxy swirl", "a violin", "a piano", "a drum", "a microphone", "a headphone",
+  "a zipper", "a shoe", "a sock", "a T‑shirt", "a pants", "a dress", "a bow tie", "a umbrella", "a mailbox", "a spoon",
+  "a fork", "a knife", "a bowl", "a plate", "a skateboard ramp"
+];
+let activePrompt = null;
+let autoJudgeOn = true;
+const askPromptBtn = document.getElementById('askPrompt');
+const switchPromptBtn = document.getElementById('switchPrompt');
+const judgeToggleBtn = document.getElementById('judgeToggle');
+
+askPromptBtn.onclick = ()=> { Sound.click(); startDrawFlowPromptAsk(); };
+switchPromptBtn.onclick = ()=> { Sound.click(); pickPrompt(true); };
+judgeToggleBtn.onclick = ()=> {
+  Sound.toggle();
+  autoJudgeOn = !autoJudgeOn;
+  judgeToggleBtn.textContent = autoJudgeOn ? "✅ Auto‑Check" : "⛔ Auto‑Check";
 };
 
-/* ------------------------------ CHAT (display only; input hidden until flow) ------------------ */
+function pickPrompt(announce=false){
+  activePrompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
+  if(announce) addTip("Draw", `New prompt: try drawing **${activePrompt}** ✍️`);
+  return activePrompt;
+}
+
+/* Doodle Judge (self‑contained tiny k‑NN on features) */
+function extractFeatures(canvas){
+  // Downsample to 32x32, compute a coarse edge map and basic shape heuristics
+  const S = 32;
+  const c2 = document.createElement('canvas'); c2.width = S; c2.height = S;
+  const c2x = c2.getContext('2d');
+  c2x.drawImage(canvas, 0, 0, S, S);
+  const img = c2x.getImageData(0,0,S,S).data;
+
+  let sum=0, cx=0, cy=0, cnt=0;
+  const gray = new Float32Array(S*S);
+  for(let i=0;i<S*S;i++){
+    const r = img[i*4], g = img[i*4+1], b = img[i*4+2], a = img[i*4+3];
+    const v = (0.299*r + 0.587*g + 0.114*b) * (a/255);
+    gray[i] = v;
+    sum += v;
+    if(v>30){ cnt++; cx += (i%S); cy += Math.floor(i/S); }
+  }
+  cx = cnt ? cx/cnt : S/2; cy = cnt ? cy/cnt : S/2;
+  // Edge energy
+  let edge=0;
+  for(let y=1;y<S-1;y++){
+    for(let x=1;x<S-1;x++){
+      const i = y*S + x;
+      const gx = gray[i+1]-gray[i-1];
+      const gy = gray[i+S]-gray[i-S];
+      edge += Math.sqrt(gx*gx + gy*gy);
+    }
+  }
+  // Horizontal vs vertical variance (helps detect lines/circles)
+  let rowVar=0, colVar=0;
+  for(let y=0;y<S;y++){
+    let mean=0; for(let x=0;x<S;x++) mean += gray[y*S+x]; mean/=S;
+    let v=0; for(let x=0;x<S;x++){ const d=gray[y*S+x]-mean; v+=d*d; } rowVar += v/S;
+  }
+  for(let x=0;x<S;x++){
+    let mean=0; for(let y=0;y<S;y++) mean += gray[y*S+x]; mean/=S;
+    let v=0; for(let y=0;y<S;y++){ const d=gray[y*S+x]-mean; v+=d*d; } colVar += v/S;
+  }
+  // Radial symmetry approximation
+  const cxn = (cx - S/2)/(S/2), cyn = (cy - S/2)/(S/2);
+  const centerDist = Math.sqrt(cxn*cxn + cyn*cyn);
+
+  // Normalize
+  const ink = sum/(S*S*255);
+  const feat = [
+    ink, edge/(S*S*255), rowVar/(255*255), colVar/(255*255), centerDist
+  ];
+  return feat;
+}
+function cosine(a,b){ let s=0, na=0, nb=0; for(let i=0;i<a.length;i++){ s+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return s/(Math.sqrt(na*nb)+1e-6); }
+
+// Tiny heuristic label vectors (very rough priors)
+const LABEL_PRIORS = {
+  "a heart":[0.25,0.18,0.20,0.20,0.05],
+  "a star":[0.25,0.30,0.25,0.25,0.05],
+  "a sun":[0.3,0.35,0.22,0.22,0.05],
+  "a cloud":[0.28,0.22,0.20,0.20,0.05],
+  "a house":[0.35,0.30,0.32,0.15,0.08],
+  "a tree":[0.32,0.36,0.40,0.18,0.12],
+  "a car":[0.33,0.34,0.28,0.22,0.08],
+  "a flower":[0.30,0.33,0.26,0.26,0.06],
+  "a face":[0.25,0.20,0.18,0.18,0.02],
+  "a pizza":[0.28,0.29,0.24,0.22,0.05],
+  "a mug":[0.30,0.26,0.20,0.28,0.08],
+  "a rocket":[0.30,0.34,0.26,0.30,0.15],
+  "a rainbow":[0.20,0.18,0.12,0.28,0.20],
+  "a starfish":[0.24,0.28,0.25,0.25,0.06],
+  "a cat":[0.28,0.26,0.24,0.24,0.08],
+  "a dog":[0.30,0.27,0.22,0.22,0.08],
+  "a fish":[0.26,0.26,0.20,0.20,0.10],
+  "a bird":[0.24,0.28,0.22,0.24,0.12],
+};
+// Map prompts to a nearest available prior label
+function priorForPrompt(p){
+  const key = p.replace(/^an?\s+/,'').replace('with','').trim();
+  const aliases = {
+    "smiley face":"a face","planet with rings":"a face","galaxy swirl":"a cloud",
+    "umbrella":"a rainbow","crown":"a star","balloon":"a cloud","snowman":"a face",
+    "sun":"a sun","moon":"a cloud","star":"a star","flower":"a flower","car":"a car","house":"a house","tree":"a tree","rocket ship":"a rocket","rocket":"a rocket","pizza":"a pizza","mug":"a mug","rainbow":"a rainbow","starfish":"a starfish","cat":"a cat","dog":"a dog","fish":"a fish","bird":"a bird"
+  };
+  for(const [k,v] of Object.entries(aliases)){ if(key.includes(k)) return LABEL_PRIORS[v]; }
+  // default generic
+  return [0.28,0.28,0.24,0.24,0.08];
+}
+function judgeDrawingForPrompt(prompt, canvas){
+  const f = extractFeatures(canvas);
+  const prior = priorForPrompt(prompt);
+  const sim = cosine(f, prior);
+  // Dynamic threshold: stricter when ink present, looser if light sketch
+  const ink = f[0];
+  const base = 0.90 - Math.min(ink,0.5)*0.35; // 0.9..0.725
+  const pass = sim >= base;
+  return { pass, score: sim.toFixed(2), needMore: !pass && ink < 0.06 };
+}
+let judgeTimer=null;
+function debounceJudge(){ clearTimeout(judgeTimer); judgeTimer = setTimeout(()=> autoJudge(), 550); }
+function autoJudge(){
+  if(!activePrompt) return;
+  const res = judgeDrawingForPrompt(activePrompt, drawCanvas);
+  if(res.pass){
+    addTip("Draw", `Wow! That looks great — **${activePrompt}** nailed! 🌟 (score ${res.score})`);
+    gentleRetryAsk();
+    activePrompt = null;
+  }else{
+    if(res.needMore){
+      addTip("Draw", "Nice start! Add a bit more detail and I’ll recheck. ✍️");
+    }else{
+      addTip("Draw", "So close! Want to try again for fun, or keep it freestyle?");
+      gentleRetryAsk();
+    }
+  }
+}
+
+/* Draw flow — intro chooser and prompt carousel interaction */
+const flowDrawEl = { wrap: document.getElementById('flowDraw'), q: document.getElementById('flowDrawQ'), yes: document.getElementById('flowDrawYes'), no: document.getElementById('flowDrawNo'), later: document.getElementById('flowDrawLater'), close: document.getElementById('flowDrawClose') };
+function bindDrawFlowHandlers(flow){
+  const setQ = ()=> flowDrawEl.q.textContent = flow.q();
+  setQ(); flowDrawEl.wrap.style.display='flex';
+  flowDrawEl.yes.onclick = ()=>{ Sound.click(); flow.yes(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
+  flowDrawEl.no.onclick = ()=>{ Sound.click(); flow.no(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
+  flowDrawEl.later.onclick = ()=>{ Sound.click(); flow.later && flow.later(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
+  flowDrawEl.close.onclick = ()=>{ Sound.click(); flow.done(); flowDrawEl.wrap.style.display='none'; };
+}
+function Flow(steps, onDone){
+  let idx = 0;
+  return {
+    q(){ return steps[idx]?.q || ""; },
+    yes(){ const s=steps[idx]; if(!s) return; s.onYes && s.onYes(); idx = s.nextYes ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
+    no(){ const s=steps[idx]; if(!s) return; s.onNo && s.onNo(); idx = s.nextNo ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
+    later(){ const s=steps[idx]; if(!s) return; s.onLater && s.onLater(); idx = s.nextLater ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
+    done(){ idx = steps.length; onDone && onDone(); },
+    atEnd(){ return idx>=steps.length; },
+  };
+}
+function startDrawFlowIntro(){
+  const flow = Flow([
+    { q:"Do you want a prompt or freestyle? (OK = prompt, No = freestyle, Later = freestyle for now)", 
+      onYes: ()=>{ pickPrompt(true); addTip("Draw","When you’re ready, I’ll auto‑check and cheer you on ✨"); },
+      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle mode — doodle anything you like! 🖌️"); },
+      onLater: ()=>{ activePrompt=null; addTip("Draw","All good — freestyle now. Tap 🧠 Prompt any time."); }
+    },
+    { q:"If I recognize your drawing, want a gentle ‘try again for fun?’ prompt?", 
+      onYes: ()=> addTip("Draw","You got it — gentle retry is ON 😊"),
+      onNo: ()=> addTip("Draw","Okay — I’ll just cheer you on! 🎉"),
+      onLater: ()=> addTip("Draw","We can decide later — no pressure 💙")
+    }
+  ]);
+  bindDrawFlowHandlers(flow);
+}
+function startDrawFlowPromptAsk(){
+  const flow = Flow([
+    { q:`Try drawing a [thing]? (OK/No/Later)`, 
+      onYes: ()=>{ pickPrompt(true); }, 
+      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle it is! ✨"); }, 
+      onLater: ()=>{ activePrompt=null; addTip("Draw","Later works — I’ll be here. 💙"); } 
+    }
+  ]);
+  bindDrawFlowHandlers(flow);
+}
+function gentleRetryAsk(){
+  const flow = Flow([
+    { q:"Omg so nice! Wanna try again for fun, or keep doodling?", 
+      onYes: ()=>{ pickPrompt(true); }, 
+      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle unlocked — go wild! 🎨"); } 
+    }
+  ]);
+  bindDrawFlowHandlers(flow);
+}
+
+/* ------------------------------ CHAT ---------------------------------- */
 const chatBox = document.getElementById("chat-box");
 const userInputField = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -816,6 +1026,25 @@ function speakText(text){
 }
 addMessage("Hi! 👋 How was your day? 😊", "bot");
 
+const MOOD_OPENERS = {
+  happy:  ["Love that energy! 🌟 What made you smile?", "Heck yes—tell me the good stuff! ✨"],
+  sad:    ["I’m sorry you’re feeling low 💙 Want to share what happened?", "I’m here with you. What’s on your mind?"],
+  angry:  ["It’s okay to feel mad 😠 What’s bugging you most?", "Let it out—what crossed the line?"],
+  nervous:["That anxious buzz is tough 😰 What’s stirring it up?", "I’ve got you. Want to unpack it together?"]
+};
+const MOOD_SUGGEST = {
+  happy:  ["Bottle that joy: write 3 things you loved today ✍️", "Share it with someone you like 💬"],
+  sad:    ["Try a 3‑breath reset: in 4, hold 4, out 6 🌬️", "A warm drink and soft music can help ☕🎧"],
+  angry:  ["Box breathing (4‑4‑4‑4) can cool the engine 🌬️", "A quick walk can vent steam 🚶‍♂️"],
+  nervous:["Name 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste 👀✋🎧👃👅", "Slow exhale for 6 sec—repeat x3 🌬️"]
+};
+const KEYWORDS = {
+  happy:["yay","great","awesome","good","love","excited","fun","win","proud"],
+  sad:["sad","down","cry","hurt","lonely","tired","blue","fail","miss"],
+  angry:["angry","mad","annoyed","furious","ugh","frustrated","rage"],
+  nervous:["anxious","nervous","scared","worried","panic","shaky","stress"]
+};
+
 moodButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     Sound.click();
@@ -823,31 +1052,43 @@ moodButtons.forEach((btn) => {
     btn.setAttribute("aria-pressed","true");
     dayMood = btn.classList[1];
     clearChat();
-    const openers = {
-      happy:  "Hey! So glad you’re feeling happy today! 🌟 Want to tell me about it?",
-      sad:    "I’m sorry you’re feeling sad 💙 Want to tell me what happened?",
-      angry:  "It’s okay to feel angry 😠 Want to talk about what’s bothering you?",
-      nervous:"Feeling nervous can be tough 😰 Want to share what’s making you feel this way?"
-    };
-    addMessage(openers[dayMood] || "Tell me more, I’m here. 💙", "bot");
+    const o = MOOD_OPENERS[dayMood] || ["Tell me more, I’m here. 💙"];
+    addMessage(o[Math.floor(Math.random()*o.length)], "bot");
     startBGMOnFirstInteraction();
-    startChatFlow(); // kick the yes/no flow on mood selection too
+    startChatFlow();
   });
 });
-sendBtn.addEventListener("click", ()=>{ Sound.click(); if(userInputField.value.trim()){ addMessage(userInputField.value.trim(),"user"); addMessage("Thanks for sharing. 💙","bot"); userInputField.value=""; toggleChatInput(false); }});
-
-/* Voice toggles (kept as-is; optional) */
-function setupRecognition(){
-  if(!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)){
-    voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported in your browser"; return;
+sendBtn.addEventListener("click", ()=>{
+  Sound.click();
+  const txt = userInputField.value.trim();
+  if(!txt) return;
+  addMessage(txt,"user");
+  replySmart(txt);
+  userInputField.value="";
+  toggleChatInput(false);
+});
+function replySmart(text){
+  const t = text.toLowerCase();
+  // Detect mood hints from free text
+  let detected = dayMood;
+  for(const [m, list] of Object.entries(KEYWORDS)){
+    if(list.some(k=>t.includes(k))) { detected = m; break; }
   }
+  const bank = MOOD_SUGGEST[detected||"happy"] || ["I’m here for you 💙"];
+  const msg = bank[Math.floor(Math.random()*bank.length)];
+  addMessage(msg, "bot");
+}
+
+const voiceReady = ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+function setupRecognition(){
+  if(!voiceReady){ voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported"; return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = "en-US";
   recognition.interimResults = false; recognition.maxAlternatives = 1;
   recognition.addEventListener("result", (event) => {
     const speech = event.results[0][0].transcript;
-    userInputField.value = speech; // will still require flow to open input
+    userInputField.value = speech; // still need to open input via flow
   });
   recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
 }
@@ -857,28 +1098,13 @@ voiceModeBtn.addEventListener("click", () => {
   else { if (recognition) recognition.stop(); voiceModeBtn.textContent = "🎤 Voice"; }
 });
 speakReplyBtn.addEventListener("click", () => {
-  Sound.toggle(); speakRepliesOn = !speakRepliesOn; speakReplyBtn.setAttribute("aria-pressed", speakRepliesOn);
-  speakReplyBtn.textContent = speakRepliesOn ? "🔊 Speak ON" : "🔊 Speak";
-  if (!speakRepliesOn && synth && synth.speaking) synth.cancel();
+  Sound.toggle(); const now = !speakRepliesOn; speakRepliesOn = now; speakReplyBtn.setAttribute("aria-pressed", now);
+  speakReplyBtn.textContent = now ? "🔊 Speak ON" : "🔊 Speak";
+  if (!now && synth && synth.speaking) synth.cancel();
 });
 
-/* ------------------------------ YES/NO FLOW ENGINE -------------------- */
-function Flow(steps, onDone){
-  let idx = 0;
-  return {
-    q(){ return steps[idx]?.q || ""; },
-    yes(){ const step = steps[idx]; if(!step) return; if(step.onYes) step.onYes(); idx = step.nextYes ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    no(){ const step = steps[idx]; if(!step) return; if(step.onNo) step.onNo(); idx = step.nextNo ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    done(){ idx = steps.length; onDone && onDone(); },
-    atEnd(){ return idx>=steps.length; },
-    index(){ return idx; },
-    set(i){ idx = i; }
-  };
-}
-
-/* Helpers to show/hide flow overlays */
+/* ------------------------------ YES/NO FLOWS -------------------------- */
 const flowGameEl = { wrap: document.getElementById('flowGame'), q: document.getElementById('flowGameQ'), yes: document.getElementById('flowGameYes'), no: document.getElementById('flowGameNo'), close: document.getElementById('flowGameClose') };
-const flowDrawEl = { wrap: document.getElementById('flowDraw'), q: document.getElementById('flowDrawQ'), yes: document.getElementById('flowDrawYes'), no: document.getElementById('flowDrawNo'), close: document.getElementById('flowDrawClose') };
 const flowChatEl = { wrap: document.getElementById('flowChat'), q: document.getElementById('flowChatQ'), yes: document.getElementById('flowChatYes'), no: document.getElementById('flowChatNo'), close: document.getElementById('flowChatClose') };
 
 function bindFlowUI(el, flow){
@@ -894,32 +1120,21 @@ function bindFlowUI(el, flow){
   el.close.onclick = closeFn;
 }
 
-/* GAME FLOW (no changes to game mechanics) */
+/* GAME FLOW */
 function startGameFlow(){
   const flow = Flow([
-    { q:"Want a gentle focus? Try popping 5 bubbles slowly. Start?", onYes:()=>addTip("Game","Nice! Take it slow and notice the colors."), onNo:()=>addTip("Game","Cool—free play mode. 🎈") },
-    { q:"Want ambient music while you play?", onYes:()=>{ if(BGM.isPaused()) BGM.play(); }, onNo:()=>{ BGM.pause(); } },
+    { q:"Want a gentle focus? Pop 5 bubbles slowly to settle in. Start?", onYes:()=>addTip("Game","Nice! Notice the colors and your breath."), onNo:()=>addTip("Game","Cool—free play mode. 🎈") },
+    { q:"Ambient music while you play?", onYes:()=>{ if(BGM.isPaused()) BGM.play(); }, onNo:()=>{ BGM.pause(); } },
     { q:"Show this guide next time?", onYes:()=>addTip("Game","Guide will appear again."), onNo:()=>{ flowGameEl.wrap.style.display='none'; } },
   ]);
   bindFlowUI(flowGameEl, flow);
 }
 
-/* DRAW FLOW (no changes to canvas) */
-function startDrawFlow(){
-  const prompts = ["Draw a cozy mug ☕", "Sketch a cloud you like ☁️", "Make a free squiggle", "Doodle your initials"];
-  const flow = Flow([
-    { q:"Want a simple drawing prompt?", onYes:()=>addTip("Draw","Prompt: "+prompts[Math.floor(Math.random()*prompts.length)]), onNo:()=>addTip("Draw","No prompt—free doodle!") },
-    { q:"Want a quick palette swap to a calm theme?", onYes:()=>applyAnyThemeByKey("ice"), onNo:()=>{} },
-    { q:"Show this guide next time?", onYes:()=>addTip("Draw","Guide will appear again."), onNo:()=>{ flowDrawEl.wrap.style.display='none'; } },
-  ]);
-  bindFlowUI(flowDrawEl, flow);
-}
-
 /* CHAT FLOW (typing opens only if user wants to tell more, then closes) */
 function startChatFlow(){
   const flow = Flow([
-    { q:"Want to tell?", onYes:()=>{ addMessage("Great—I'm listening. 💬","bot"); }, onNo:()=>{ addMessage("Totally fine. We can just sit here quietly. 💙","bot"); } },
-    { q:"Do you want to tell more?", onYes:()=>{ toggleChatInput(true); }, onNo:()=>{ addMessage("Okay. Would a quick tip help—like 3 slow breaths?", "bot"); } },
+    { q:"Want to tell?", onYes:()=>{ addMessage("Great—I'm listening. 💬","bot"); }, onNo:()=>{ addMessage("Totally fine. We can sit quietly. 💙","bot"); } },
+    { q:"Do you want to tell more?", onYes:()=>{ toggleChatInput(true); }, onNo:()=>{ addMessage("Okay. Want a quick tip—like 3 slow breaths?", "bot"); } },
     { q:"Want another coping tool suggestion?", onYes:()=>addMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️","bot"), onNo:()=>addMessage("Got it. I’m here when you need me. 💙","bot") },
   ], ()=>{ /* end */ });
   bindFlowUI(flowChatEl, flow);
@@ -930,7 +1145,7 @@ function toggleChatInput(show){
   footer.style.display = show ? 'block' : 'none';
 }
 
-/* Tip to chat box for consistency */
+/* Tip helper */
 function addTip(area, text){
   const t = `[${area}] ${text}`;
   addMessage(t, "bot");
@@ -950,9 +1165,11 @@ function closeAllFlows(){
   flowDrawEl.wrap.style.display='none';
   flowChatEl.wrap.style.display='none';
 }
-
 document.addEventListener('keydown', (e)=>{ if(e.key==="Escape"){ if(themesPanel.classList.contains('open')) closeThemesPanel(); else closeAllFlows(); } });
 
+/* ------------------------------ FUN STUB ------------------------------ */
+/* Multiplayer mode — coming soon */
+console.log("Multiplayer mode — coming soon 👀 (no signups!)");
 </script>
 </body>
 </html>
