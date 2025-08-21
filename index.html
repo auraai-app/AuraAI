@@ -3,383 +3,435 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AuraAI — All in One</title>
-<!-- minimal comments only where necessary -->
+<title>AuraAI — All-in-One</title>
+<!-- Fonts omitted (keeps look similar). All styling kept close to your previous design. -->
 <style>
-  :root{
-    --bot-bg:#d6e6fb; --bot-fg:#074279;
-    --user-bg:#517fc4; --user-fg:#e8f3fc;
-    --glass-bg: rgba(255,255,255,0.20);
-    --glass-border: rgba(255,255,255,0.28);
-    --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
-    --glass-blur: blur(18px);
-    --pad:20px; --radius:18px; --motion-scale:0.75;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:"Comic Neue",Arial,sans-serif; color:#0b3c61;
-    background:#a8cdf1; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
-  }
-  .screen{position:absolute; inset:0; display:none; place-items:center; padding:var(--pad)}
-  .screen.active{display:grid}
-  .glass{background:var(--glass-bg); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow)}
-  .btn{border:0;cursor:pointer;border-radius:14px;padding:14px 18px;font-weight:800;font-size:16px;color:#0b3c61;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.7);transition:filter .18s ease, transform .18s ease}
-  .btn:hover{filter:brightness(.92);transform:translateY(-1px)}
-  /* Hello */
-  .hello-wrap{width:min(980px,92vw);border-radius:var(--radius);padding:28px;text-align:center}
-  .hello-text{font-weight:900;line-height:1;user-select:none;margin:14px 0 8px;font-size:clamp(42px,8vw,92px);letter-spacing:1px;background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:hueflow 12s linear infinite;filter:saturate(.9)}
-  @keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
-  .hello-sub{font-size:clamp(16px,2.6vw,22px);opacity:.9;margin-bottom:18px}
-  .hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-  .hint{margin-top:14px;font-size:14px;opacity:.8}
-  /* Game */
-  .game-wrap{width:min(1000px,95vw);height:min(70vh,680px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px}
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-  .title{font-weight:900;font-size:20px}
-  #gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5)}
-  .game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.55)}
-  /* Draw */
-  .draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px}
-  .draw-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .brush{display:flex;align-items:center;gap:8px;font-weight:800;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px}
-  .swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-  .draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.65);outline:2px solid rgba(255,255,255,.5)}
-  .draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
-  .picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
-  .picker input[type="color"]{appearance:none;-webkit-appearance:none;border:none;width:42px;height:26px;border-radius:10px;cursor:pointer;background:conic-gradient(from 0deg, red,yellow,lime,cyan,blue,magenta,red)}
-  /* Chat */
-  .chat-container{width:min(980px,92vw);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px}
-  .header-controls{display:flex;gap:10px;align-items:center}
-  .mood-header{flex:1;text-align:center;font-weight:900;font-size:22px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.4)}
-  .mood-selector{display:flex;gap:10px;flex-wrap:wrap}
-  .mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:16px;transition:transform .18s ease,box-shadow .18s ease}
-  .mood-btn.happy{background:#c1e6a6}.mood-btn.sad{background:#a4c7f9}.mood-btn.angry{background:#f9d6d6}.mood-btn.nervous{background:#fff3c8}
-  .mood-btn:hover{transform:translateY(-3px);box-shadow:0 10px 16px rgba(0,0,0,.22)}
-  .mood-btn[aria-pressed="true"]{box-shadow:0 0 12px 2px rgba(0,0,0,.22)}
-  #chat-box{flex:1;min-height:280px;max-height:52vh;overflow-y:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.55)}
-  .message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;border:2px solid transparent;font-size:18px}
-  .message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)}
-  .message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)}
-  .input-footer{position:relative;display:none}
-  #user-input{width:100%;padding:16px 120px 16px 14px;border-radius:12px;border:1px solid #a9c8e8;background:rgba(255,255,255,.72);font-size:18px;color:#0b3c61;outline:none}
-  #send-btn{position:absolute;right:6px;top:6px;bottom:6px;width:108px;color:#fff;background:#88b7e5}
-  /* Themes panel */
-  .themes-panel{position:fixed;top:0;right:0;height:100%;width:0;opacity:0;pointer-events:none;z-index:1000;transition:width .3s ease,opacity .25s ease;display:flex;flex-direction:column}
-  .themes-panel.open{width:320px;opacity:1;pointer-events:auto}
-  .themes-body{padding:12px 10px;overflow-y:auto;flex:1}
-  .swatch-row{display:flex;gap:10px;flex-wrap:wrap}
-  .theme-btn{width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
-  /* Mini player */
-  .miniplayer{position:fixed;right:14px;bottom:14px;z-index:1200;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px}
-  .mini-btn{border:0;cursor:pointer;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:rgba(255,255,255,.6);box-shadow:0 4px 8px rgba(0,0,0,.15)}
-  .mini-meta{display:flex;flex-direction:column;gap:4px;min-width:170px;max-width:240px}
-  .mini-progress{appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(255,255,255,.6);outline:none;cursor:pointer}
-  /* Flow overlays */
-  .flow-pad{position:absolute;left:16px;bottom:16px;z-index:900;display:flex;flex-direction:column;gap:8px;max-width:min(560px,80vw);padding:10px 12px;border-radius:14px}
-  .flow-q{font-weight:900;font-size:16px;line-height:1.25}
-  .flow-actions{display:flex;gap:8px;flex-wrap:wrap}
-  .chip{border:0;cursor:pointer;border-radius:12px;padding:10px 14px;font-weight:800;background:rgba(255,255,255,.65)}
-  .chip:hover{filter:brightness(.95)}
-  @media (max-width:880px){.mood-selector{flex-wrap:wrap}.header-controls{flex-wrap:wrap}.miniplayer{right:10px;left:10px;bottom:10px}}
+:root{
+  --bot-bg:#d6e6fb; --bot-fg:#074279;
+  --user-bg:#517fc4; --user-fg:#e8f3fc;
+  --glass-bg: rgba(255,255,255,0.20);
+  --glass-border: rgba(255,255,255,0.28);
+  --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
+  --glass-blur: blur(18px);
+  --pad: 20px; --radius:18px; --motion-scale:0.75;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0; font-family:"Comic Neue", Arial, sans-serif; color:#0b3c61;
+  background:#a8cdf1; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.screen{position:absolute; inset:0; display:none; place-items:center; padding:var(--pad);}
+.screen.active{display:grid;}
+.glass{background:var(--glass-bg); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
+.btn{border:0; cursor:pointer; border-radius:14px; padding:14px 18px; font-weight:800; font-size:16px; color:#0b3c61; background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%); box-shadow:0 4px 8px rgba(168,205,241,.7); transition:filter .18s, transform .18s;}
+.btn:hover{filter:brightness(.92); transform:translateY(-1px);}
+
+/* Hello */
+.hello-wrap{width:min(980px,92vw); border-radius:var(--radius); padding:28px; text-align:center;}
+.hello-text{font-weight:900; line-height:1; user-select:none; margin:14px 0 8px; font-size:clamp(42px,8vw,92px); letter-spacing:1px; background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff); -webkit-background-clip:text; background-clip:text; color:transparent; animation:hueflow 12s linear infinite; filter:saturate(.9);}
+@keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+.hello-sub{font-size:clamp(16px,2.6vw,22px); opacity:.9; margin-bottom:18px;}
+.hello-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+.hint{margin-top:14px; font-size:14px; opacity:.8;}
+
+/* Game */
+.game-wrap{width:min(1000px,95vw); height:min(70vh,680px); border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr; gap:10px;}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+.left-group,.right-group{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.title{font-weight:900; font-size:20px;}
+.game-ind{font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55);}
+#gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5);}
+
+/* Draw */
+.draw-wrap{width:min(1100px,96vw); height:min(76vh,740px); border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr auto; gap:10px;}
+.draw-tools{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.brush{display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px;}
+.swatch{width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2);}
+.toggle{display:flex; align-items:center; gap:6px; font-weight:800; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55)}
+.draw-canvas{width:100%; height:100%; border-radius:14px; background:rgba(255,255,255,.65); outline:2px solid rgba(255,255,255,.5);}
+.draw-bottom{display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;}
+.picker{display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800;}
+.picker input[type="color"]{appearance:none; -webkit-appearance:none; border:none; width:42px; height:26px; border-radius:10px; cursor:pointer; background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);}
+
+/* Chat */
+.chat-container{width:min(980px,92vw); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:12px;}
+.header-controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.mood-header{flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background:linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow:0 4px 8px rgba(168,205,241,.4);}
+.header-buttons{display:flex; gap:8px; flex-wrap:wrap;}
+.header-buttons .btn{height:44px}
+.mood-selector{display:flex; gap:10px; flex-wrap:wrap;}
+.mood-btn{border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px;}
+.mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
+#chat-box{flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background:rgba(232,242,252,.55);}
+.message{margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border:2px solid transparent; font-size:18px;}
+.message.bot{background:rgba(0,0,0,0.35); color:#f0f0f0; border:1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px);}
+.message.user{background:rgba(0,0,0,0.55); color:#fff; align-self:flex-end; text-align:right; border:1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px);}
+.input-footer{position:relative; display:none;}
+#user-input{width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background:rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none;}
+#send-btn{position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5}
+
+/* Themes */
+.themes-panel{position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition:width .3s ease, opacity .25s ease; display:flex; flex-direction:column;}
+.themes-panel.open{width:360px; opacity:1; pointer-events:auto;}
+.panel-shell{height:100%; display:flex; flex-direction:column;}
+.themes-head{display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px;}
+.themes-body{padding:12px 10px; overflow-y:auto; flex:1;}
+.swatch-strip{display:flex; flex-direction:column; gap:14px;}
+.group{display:flex; flex-direction:column; gap:10px;}
+.group-title{font-weight:900; font-size:14px; opacity:.85; padding-left:4px;}
+.swatch-row{display:flex; gap:10px; flex-wrap:wrap;}
+.theme-btn{width:42px; height:42px; border-radius:8px; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; position:relative; overflow:hidden;}
+.theme-btn:hover{transform:scale(1.04);}
+
+/* mini player */
+.miniplayer{position:fixed; right:14px; bottom:14px; z-index:1200; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px;}
+.mini-btn{border:0; cursor:pointer; border-radius:12px; padding:10px 12px; font-weight:800; font-size:14px; background:rgba(255,255,255,.6); box-shadow:0 4px 8px rgba(0,0,0,.15)}
+.mini-meta{display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:260px;}
+.mini-title{font-weight:900; font-size:14px;}
+.mini-progress{appearance:none; width:100%; height:6px; border-radius:6px; background:rgba(255,255,255,.6); outline:none; cursor:pointer;}
+
+/* Flow overlay */
+.flow-pad{position:absolute; left:16px; bottom:16px; z-index:900; display:flex; flex-direction:column; gap:8px; max-width:min(560px,80vw); padding:10px 12px; border-radius:14px;}
+.flow-q{font-weight:900; font-size:16px; line-height:1.25}
+.flow-actions{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65)}
+.chip:hover{filter:brightness(.95)}
+
+/* Prompt UI (draw) */
+.prompt-panel{position:absolute; right:20px; top:20px; z-index:950; width:280px; border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px;}
+.prompt-row{display:flex; gap:8px; align-items:center; justify-content:space-between;}
+.prompt-title{font-weight:900}
+.small-controls{display:flex; gap:8px; align-items:center;}
+.toggle-auto{display:flex; align-items:center; gap:6px; font-weight:700}
+
+/* tooltip */
+.theme-btn .tt { position:absolute; bottom:6px; left:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:11px; padding:4px 6px; border-radius:6px; opacity:0; transform:translateY(6px); transition:all .16s; text-align:center;}
+.theme-btn:hover .tt{ opacity:1; transform:translateY(0); }
+
+/* responsive */
+@media (max-width:880px){ .prompt-panel{ right:10px; left:10px; top:auto; bottom:10px; width:auto } .miniplayer{ right:10px; left:10px; bottom:10px; } }
 </style>
 </head>
 <body>
+<!-- THEME: keep layout identical to your prior design; below we add prompt UI and auto-check features. -->
 
-  <!-- HELLO -->
-  <section id="hello-screen" class="screen active">
-    <div class="hello-wrap glass">
-      <div class="hello-text">AuraAI</div>
-      <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
-      <div class="hello-actions">
-        <button id="goPlay" class="btn">🎮 Play a Game</button>
-        <button id="goDraw" class="btn">🎨 Draw Something</button>
-        <button id="goTalk" class="btn">💬 Talk</button>
-      </div>
-      <div class="hint">You can always go back here from any screen.</div>
+<!-- HELLO -->
+<section id="hello-screen" class="screen active">
+  <div class="hello-wrap glass">
+    <div class="hello-text">AuraAI</div>
+    <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
+    <div class="hello-actions">
+      <button class="btn" id="goPlay">🎮 Play a Game</button>
+      <button class="btn" id="goDraw">🎨 Draw Something</button>
+      <button class="btn" id="goTalk">💬 Talk</button>
     </div>
-  </section>
+    <div class="hint">You can always go back here from any screen.</div>
+  </div>
+</section>
 
-  <!-- GAME -->
-  <section id="game-screen" class="screen">
-    <div class="game-wrap glass">
-      <div class="bar">
-        <div class="left-group"><div class="title">🫧 Bubble Pop — calm your mind</div></div>
-        <div class="right-group">
-          <span class="game-ind">Level: <span id="levelTxt">1</span> • Score: <span id="scoreTxt">0</span></span>
-          <button id="resetGame" class="btn">Reset</button>
-          <button id="themeBtnGame" class="btn" title="Themes">🎨 Themes</button>
-          <button id="muteBtnGame" class="btn" title="Mute/Unmute">🔇 Mute</button>
-          <button id="backFromGame" class="btn">⬅ Back</button>
-        </div>
-      </div>
-      <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
-      <div id="flowGame" class="flow-pad glass" role="group" aria-label="Game Flow" style="display:none">
-        <div id="flowGameQ" class="flow-q"></div>
-        <div class="flow-actions">
-          <button id="flowGameOK" class="chip">OK</button>
-          <button id="flowGameNo" class="chip">No</button>
-          <button id="flowGameLater" class="chip">Later</button>
-        </div>
+<!-- GAME -->
+<section id="game-screen" class="screen">
+  <div class="game-wrap glass">
+    <div class="bar">
+      <div class="left-group"><div class="title">🫧 Bubble Pop — calm your mind</div></div>
+      <div class="right-group">
+        <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
+        <button class="btn" id="resetGame">Reset</button>
+        <button class="btn" id="themeBtnGame">🎨 Themes</button>
+        <button class="btn" id="muteBtnGame">🔇 Mute</button>
+        <button class="btn" id="backFromGame">⬅ Back</button>
       </div>
     </div>
-  </section>
+    <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
+  </div>
+</section>
 
-  <!-- DRAW -->
-  <section id="draw-screen" class="screen">
-    <div class="draw-wrap glass">
-      <div class="bar">
-        <div class="left-group">
-          <div class="title">🎨 Draw Something — express or doodle</div>
-          <div class="brush">Brush <input id="brushSize" type="range" min="2" max="50" value="10" /></div>
-          <button class="swatch" style="background:#000" data-color="#000" title="Black"></button>
-          <button class="swatch" style="background:#fff" data-color="#fff" title="White"></button>
-          <label class="toggle"><input id="eraserToggle" type="checkbox" /> Eraser</label>
-          <div class="picker">Color <input id="colorPicker" type="color" value="#1e88e5" title="Pick color" /></div>
-        </div>
-        <div class="right-group">
-          <button id="themeBtnDraw" class="btn" title="Themes">🎨 Themes</button>
-          <button id="muteBtnDraw" class="btn" title="Mute/Unmute">🔇 Mute</button>
-          <button id="backFromDraw" class="btn">⬅ Back</button>
-        </div>
+<!-- DRAW -->
+<section id="draw-screen" class="screen">
+  <div class="draw-wrap glass">
+    <div class="bar">
+      <div class="left-group">
+        <div class="title">🎨 Draw Something — express or doodle</div>
+        <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
+        <button class="swatch" style="background:#000" data-color="#000" title="Black"></button>
+        <button class="swatch" style="background:#fff" data-color="#fff" title="White"></button>
+        <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
+        <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color" /></div>
       </div>
-
-      <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
-
-      <div class="draw-bottom">
-        <div class="left">
-          <button id="clearDraw" class="btn">Clear</button>
-          <button id="saveDraw" class="btn">Save</button>
-          <button id="randomPrompt" class="btn">New Prompt</button>
-        </div>
-        <div class="right">
-          <div id="promptDisplay" style="font-weight:800; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.6);">Prompt: —</div>
-        </div>
-      </div>
-
-      <div id="drawFlow" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
-        <div id="drawFlowQ" class="flow-q"></div>
-        <div class="flow-actions">
-          <button id="drawOK" class="chip">OK</button>
-          <button id="drawNo" class="chip">No</button>
-          <button id="drawLater" class="chip">Later</button>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- CHAT -->
-  <section id="chat-screen" class="screen">
-    <div class="chat-container glass">
-      <div class="header-controls">
-        <div class="mood-header glass">How do you feel?</div>
-        <div class="header-buttons">
-          <button id="voice-mode-btn" class="btn" aria-pressed="false" title="Toggle Voice">🎤 Voice</button>
-          <button id="speak-reply-btn" class="btn" aria-pressed="false" title="Speak Replies">🔊 Speak</button>
-          <button id="themeBtnChat" class="btn" title="Themes">🎨 Themes</button>
-          <button id="muteBtnChat" class="btn" title="Mute/Unmute">🔇 Mute</button>
-          <button id="backFromChat" class="btn">⬅ Back</button>
-        </div>
-      </div>
-
-      <div class="mood-selector">
-        <button class="mood-btn happy" aria-pressed="false">😊 Happy</button>
-        <button class="mood-btn sad" aria-pressed="false">😢 Sad</button>
-        <button class="mood-btn angry" aria-pressed="false">😠 Angry</button>
-        <button class="mood-btn nervous" aria-pressed="false">😰 Nervous</button>
-      </div>
-
-      <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
-
-      <div class="input-footer">
-        <input id="user-input" type="text" placeholder="Type your response..." autocomplete="off" />
-        <button id="send-btn" class="btn">Send</button>
-      </div>
-
-      <div id="chatFlow" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
-        <div id="chatFlowQ" class="flow-q"></div>
-        <div class="flow-actions">
-          <button id="chatOK" class="chip">OK</button>
-          <button id="chatNo" class="chip">No</button>
-          <button id="chatLater" class="chip">Later</button>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- THEMES PANEL -->
-  <aside id="themesPanel" class="themes-panel" aria-hidden="true">
-    <div class="panel-shell glass">
-      <div class="themes-head glass" style="display:flex;align-items:center;justify-content:space-between;padding:12px;font-weight:900;">
-        <div>🎨 Themes</div>
-        <button id="closeThemes" class="close-btn">✕</button>
-      </div>
-      <div class="themes-body">
-        <div id="themeStrip" class="swatch-strip"></div>
+      <div class="right-group">
+        <button class="btn" id="themeBtnDraw">🎨 Themes</button>
+        <button class="btn" id="muteBtnDraw">🔇 Mute</button>
+        <button class="btn" id="backFromDraw">⬅ Back</button>
       </div>
     </div>
-  </aside>
 
-  <!-- MINI PLAYER -->
-  <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
-    <button id="miniPlayPause" class="mini-btn">⏸</button>
-    <div class="mini-meta">
-      <div id="miniTitle" class="mini-title" style="font-weight:900">BGM</div>
-      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
-      <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
+    <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing Canvas"></canvas>
+
+    <div class="draw-bottom">
+      <div class="left">
+        <button class="btn" id="clearDraw">Clear</button>
+        <button class="btn" id="saveDraw">Save</button>
+      </div>
+      <div class="right"></div>
+    </div>
+
+    <!-- Prompt UI (draw) -->
+    <div class="prompt-panel glass" id="promptPanel" role="region" aria-label="Drawing Prompt">
+      <div class="prompt-row"><div class="prompt-title">🧠 Prompt</div>
+        <div class="small-controls">
+          <button class="btn" id="newPromptBtn" title="Shuffle prompt">🔄 New</button>
+          <label class="toggle toggle-auto"><input type="checkbox" id="autoCheckToggle" /> Auto‑Check</label>
+        </div>
+      </div>
+      <div id="currentPrompt" style="font-weight:800; padding:6px 4px; min-height:44px;">Loading...</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="okPrompt">OK</button>
+        <button class="btn" id="noPrompt">No</button>
+        <button class="btn" id="laterPrompt">Later</button>
+        <button class="btn" id="closePrompt">Close</button>
+      </div>
+      <div style="margin-top:6px; font-size:13px; opacity:.85;" id="promptHint">Try drawing the prompt, then press OK to auto-check.</div>
+      <div style="margin-top:8px;"><button id="clearSaveBtn" class="btn">Clear & Save</button></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CHAT -->
+<section id="chat-screen" class="screen">
+  <div class="chat-container glass">
+    <div class="header-controls">
+      <div class="mood-header glass">How do you feel?</div>
+      <div class="header-buttons">
+        <button class="btn" id="voice-mode-btn" aria-pressed="false">🎤 Voice</button>
+        <button class="btn" id="speak-reply-btn" aria-pressed="false">🔊 Speak</button>
+        <button class="btn" id="themeBtnChat">🎨 Themes</button>
+        <button class="btn" id="muteBtnChat">🔇 Mute</button>
+        <button class="btn" id="backFromChat">⬅ Back</button>
+      </div>
+    </div>
+
+    <div class="mood-selector">
+      <button class="mood-btn happy" aria-pressed="false">😊 Happy</button>
+      <button class="mood-btn sad" aria-pressed="false">😢 Sad</button>
+      <button class="mood-btn angry" aria-pressed="false">😠 Angry</button>
+      <button class="mood-btn nervous" aria-pressed="false">😰 Nervous</button>
+    </div>
+
+    <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
+
+    <div class="input-footer">
+      <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
+      <button class="btn" id="send-btn">Send</button>
     </div>
   </div>
+</section>
 
-<!-- TensorFlow.js + MobileNet from CDN -->
+<!-- THEMES PANEL -->
+<aside class="themes-panel" id="themesPanel" aria-hidden="true">
+  <div class="panel-shell glass">
+    <div class="themes-head glass">
+      <div>🎨 Themes</div>
+      <button class="close-btn" id="closeThemes">✕</button>
+    </div>
+    <div class="themes-body">
+      <div class="swatch-strip" id="themeStrip"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MINI PLAYER -->
+<div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
+  <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
+  <div class="mini-meta">
+    <div class="mini-title" id="miniTrackTitle">Ambient</div>
+    <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek">
+    <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
+  </div>
+</div>
+
+<!-- AUDIO: 3 tracks expected in repo root: bgm.mp3, bgm2.mp3, bgm3.mp3 -->
+<audio id="bgmPlayer" crossorigin="anonymous"></audio>
+
+<!-- TensorFlow & MobileNet from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@3.1.0/dist/mobilenet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.1/dist/mobilenet.min.js"></script>
 
 <script>
-/* ---------- Utilities & quick startup ---------- */
+/* ---------- Utilities (sound engine, fuzzy matching, shuffle) ---------- */
 const Sound = (() => {
   let ctx, muted=false;
-  function ensure(){ if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) ctx=new AC(); } }
-  function tone(f=440,d=0.08,t='sine',g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=t; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
-  return { click:()=>tone(600,0.05,'triangle',0.05), pop:()=>tone(900,0.08,'sine',0.07), scribble:()=>tone(280,0.03,'square',0.03), toggle:()=>tone(420,0.06,'sawtooth',0.06), setMuted:(v)=>muted=v, isMuted:()=>muted };
+  function ensure(){ if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) ctx = new AC(); } }
+  function tone(f=440,d=0.08,type="sine",g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=type; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
+  return { click:()=>tone(600,0.05,"triangle",0.04), pop:()=>tone(900,0.06,"sine",0.06), scribble:()=>tone(280,0.02,"square",0.03), toggle:()=>tone(420,0.06,"sawtooth",0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
 })();
 
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+
+function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9 ]+/g,'').trim(); }
+function lev(a,b){ const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=0;i<=m;i++)dp[i][0]=i; for(let j=0;j<=n;j++)dp[0][j]=j; for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){ const cost=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);} return dp[m][n];}
+
+/* ---------- Screen routing ---------- */
 const screens = { hello:document.getElementById('hello-screen'), game:document.getElementById('game-screen'), draw:document.getElementById('draw-screen'), chat:document.getElementById('chat-screen') };
 function switchScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
 
-/* ---------- Theme list (many groups; includes rainbow option) ---------- */
+/* ---------- Bind start/back buttons ---------- */
+document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); loadPromptIfNeeded(); };
+document.getElementById('goTalk').onclick = ()=>{ Sound.click(); switchScreen('chat'); };
+document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
+
+/* ---------- Themes: build full set + tooltips ---------- */
 const THEMES = {
-  "Core":[ ["classic","linear-gradient(135deg,#a8cdf1,#f7b7b9)","#d6e6fb","#517fc4"] ],
-  "Vibrant":[ ["rainbow-loop","linear-gradient(135deg,#ff0000,#ff8000,#ffff00,#008000,#0000ff,#4b0082,#9400d3)", "#ffffff", "#000000"], ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)","#e8f6ff","#1E88E5"] ],
-  "Dark":[ ["poster-black","#000000","#2b2b2b","#0a0a0a"], ["navy","linear-gradient(135deg,#2C3E50,#4b6eaf)","#496177","#1f6592"] ],
-  "Pastel":[ ["cotton-candy","linear-gradient(135deg,#ffb6c1,#add8e6)","#fff8fb","#add8e6"], ["pastel-mint","#C2F5E9","#eafffa","#9edfcf"] ]
+  "Black & White (solid)": [
+    ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
+    ["deep-charcoal","#2C3E50",["#3e5368","#ffffff"],["#1c2a36","#ffffff"]],
+    ["slate-gray","#7F8C8D",["#a1adae","#1e2b30"],["#5e6a6b","#ffffff"]],
+    ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
+    ["silver-mist","linear-gradient(135deg,#ECEFF1,#B0BEC5)",["#f5f8fa","#0a3358"],["#d6e3ee","#0b2a47"]],
+  ],
+  "Red (solid)": [
+    ["poster-red","#E53935",["#f6b6b4","#6c0b0b"],["#b9221f","#ffffff"]],
+    ["rose-red","#FF6F61",["#ffd0ca","#5c1713"],["#e2574a","#ffffff"]],
+    ["crimson","#B71C1C",["#d86464","#ffffff"],["#8f1414","#ffffff"]],
+    ["wine-red","#8B0000",["#a43b3b","#ffffff"],["#5b0000","#ffffff"]],
+  ],
+  "Orange (solid)": [
+    ["poster-orange","#F57C00",["#ffc07e","#4b2a00"],["#d66700","#ffffff"]],
+    ["pumpkin","#D35400",["#f0a870","#3d2300"],["#b94900","#ffffff"]],
+    ["amber","#FFB300",["#ffe18a","#4a3a00"],["#e2a200","#231d00"]],
+  ],
+  "Yellow (solid)": [
+    ["poster-yellow","#FDD835",["#fff6b0","#3c3600"],["#eacb2f","#2a2300"]],
+    ["sun-yellow","#FFEB3B",["#fff7a6","#3a3400"],["#ecd835","#231e00"]],
+    ["goldenrod","#DAA520",["#f0d584","#2d2500"],["#c0911c","#ffffff"]],
+  ],
+  "Green (solid)": [
+    ["poster-green","#43A047",["#bfe6c3","#0f2a12"],["#2f7a33","#ffffff"]],
+    ["mint","#98FF98",["#e4ffe4","#0f2a12"],["#7be47b","#0f2a12"]],
+    ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
+    ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
+  ],
+  "Blue (solid)": [
+    ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
+    ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
+    ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
+    ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
+  ],
+  "Purple/Pink (solid)": [
+    ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
+    ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
+    ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
+    ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
+  ],
+  "Gradients — Sunset":[
+    ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
+    ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
+    ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
+  ],
+  "Gradients — Ice/Dream":[
+    ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
+    ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
+    ["cotton-candy","linear-gradient(135deg,#f6d365,#fda085)",["#fff0cf","#3a2e0a"],["#f18c6a","#2a1408"]],
+  ],
+  "Pastels":[
+    ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
+    ["pastel-peach","#FFD1BA",["#fff1ea","#2a1a0f"],["#ffb899","#2a1a0f"]],
+    ["pastel-lilac","#D9C2FF",["#f6efff","#211a2a"],["#c1a3ff","#211a2a"]],
+    ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
+  ],
+  "Neons":[
+    ["neon-cyan","#00F5FF",["#d4fdff","#002a2e"],["#00c8d0","#00181b"]],
+    ["neon-magenta","#FF00E5",["#ffd4fb","#2a0025"],["#d100bf","#2a0025"]],
+    ["neon-lime","#B6FF00",["#f0ffd4","#1a2a00"],["#8be000","#1a2a00"]],
+    ["neon-blue","#00A2FF",["#d9f0ff","#0a2740"],["#0087d1","#0a2740"]],
+  ],
+  "Earth Tones":[
+    ["earth-clay","#B5651D",["#e7c39d","#2a1807"],["#8e4a12","#ffffff"]],
+    ["earth-sand","#C2B280",["#f5edd4","#2a240f"],["#a99a65","#2a240f"]],
+    ["earth-olive","#556B2F",["#cfe0a8","#0f1a06"],["#3f4f22","#ffffff"]],
+    ["earth-ocean","#2E8B57",["#bfe7d0","#0a2a1f"],["#226b43","#ffffff"]],
+    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
+  ]
 };
+
 const themeStrip = document.getElementById('themeStrip');
-(function buildThemes(){
-  for(const [group,items] of Object.entries(THEMES)){
-    const g=document.createElement('div'); g.style.marginBottom='12px';
-    const t=document.createElement('div'); t.textContent=group; t.style.fontWeight='900'; t.style.marginBottom='6px';
-    g.appendChild(t);
-    const row=document.createElement('div'); row.className='swatch-row';
+(function buildThemeDots(){
+  for(const [group, items] of Object.entries(THEMES)){
+    const g = document.createElement('div'); g.className='group';
+    const label = document.createElement('div'); label.className='group-title'; label.textContent = group;
+    const row = document.createElement('div'); row.className='swatch-row';
     items.forEach(([key,bg,bot,user])=>{
-      const btn=document.createElement('button'); btn.className='theme-btn'; btn.title=key; btn.dataset.key=key; btn.style.background=bg;
-      btn.onclick=()=>{ Sound.toggle(); applyTheme(bg,bot,user); localStorage.setItem('aura-theme',key) };
+      const btn = document.createElement('button'); btn.className='theme-btn'; btn.title=key; btn.dataset.key=key;
+      btn.style.background = typeof bg==='string' ? bg : bg;
+      const tt = document.createElement('div'); tt.className='tt'; tt.textContent = key; btn.appendChild(tt);
+      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
       row.appendChild(btn);
     });
-    g.appendChild(row); themeStrip.appendChild(g);
+    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
   }
 })();
-function applyTheme(background, bot, user){
-  document.body.style.background = background;
-  if(bot) document.documentElement.style.setProperty('--bot-bg', bot);
-  if(user) document.documentElement.style.setProperty('--user-bg', user);
-  const dark = (typeof background==='string' && background.includes('#000')) || (background && background.startsWith('linear-gradient'));
-  document.documentElement.style.setProperty('--glass-bg', dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.20)');
-  document.documentElement.style.setProperty('--glass-border', dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.28)');
+function isDarkBackground(bg){
+  if(!bg || typeof bg!=="string") return false;
+  if(bg.startsWith("linear-gradient")) return true;
+  const hex = bg.replace("#","").trim();
+  if(hex.length!==6) return false;
+  const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+  const L = 0.2126*r + 0.7152*g + 0.0722*b; return L < 128;
 }
-const saved = localStorage.getItem('aura-theme'); if(saved){ /* try to reapply by key */ for(const g of Object.values(THEMES)){ for(const it of g){ if(it[0]===saved) applyTheme(it[1], it[2], it[3]); } } }
-
-/* ---------- Music / BGM ---------- */
-const bgFiles = ['bgm.mp3','bgm2.mp3','bgm3.mp3'];
-let currentTrackIndex = 0;
-const BGM = new Audio(); BGM.loop = true;
-BGM.src = bgFiles[currentTrackIndex];
-BGM.preload = 'auto';
-const mini = { btn: document.getElementById('miniPlayPause'), seek: document.getElementById('miniSeek'), cur: document.getElementById('miniCur'), dur: document.getElementById('miniDur'), title: document.getElementById('miniTitle') };
-function fmt(t){ if(isNaN(t)) return '0:00'; const m=Math.floor(t/60), s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
-mini.btn.onclick = ()=>{ Sound.click(); if(BGM.paused){ BGM.play(); mini.btn.textContent='⏸'; } else { BGM.pause(); mini.btn.textContent='▶️'; } };
-mini.seek.addEventListener('input', ()=>{ if(BGM.duration) BGM.currentTime = (mini.seek.value/100)*BGM.duration; });
-BGM.addEventListener('timeupdate', ()=>{ if(BGM.duration){ mini.seek.value = (BGM.currentTime/BGM.duration)*100; mini.cur.textContent = fmt(BGM.currentTime); mini.dur.textContent = fmt(BGM.duration); } mini.btn.textContent = BGM.paused ? '▶️' : '⏸'; });
-function setTrack(i){ currentTrackIndex = i % bgFiles.length; BGM.src = bgFiles[currentTrackIndex]; BGM.load(); BGM.play().catch(()=>{}); mini.title.textContent = `Track ${currentTrackIndex+1}`; }
-
-/* ---------- Screen routing buttons ---------- */
-document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); startGameFlow(); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlow(); };
-document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); startChatFlow(); };
-document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
-document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
-document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
+function applyThemeRecord(bg,bot,user){
+  document.body.style.background = bg;
+  document.documentElement.style.setProperty("--bot-bg", bot[0]); document.documentElement.style.setProperty("--bot-fg", bot[1]);
+  document.documentElement.style.setProperty("--user-bg", user[0]); document.documentElement.style.setProperty("--user-fg", user[1]);
+  const dark=isDarkBackground(bg);
+  document.documentElement.style.setProperty("--glass-bg", dark? "rgba(255,255,255,0.12)":"rgba(255,255,255,0.20)");
+  document.documentElement.style.setProperty("--glass-border", dark? "rgba(255,255,255,0.22)":"rgba(255,255,255,0.28)");
+  document.documentElement.style.setProperty("--glass-shadow", dark? "0 18px 44px rgba(0,0,0,0.35)":"0 18px 40px rgba(0,0,0,0.22)");
+}
 document.getElementById('themeBtnGame').onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById('themeBtnDraw').onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById('themeBtnChat').onclick = ()=>{ Sound.click(); openThemes(); };
 document.getElementById('closeThemes').onclick = ()=>{ Sound.click(); closeThemes(); };
+function openThemes(){ document.getElementById('themesPanel').classList.add('open'); document.getElementById('themesPanel').setAttribute('aria-hidden','false'); }
+function closeThemes(){ document.getElementById('themesPanel').classList.remove('open'); document.getElementById('themesPanel').setAttribute('aria-hidden','true'); }
 
-/* ---------- Themes open/close ---------- */
-const themesPanel = document.getElementById('themesPanel');
-function openThemes(){ themesPanel.classList.add('open'); themesPanel.style.width='320px'; themesPanel.setAttribute('aria-hidden','false'); }
-function closeThemes(){ themesPanel.classList.remove('open'); themesPanel.style.width='0'; themesPanel.setAttribute('aria-hidden','true'); }
+/* ---------- BGM player with 3 tracks (files to be in repo) ---------- */
+const tracks = [
+  {file:'bgm.mp3', title:'Ambient 1'},
+  {file:'bgm2.mp3', title:'Ambient 2'},
+  {file:'bgm3.mp3', title:'Ambient 3'}
+];
+const audio = document.getElementById('bgmPlayer'); let trackIndex=0;
+function loadTrack(i){ trackIndex = (i%tracks.length+tracks.length)%tracks.length; audio.src = tracks[trackIndex].file; document.getElementById('miniTrackTitle').textContent = tracks[trackIndex].title; audio.load(); }
+loadTrack(0);
+const miniPlay = document.getElementById('miniPlayPause'); miniPlay.onclick = ()=>{ Sound.click(); if(audio.paused) { audio.play().catch(()=>{}); } else audio.pause(); updateMini(); };
+function updateMini(){ miniPlay.textContent = audio.paused ? "▶️" : "⏸"; }
+audio.addEventListener('timeupdate', ()=>{ const s=document.getElementById('miniSeek'); if(audio.duration){ s.value = (audio.currentTime/audio.duration)*100; document.getElementById('miniCur').textContent = fmt(audio.currentTime); document.getElementById('miniDur').textContent = fmt(audio.duration);} updateMini(); });
+document.getElementById('miniSeek').addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (document.getElementById('miniSeek').value/100)*audio.duration; });
+function fmt(t){ if(isNaN(t)) return "0:00"; const m=Math.floor(t/60); const s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
 
-/* ---------- Mute binds ---------- */
-function bindMute(id){ const el = document.getElementById(id); if(!el) return; const setLabel = ()=> el.textContent = Sound.isMuted() ? '🔈 Unmute' : '🔇 Mute'; setLabel(); el.onclick = ()=>{ const will = !Sound.isMuted(); Sound.setMuted && Sound.setMuted(will); setLabel(); if(will) { BGM.pause(); } else { BGM.play().catch(()=>{}); } } }
-bindMute('muteBtnGame'); bindMute('muteBtnDraw'); bindMute('muteBtnChat');
-
-/* ---------- BUBBLE POP (level system up to 30) ---------- */
-const gameCanvas = document.getElementById('gameCanvas');
-let gctx, bubbles=[], score=0, level=1, lastSpawn=0, running=true, prevT=performance.now();
-
-function resizeGame(){ const rect=gameCanvas.getBoundingClientRect(); gameCanvas.width=Math.floor(rect.width*devicePixelRatio); gameCanvas.height=Math.floor(rect.height*devicePixelRatio); gctx=gameCanvas.getContext('2d'); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
+/* ---------- Bubble pop game (kept, with levels + encouragements) ---------- */
+const gameCanvas = document.getElementById('gameCanvas'); const scoreTxt = document.getElementById('scoreTxt'); const resetGameBtn = document.getElementById('resetGame');
+let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true, level = 1, poppedTotal = 0;
+function resizeGame(){ const rect = gameCanvas.getBoundingClientRect(); gameCanvas.width = Math.floor(rect.width * devicePixelRatio); gameCanvas.height = Math.floor(rect.height * devicePixelRatio); W = gameCanvas.width; H = gameCanvas.height; gctx = gameCanvas.getContext('2d'); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
 window.addEventListener('resize', resizeGame); resizeGame();
-
-function spawnBubble(){
-  const r = 16 + Math.random()* (22 + level/2);
-  const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
-  const y = gameCanvas.clientHeight + r + 10;
-  const vy = (0.4 + Math.random()*0.9) * (0.9 + level*0.03) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
-  const hue = Math.floor(200 + Math.random()*100);
-  bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
-}
-function updateBubble(b,dt){
-  if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } } else { b.alpha -= 0.04; }
-}
-function drawBubble(b){
-  const ctx = gctx; ctx.save(); ctx.globalAlpha = Math.max(0,b.alpha); ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.25)';
-  const cx=b.x, cy=b.y, r=b.r;
-  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
-  grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`); grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
-  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill(); ctx.restore();
-}
-function checkLevelUp(){
-  const next = Math.min(30, Math.floor(score / (10 * level)) + 1);
-  if(next > level){ level = next; document.getElementById('levelTxt').textContent = level; addGameEncouragement(`Level up! Welcome to level ${level}.`); if(level >= 30) addGameEncouragement('Boss chill mode unlocked — breathe.'); }
-}
-function addGameEncouragement(txt){ addMessage(`[Game] ${txt}`, 'bot'); Sound.pop(); }
-function gameLoop(t){
-  const dt = t - prevT; prevT = t;
-  if(running){
-    gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)');
-    gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    const spawnRate = Math.max(450 - level*10, 120);
-    if(t - lastSpawn > spawnRate) { spawnBubble(); lastSpawn = t; }
-    bubbles = bubbles.filter(b => b.alpha > 0);
-    for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
-  }
-  requestAnimationFrame(gameLoop);
-}
+function spawnBubble(){ const r = 18 + Math.random()*30*Math.max(1,1 - level*0.02); const x = r + Math.random()*(gameCanvas.clientWidth - r*2); const y = gameCanvas.clientHeight + r + 10; const vy = (0.6 + Math.random()*1.2) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')); const hue = Math.floor(180 + Math.random()*140); const points = Math.ceil((r-18)/6)+1; bubbles.push({x,y,r,vy,alpha:1,hue,popped:false,points}); }
+function updateBubble(b,dt){ if(!b.popped){ b.y -= b.vy * dt * 0.06 * (1 + level*0.01); if(b.y < -b.r){ b.popped = true; b.alpha = 0; } } else b.alpha -= 0.04; }
+function drawBubble(b){ const ctx=gctx; ctx.save(); ctx.globalAlpha = Math.max(0,b.alpha); ctx.shadowColor = `rgba(255,255,255,0.9)`; ctx.shadowBlur = 12; ctx.lineWidth = 2; ctx.strokeStyle = `rgba(0,0,0,0.25)`; const cx=b.x,cy=b.y,r=b.r; const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx,cy,r); grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`); ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill(); ctx.restore(); }
+let prevT = performance.now();
+function gameLoop(t){ const dt = t - prevT; prevT = t; if(running){ gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)'); gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); if(t - lastSpawn > Math.max(350,900 - level*20)){ spawnBubble(); lastSpawn = t; } bubbles = bubbles.filter(b => b.alpha > 0); for(const b of bubbles){ updateBubble(b,dt); drawBubble(b); } checkLevelUp(); } requestAnimationFrame(gameLoop); }
 requestAnimationFrame(gameLoop);
-gameCanvas.addEventListener('click', (e)=>{
-  const rect = gameCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  for(const b of bubbles){
-    const dx = x - b.x, dy = y - b.y;
-    if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
-      b.popped=true; b.vy=0; score++; document.getElementById('scoreTxt').textContent = score; Sound.pop();
-      if([25,50,100,150,250,500,1000].includes(score)) addGameEncouragement(`Milestone reached: ${score} points! Amazing.`);
-      checkLevelUp();
-      break;
-    }
-  }
-});
-document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; level=1; document.getElementById('scoreTxt').textContent=0; document.getElementById('levelTxt').textContent=1; };
+gameCanvas.addEventListener('click', (e)=>{ const rect = gameCanvas.getBoundingClientRect(); const x = e.clientX - rect.left, y = e.clientY - rect.top; for(const b of bubbles){ const dx = x - b.x, dy = y - b.y; if(!b.popped && dx*dx + dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; score += b.points; poppedTotal++; scoreTxt.textContent = score; Sound.pop(); maybeEncourage(); break; } }});
+resetGameBtn.onclick = ()=>{ Sound.click(); bubbles=[]; score=0; scoreTxt.textContent=0; level=1; poppedTotal=0; };
+function maybeEncourage(){ const milestones=[25,50,100,150,250,500,1000]; for(const m of milestones){ if(score>=m && (score - bubbles.length) < m){ addTip('Game', `✨ Milestone ${m}! Nicely done!`); Sound.toggle(); } } if(Math.random()<0.12) addTip('Game', ["Nice flow ✨","Breathe and pop 🌬️","Steady! Keep going 🙂"][Math.floor(Math.random()*3)]); }
+function checkLevelUp(){ const next = Math.floor(poppedTotal/15)+1; if(next>level){ level=next; addTip('Game', `Level up! You reached level ${level}.`); } }
 
-/* ---------- DRAW PAD + 100 prompts ---------- */
-const drawCanvas = document.getElementById('drawCanvas');
-const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+/* ---------- Drawpad logic + prompt management + TF auto-check ---------- */
+const drawCanvas = document.getElementById('drawCanvas'); const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
 let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0, lastY=0, erasing=false;
-function sizeDrawCanvas(){ const rect=drawCanvas.getBoundingClientRect(); try{ const prev=dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1); drawCanvas.width = Math.floor(rect.width*devicePixelRatio); drawCanvas.height = Math.floor(rect.height*devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); dctx.putImageData(prev,0,0); }catch{ drawCanvas.width = Math.floor(rect.width*devicePixelRatio); drawCanvas.height = Math.floor(rect.height*devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); } }
+function sizeDrawCanvas(){ const rect = drawCanvas.getBoundingClientRect(); const prev = (()=>{ try{return dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);}catch(e){return null;} })(); drawCanvas.width = Math.floor(rect.width * devicePixelRatio); drawCanvas.height = Math.floor(rect.height * devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); try{ if(prev) dctx.putImageData(prev,0,0);}catch(e){} }
 new ResizeObserver(sizeDrawCanvas).observe(drawCanvas); setTimeout(sizeDrawCanvas,0);
 function startDraw(x,y){ drawing=true; lastX=x; lastY=y; Sound.scribble(); }
 function moveDraw(x,y){ if(!drawing) return; dctx.lineWidth = brushSize; dctx.lineCap='round'; dctx.lineJoin='round'; if(erasing){ dctx.globalCompositeOperation='destination-out'; dctx.strokeStyle='rgba(0,0,0,1)'; } else { dctx.globalCompositeOperation='source-over'; dctx.strokeStyle = brushColor; } dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke(); lastX=x; lastY=y; }
@@ -387,191 +439,166 @@ function endDraw(){ drawing=false; dctx.globalCompositeOperation='source-over'; 
 drawCanvas.addEventListener('mousedown', e=>{ const r=drawCanvas.getBoundingClientRect(); startDraw(e.clientX - r.left, e.clientY - r.top); });
 drawCanvas.addEventListener('mousemove', e=>{ const r=drawCanvas.getBoundingClientRect(); moveDraw(e.clientX - r.left, e.clientY - r.top); });
 window.addEventListener('mouseup', endDraw);
-drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); }, {passive:false});
-drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); }, {passive:false});
+drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
+drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
+drawCanvas.addEventListener('touchend', endDraw);
 document.querySelectorAll('.swatch').forEach(btn=>btn.addEventListener('click', ()=>{ brushColor = btn.dataset.color; erasing=false; document.getElementById('eraserToggle').checked=false; Sound.click(); }));
-
-document.getElementById('brushSize').addEventListener('input', e=>{ brushSize = +e.target.value; });
-document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
+document.getElementById('brushSize').addEventListener('input', e=>brushSize=+e.target.value);
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor=e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
 document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
 document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); };
-document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); };
+document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url=drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); };
 
-/* 100 prompts list */
+/* ---------- 100 drawing prompts ---------- */
 const PROMPTS = [
- "cat","dog","house","sun","tree","car","bicycle","boat","fish","flower","butterfly","bird","star","moon","mountain","cloud","cup","cake","pizza","ice cream","shoe","hat","chair","door","phone","book","pencil","clock","ball","robot","alien","rocket","castle","dragon","horse","cow","sheep","lion","tiger","elephant","snake","whale","dolphin","kite","guitar","piano","violin","camera","lamp","bridge","road","island","volcano","waterfall","train","bus","scooter","skateboard","butterfly","leaf","feather","feast","island","map","key","glasses","mirror","balloon","present","crown","egg","nest","beach","sandcastle","compass","tent","lantern","mushroom","lighthouse","statue","umbrella","socks","pajamas","blanket","garden","bench","harp","microphone","telescope","hourglass","magnet","snowman","penguin","owl","fox","bear","peacock","treehouse","fountain","ferry","submarine","sailboat","jellyfish","seahorse","clocktower","market","bakery","bakery-shop"
+  "cat","dog","house","tree","sun","moon","boat","car","flower","cup",
+  "bird","fish","butterfly","star","cloud","mountain","heart","cake","book","pencil",
+  "bicycle","rocket","guitar","shoe","hat","robot","dinosaur","elephant","lion","turtle",
+  "apple","banana","ice cream","camera","clock","lamp","chair","candle","key","map",
+  "window","door","bridge","island","island with palm tree","kite","balloon","penguin","owl","squirrel",
+  "castle","dragon","wizard","fairy","treasure chest","train","submarine","skyscraper","stadium","garden",
+  "forest","volcano","waterfall","lighthouse","ferris wheel","carousel","sandcastle","giraffe","zebra","koala",
+  "penguin sliding","skateboard","soccer ball","basketball hoop","microphone","headphones","piano","violin","calendar","envelope",
+  "mountain lake","campfire","tent","compass","backpack","binoculars","cactus","mushroom","lantern","sailboat",
+  "mermaid","spaceship","alien","satellite","hourglass","snowman","igloo","palm tree","road sign","traffic light"
 ];
+let promptPool = shuffle([...PROMPTS]);
+const currentPromptEl = document.getElementById('currentPrompt');
+const autoCheckToggle = document.getElementById('autoCheckToggle');
+function pickPrompt(){ if(promptPool.length===0) promptPool = shuffle([...PROMPTS]); return promptPool.pop(); }
 let currentPrompt = null;
-const promptDisplay = document.getElementById('promptDisplay');
-function pickRandomPrompt(){
-  currentPrompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
-  promptDisplay.textContent = 'Prompt: ' + currentPrompt;
-  return currentPrompt;
-}
-document.getElementById('randomPrompt').onclick = ()=>{ pickRandomPrompt(); showDrawFlow(); };
+function showNewPrompt(){ currentPrompt = pickPrompt(); currentPromptEl.textContent = `Try drawing a ${currentPrompt}`; }
+document.getElementById('newPromptBtn').onclick = ()=>{ Sound.click(); showNewPrompt(); }
+document.getElementById('laterPrompt').onclick = ()=>{ Sound.click(); addTip('Draw','Alright—free drawing unlocked.'); toggleChatInput(false); }
+document.getElementById('closePrompt').onclick = ()=>{ Sound.click(); document.getElementById('promptPanel').style.display='none'; }
+document.getElementById('noPrompt').onclick = ()=>{ Sound.click(); addTip('Draw','Awesome — try another prompt?'); showNewPrompt(); }
+document.getElementById('clearSaveBtn').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); const url=drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); }
 
-/* ---------- TensorFlow / MobileNet integration for quick checking ---------- */
-let mobilenetModel = null;
-let tfReady = false;
-async function loadMobileNet(){
-  try{
-    mobilenetModel = await mobilenet.load({version:2, alpha:1.0});
-    tfReady = true;
-    console.warn('MobileNet loaded.');
-  }catch(e){
-    console.warn('Could not load MobileNet (offline or blocked). Auto-check disabled.', e);
-    tfReady = false;
-  }
-}
-loadMobileNet();
-
-/* classify drawing: render canvas to 224x224 canvas then call mobilenet.classify */
-async function classifyDrawing(){
-  if(!tfReady || !mobilenetModel) return {ok:false,reason:'model-unavailable'};
-  // create offscreen canvas, draw the user's drawing scaled
-  const off = document.createElement('canvas'); off.width=224; off.height=224; const octx = off.getContext('2d');
-  // white background to help
-  octx.fillStyle = '#ffffff'; octx.fillRect(0,0,224,224);
-  // draw current drawing scaled to fit
-  const src = drawCanvas;
-  octx.drawImage(src, 0, 0, 224, 224);
-  // use mobilenet
-  try{
-    const img = tf.browser.fromPixels(off);
-    const results = await mobilenetModel.classify(img);
-    img.dispose();
-    return {ok:true,results};
-  }catch(e){
-    console.warn('Classification failed', e);
-    return {ok:false,reason:'error'};
-  }
-}
-
-/* evaluate whether classified labels match the prompt roughly */
-function matchResultsToPrompt(results, prompt){
-  if(!results || !results.length) return false;
-  const p = (prompt||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  const labels = results.map(r=> (r.className || '').toLowerCase());
-  for(const lab of labels){
-    const clean = lab.replace(/[^a-z0-9]+/g,'');
-    if(clean.includes(p) || p.includes(clean)) return true;
-    if(p.split(' ').some(tok => lab.includes(tok))) return true;
-  }
-  return false;
-}
-
-/* UI flow for the draw OK/No/Later buttons */
-const drawFlow = { wrap: document.getElementById('drawFlow'), q: document.getElementById('drawFlowQ'), ok: document.getElementById('drawOK'), no: document.getElementById('drawNo'), later: document.getElementById('drawLater') };
-function showDrawFlow(){
-  const prompt = currentPrompt || pickRandomPrompt();
-  drawFlow.q.textContent = `Try drawing a ${prompt}? (OK / No / Later)`;
-  drawFlow.wrap.style.display = 'flex';
-}
-drawFlow.ok.onclick = async ()=>{
+/* When user clicks OK: auto-check if enabled, otherwise treat as manual acceptance or ask "try again?" */
+document.getElementById('okPrompt').onclick = async ()=>{
   Sound.click();
-  addMessage(`Okay — checking your ${currentPrompt || 'drawing'}...`, 'bot');
-  const res = await classifyDrawing();
-  if(!res.ok){ addMessage(`That was a great try — mobile model not available or couldn't evaluate automatically. Want to try again or keep free-drawing?`, 'bot'); return; }
-  const match = matchResultsToPrompt(res.results, currentPrompt);
-  if(match){ addMessage(`Wow! That looks great — nice job! 🎉`, 'bot'); } else { addMessage(`So nice! Wanna try again or try a different angle?`, 'bot'); }
-  drawFlow.wrap.style.display = 'none';
+  if(!currentPrompt){ addTip('Draw','No prompt selected — choose New Prompt'); return; }
+  if(autoCheckToggle.checked){ await autoCheckDrawing(currentPrompt); } else {
+    addTip('Draw','Saved as a nice try! Want to auto-check next time? Toggle Auto‑Check.');
+  }
 };
-drawFlow.no.onclick = ()=>{ Sound.click(); addMessage('No worries — want another prompt or free-draw?', 'bot'); drawFlow.wrap.style.display='none'; };
-drawFlow.later.onclick = ()=>{ Sound.click(); addMessage('Cool — free-draw unlocked. Have fun!', 'bot'); drawFlow.wrap.style.display='none'; toggleDrawInput(true); };
 
-/* ---------- Chat flow (Yes/No/Later) ---------- */
-const chatFlow = {wrap:document.getElementById('chatFlow'), q:document.getElementById('chatFlowQ'), ok:document.getElementById('chatOK'), no:document.getElementById('chatNo'), later:document.getElementById('chatLater')};
-function startChatFlow(){
-  chatFlow.q.textContent = `Want to tell me about your day? (OK / No / Later)`;
-  chatFlow.wrap.style.display = 'flex';
-}
-chatFlow.ok.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Great — I'm listening. 💬", 'bot'); toggleChatInput(true); };
-chatFlow.no.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Totally fine. We can just sit here quietly. 💙", 'bot'); };
-chatFlow.later.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Whenever you're ready — I'm here.", 'bot'); };
+/* ---------- TensorFlow MobileNet model loading & auto-check ---------- */
+let mobilenetModel = null;
+async function loadModel(){ try{ mobilenetModel = await mobilenet.load({version:2,alpha:1.0}); console.log('mobilenet loaded'); }catch(e){ console.warn('mobilenet load failed',e); mobilenetModel=null; } }
+loadModel();
 
-/* ---------- Game flow ---------- */
-const gameFlow = {wrap:document.getElementById('flowGame'), q:document.getElementById('flowGameQ'), ok:document.getElementById('flowGameOK'), no:document.getElementById('flowGameNo'), later:document.getElementById('flowGameLater')};
-function startGameFlow(){ gameFlow.q.textContent = 'Want a gentle focus? Try popping 5 bubbles slowly. (OK / No / Later)'; gameFlow.wrap.style.display = 'flex'; }
-gameFlow.ok.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Nice! Take it slow and notice the colors.', 'bot'); };
-gameFlow.no.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Cool—free play mode. 🎈', 'bot'); };
-gameFlow.later.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Alright — hop in when ready!', 'bot'); };
-
-/* ---------- helpers ---------- */
-function closeAllFlows(){ drawFlow.wrap.style.display='none'; gameFlow.wrap.style.display='none'; chatFlow.wrap.style.display='none'; }
-function addMessage(text, sender){ const chatBox=document.getElementById('chat-box'); const d=document.createElement('div'); d.className='message '+sender; d.textContent=text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight; if(sender==='bot' && speakRepliesOn) speakText(text); }
-let speakRepliesOn=false;
-function speakText(t){ if(!window.speechSynthesis) return; const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; window.speechSynthesis.speak(u); }
-
-/* ---------- Chat minimal bot (improved rules + fuzzy) ---------- */
-const synonyms = {
-  happy:['happy','glad','great','good','amazing','awesome','joy'],
-  sad:['sad','down','unhappy','depressed','blue','cry'],
-  anxious:['anxious','nervous','worried','scared','panic'],
-  angry:['angry','mad','furious','annoyed','irritated'],
-};
-function detectIntent(text){
-  const s=text.toLowerCase();
-  for(const [k,arr] of Object.entries(synonyms)) if(arr.some(w=>s.includes(w))) return k;
-  if(/thank|thanks|ty\b/.test(s)) return 'thanks';
-  if(/help|support|advice/.test(s)) return 'support';
-  if(/draw|paint|doodle/.test(s)) return 'draw';
-  return null;
-}
-function getReplyForIntent(key){
-  switch(key){
-    case 'happy': return ["That's wonderful — want to tell me what made you smile?","So glad! Keep that feeling — anything fun to share?"];
-    case 'sad': return ["I'm sorry you're feeling low — want to tell me what happened?","It's okay to feel sad. Would a breathing exercise help?"];
-    case 'anxious': return ["Take a slow breath with me: inhale 4s, hold 4s, exhale 6s — want me to guide you?","You're safe here. Want a grounding exercise?"];
-    case 'angry': return ["It's okay to be angry. Want to vent or try a quick cooldown?","You're allowed to feel that — want a 60s distraction?"];
-    case 'thanks': return ["You're welcome! 💙","Anytime — I'm here."];
-    case 'support': return ["Tell me what's up; we can make a tiny plan together.","I can help with a calming step or someone to reach out to."];
-    case 'draw': return ["Love drawing — want a prompt or free-draw?","We can start a drawing prompt — want one?"];
-    default: return ["I'm here to listen — can you tell me a bit more?","Got you. Want a suggestion to start?"];
+async function autoCheckDrawing(prompt){
+  if(!mobilenetModel){ addTip('Draw',"Auto-check unavailable (model still loading or blocked). Try again or uncheck Auto‑Check."); return; }
+  addTip('Draw','Checking your drawing...'); // show status
+  // Convert canvas to tensor via tf.browser.fromPixels
+  try{
+    const img = tf.browser.fromPixels(drawCanvas);
+    // MobileNet expects 224 px width; model will handle internal resizing in predict
+    const result = await mobilenetModel.classify(img,3);
+    img.dispose();
+    // Compare result labels to prompt words
+    const labels = result.map(r=>r.className.toLowerCase());
+    const promptNorm = norm(prompt);
+    const promptWords = promptNorm.split(' ');
+    let match=false, bestLabel = result[0]?.className||'';
+    // direct match checks
+    for(const lab of labels){
+      for(const w of promptWords){
+        if(lab.includes(w) || w.includes(lab.split(',')[0])) match=true;
+        // Levenshtein fuzzy
+        const lnorm = lab.replace(/[^a-z0-9 ]+/g,'').split(' ')[0];
+        if(lev(lnorm, w) <= 2) match=true;
+      }
+    }
+    if(match){
+      const praises = ["Wow — that looks great!","Amazing! Nice job 🎉","Nice! You nailed it!","Lovely, well done!"];
+      addTip('Draw', praises[Math.floor(Math.random()*praises.length)]);
+      // optional: highlight matching label
+      addTip('Draw', `Auto-check saw: ${bestLabel}`);
+    } else {
+      const tries = ["Omg that's lovely — want to try again for fun?","So nice! Keen to try another version?","Close! Want a retry to see if we can make it match?"];
+      addTip('Draw', tries[Math.floor(Math.random()*tries.length)]);
+      addTip('Draw', `Hints: I detected ${labels.join(', ')}`);
+    }
+  }catch(err){
+    console.error(err);
+    addTip('Draw','Auto-check failed — please try again or disable Auto‑Check.');
   }
 }
-document.getElementById('send-btn').addEventListener('click', ()=>{
-  const t = document.getElementById('user-input').value.trim(); if(!t) return;
-  addMessage(t, 'user'); document.getElementById('user-input').value=''; toggleChatInput(false);
-  const intent = detectIntent(t);
-  const reply = getReplyForIntent(intent)[Math.floor(Math.random()*getReplyForIntent(intent).length)];
-  setTimeout(()=> addMessage(reply, 'bot'), 700);
-});
 
-/* mood buttons */
-document.querySelectorAll('.mood-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    Sound.click(); document.querySelectorAll('.mood-btn').forEach(b=>b.setAttribute('aria-pressed','false')); btn.setAttribute('aria-pressed','true');
-    const mood = btn.classList[1];
-    const mapping = {happy:'happy', sad:'sad', angry:'angry', nervous:'anxious'};
-    const reply = getReplyForIntent(mapping[mood])[0];
-    addMessage(reply,'bot'); startChatFlow();
-  });
-});
+/* ---------- Chatbot: improved fuzzy intents + empathetic replies ---------- */
+const chatBox = document.getElementById('chat-box'); const userInputField = document.getElementById('user-input'); const sendBtn = document.getElementById('send-btn');
+const moodButtons = document.querySelectorAll('.mood-btn'); let speakRepliesOn=false, synth = window.speechSynthesis;
 
-/* chat voice toggles */
-document.getElementById('voice-mode-btn').addEventListener('click', ()=>{ Sound.toggle(); alert('Voice mode placeholder: browser support varies.'); });
-document.getElementById('speak-reply-btn').addEventListener('click', ()=>{ Sound.toggle(); speakRepliesOn = !speakRepliesOn; document.getElementById('speak-reply-btn').textContent = speakRepliesOn ? '🔊 Speak ON' : '🔊 Speak'; if(!speakRepliesOn && window.speechSynthesis) window.speechSynthesis.cancel(); });
+function addMessage(text, sender){ const div=document.createElement('div'); div.className='message '+sender; div.textContent=text; chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight; if(speakRepliesOn && sender==='bot') speakText(text); }
+function speakText(t){ if(!synth) return; if(synth.speaking) synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; synth.speak(u); }
 
-/* toggle chat input */
-function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block' : 'none'; }
+const INTENTS = [
+  {key:'bullying', patterns:['bully','bullied','bullying','picked on','harass','mean'], reply:["I'm really sorry you had to face bullying — you deserve safety. Want practical steps to handle it?","That sounds awful. We can roleplay what to say, or plan who to tell." ]},
+  {key:'lonely', patterns:['lonely','alone','isolated','left out','leftout'], reply:["Loneliness is heavy. Want to plan a tiny reach-out message to one person?","You're not a burden. We can pick someone small to text — I can draft it."]},
+  {key:'anxious', patterns:['nervous','anxious','scared','afraid','panic','worry'], reply:["Try breathing 4-4-6 with me — breathe in 4, hold 4, out 6. Want me to pace you?","Grounding helps: name 5 things you see, 4 you can touch, 3 you hear... ready?"]},
+  {key:'angry', patterns:['angry','mad','furious','rage'], reply:["Anger is valid. Want a 60-second vent or a cool-down exercise?","Let's make a quick plan: Pause, breathe, one small step. Which would you prefer?"]},
+  {key:'sad', patterns:['sad','down','cry','depressed','blue','unhappy'], reply:["I’m so sorry you’re feeling low. Want to tell me about it or try a tiny comfort (music, blanket)?","It's okay to feel this — do you want a quick coping idea or to just be heard?"]},
+  {key:'thanks', patterns:['thank','thanks','thankyou','ty','appreciate'], reply:["You're welcome — glad to help!","Anytime — I'm here when you need."]},
+  {key:'selfharm', patterns:['hurt myself','kill myself','suicide','die by'], reply:["I’m really sorry you’re feeling this. I can’t help with instructions. If you’re in immediate danger, please call your local emergency number now. If you’re in Malaysia (or elsewhere), reach a trusted adult or hotline. Would you like crisis resources?"] , sensitive:true}
+];
 
-/* start flows for draw / game / chat from main buttons */
-function startDrawFlow(){ if(!currentPrompt) pickRandomPrompt(); showDrawFlow(); }
-function startBGMOnFirstInteraction(){ document.removeEventListener('pointerdown', kickStartBGM); BGM.play().catch(()=>{}); }
-function kickStartBGM(){ BGM.play().catch(()=>{}); document.removeEventListener('pointerdown', kickStartBGM); }
-document.addEventListener('pointerdown', kickStartBGM, {once:true});
+function matchIntent(text){
+  const s = norm(text);
+  if(!s) return null;
+  // small safety: suicide/self-harm detection
+  for(const it of INTENTS.filter(i=>i.sensitive)){ for(const p of it.patterns) if(s.includes(p)) return it.key; }
+  let best=null, bestScore=1e9;
+  for(const intent of INTENTS){
+    for(const p of intent.patterns){
+      const d = lev(s.replace(/ /g,''), p.replace(/ /g,'')); const scaled = d / Math.max(3,p.length);
+      if(d <= 2 || scaled <= 0.33 || s.includes(p)) { if(d < bestScore){ best=intent.key; bestScore=d; } }
+    }
+  }
+  return best;
+}
 
-/* ---------- small UX: when open draw screen, show prompt chooser ---------- */
-document.getElementById('randomPrompt').addEventListener('click', ()=>{ pickRandomPrompt(); });
+function respondTo(text){
+  const key = matchIntent(text);
+  if(!key) { addMessage("I didn't quite catch that — want to rephrase or pick a mood above? 💙", "bot"); return; }
+  const it = INTENTS.find(i=>i.key===key);
+  const r = it.reply[Math.floor(Math.random()*it.reply.length)];
+  addMessage(r, "bot");
+}
 
-/* ---------- initial bot message ---------- */
-addMessage("Hi! 👋 How was your day? 😊","bot");
+sendBtn.addEventListener('click', ()=>{ const v=userInputField.value.trim(); if(!v) return; addMessage(v,"user"); userInputField.value=''; respondTo(v); });
+userInputField.addEventListener('keypress', e=>{ if(e.key==='Enter') sendBtn.click(); });
 
-/* ---------- Expose helper to set track externally (if you want switching) ---------- */
-window.setTrack = setTrack;
+moodButtons.forEach(btn=>btn.addEventListener('click', ()=>{ Sound.click(); moodButtons.forEach(b=>b.setAttribute('aria-pressed','false')); btn.setAttribute('aria-pressed','true'); const mood = btn.classList[1]; const openers = { happy:"Hey — love that you're feeling happy! What's up?", sad:"I'm sorry you're sad. Want to tell me about it?", angry:"You're allowed to be angry. Want to vent?", nervous:"Nervous now — want a grounding exercise?" }; addMessage(openers[mood]||"Tell me more, I'm listening 💙", "bot"); }));
 
-/* ---------- simple keyboard escape to close panels ---------- */
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeThemes(); closeAllFlows(); } });
+/* ---------- Flow helpers & tips ---------- */
+function addTip(area, text){ addMessage(`[${area}] ${text}`, "bot"); }
+function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block':'none'; }
+
+/* ---------- Prompt startup ---------- */
+function loadPromptIfNeeded(){ if(!currentPrompt) showNewPrompt(); else currentPromptEl.textContent = `Try drawing a ${currentPrompt}`; document.getElementById('promptPanel').style.display = 'flex'; }
+function showNewPrompt(){ currentPrompt = pickPrompt(); document.getElementById('currentPrompt').textContent = `Try drawing a ${currentPrompt}`; }
+
+/* ---------- Tiny UI binds ---------- */
+document.getElementById('newPromptBtn').addEventListener('click', ()=>{ showNewPrompt(); });
+document.getElementById('okPrompt').addEventListener('click', ()=>{ /* handled above */ });
+document.getElementById('laterPrompt').addEventListener('click', ()=>{ addTip('Draw','Freestyle mode enabled.'); toggleChatInput(false); });
+
+/* ---------- Theme open/close safety ---------- */
+function closeThemes(){ document.getElementById('themesPanel').classList.remove('open'); }
+
+/* ---------- Start attempts: resume audio only on first interaction if blocked ---------- */
+let firstInteraction=false;
+function startOnFirstInteraction(){ if(firstInteraction) return; firstInteraction=true; document.removeEventListener('pointerdown', startOnFirstInteraction); audio.play().catch(()=>{}); }
+document.addEventListener('pointerdown', startOnFirstInteraction, {once:true});
+
+/* ---------- Load mobilenet model early ---------- */
+(async ()=>{ try{ await loadModel(); }catch(e){ console.warn('model load error',e);} })();
+
+/* ---------- On load: show initial messages ---------- */
+addMessage("Hi! 👋 How was your day? 😊", "bot");
+showNewPrompt();
 
 </script>
 </body>
