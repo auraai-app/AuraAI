@@ -1,258 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aura AI</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AuraAI — All in One</title>
+<!-- minimal comments only where necessary -->
 <style>
   :root{
     --bot-bg:#d6e6fb; --bot-fg:#074279;
     --user-bg:#517fc4; --user-fg:#e8f3fc;
-
     --glass-bg: rgba(255,255,255,0.20);
     --glass-border: rgba(255,255,255,0.28);
     --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
     --glass-blur: blur(18px);
-
-    --pad: 20px;
-    --radius: 18px;
-    --motion-scale: 0.9;
+    --pad:20px; --radius:18px; --motion-scale:0.75;
   }
-
-  *{ box-sizing: border-box }
-  html, body { height: 100% }
-
+  *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0;
-    font-family: "Comic Neue", Arial, sans-serif;
-    color:#0b3c61;
-    background:#a8cdf1;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
+    margin:0; font-family:"Comic Neue",Arial,sans-serif; color:#0b3c61;
+    background:#a8cdf1; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
-
-  .screen{
-    position: absolute; inset: 0;
-    display: none; place-items: center; padding: var(--pad);
-  }
-  .screen.active{ display: grid; }
-
-  .glass{
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-  }
-
-  .btn{
-    border:0; cursor:pointer; border-radius:14px;
-    padding:14px 18px; font-weight:800; font-size:16px;
-    color:#0b3c61;
-    background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
-    box-shadow: 0 4px 8px rgba(168,205,241,.7);
-    transition: filter .2s ease, transform .2s ease;
-  }
-  .btn:hover{ filter:brightness(.92); transform: translateY(-1px) }
-
+  .screen{position:absolute; inset:0; display:none; place-items:center; padding:var(--pad)}
+  .screen.active{display:grid}
+  .glass{background:var(--glass-bg); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow)}
+  .btn{border:0;cursor:pointer;border-radius:14px;padding:14px 18px;font-weight:800;font-size:16px;color:#0b3c61;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.7);transition:filter .18s ease, transform .18s ease}
+  .btn:hover{filter:brightness(.92);transform:translateY(-1px)}
   /* Hello */
-  .hello-wrap{
-    width:min(980px, 92vw);
-    border-radius: var(--radius);
-    padding: 28px; text-align: center;
-  }
-  .hello-text{
-    font-weight:900; line-height:1; user-select:none;
-    margin: 14px 0 8px;
-    font-size: clamp(42px, 8vw, 92px); letter-spacing: 1px;
-    background: linear-gradient(90deg,#dfe7ff,#f09dad,#86bff5,#e8f1ff);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: hueflow 12s linear infinite; filter: saturate(.9) brightness(.9);
-  }
-  @keyframes hueflow{ 0%{ filter:hue-rotate(0deg) saturate(.9) brightness(.9) } 100%{ filter:hue-rotate(360deg) saturate(.9) brightness(.9) } }
-  .hello-sub{ font-size: clamp(16px, 2.6vw, 22px); opacity:.9; margin-bottom: 18px; }
-  .hello-actions{ display:flex; gap:12px; justify-content:center; flex-wrap: wrap; }
-  .hello-actions .btn{ min-width:160px }
-  .hint{ margin-top:14px; font-size:14px; opacity:.8; }
-
+  .hello-wrap{width:min(980px,92vw);border-radius:var(--radius);padding:28px;text-align:center}
+  .hello-text{font-weight:900;line-height:1;user-select:none;margin:14px 0 8px;font-size:clamp(42px,8vw,92px);letter-spacing:1px;background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:hueflow 12s linear infinite;filter:saturate(.9)}
+  @keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+  .hello-sub{font-size:clamp(16px,2.6vw,22px);opacity:.9;margin-bottom:18px}
+  .hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .hint{margin-top:14px;font-size:14px;opacity:.8}
   /* Game */
-  .game-wrap{
-    width:min(1000px,95vw); height:min(70vh, 680px);
-    border-radius: var(--radius); padding: 12px;
-    display: grid; grid-template-rows: auto 1fr; gap:10px;
-  }
-  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .left-group, .right-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
-  .title{ font-weight:900; font-size:20px }
-  .game-ind{ font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55) }
-  #gameCanvas{ width:100%; height:100%; border-radius: 14px; background: linear-gradient(135deg,#eaf6ff,#f6f0ff); display:block; outline: 2px solid rgba(255,255,255,.5); }
-
+  .game-wrap{width:min(1000px,95vw);height:min(70vh,680px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .title{font-weight:900;font-size:20px}
+  #gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5)}
+  .game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.55)}
   /* Draw */
-  .draw-wrap{
-    width:min(1100px,96vw); height:min(76vh, 740px);
-    border-radius: var(--radius); padding: 12px;
-    display: grid; grid-template-rows: auto 1fr auto; gap:10px;
-  }
-  .draw-tools{ display:flex; gap:10px; align-items:center; flex-wrap: wrap }
-  .brush{ display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; }
-  .swatch{ width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2); }
-  .toggle{ display:flex; align-items:center; gap:6px; font-weight:800; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55) }
-  .draw-canvas{ width:100%; height:100%; border-radius:14px; background: rgba(255,255,255,.65); outline: 2px solid rgba(255,255,255,.5); }
-  .draw-bottom{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap }
-  .draw-bottom .right{ display:flex; gap:8px; }
-  .picker{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800; }
-  .picker input[type="color"]{ appearance:none; -webkit-appearance:none; border:none; width:42px; height:26px; border-radius:10px; cursor:pointer; background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red); }
-  .picker input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
-  .picker input[type="color"]::-webkit-color-swatch{ border: 1px solid rgba(0,0,0,.15); border-radius:10px; }
-
+  .draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px}
+  .draw-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .brush{display:flex;align-items:center;gap:8px;font-weight:800;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px}
+  .swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+  .draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.65);outline:2px solid rgba(255,255,255,.5)}
+  .draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+  .picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
+  .picker input[type="color"]{appearance:none;-webkit-appearance:none;border:none;width:42px;height:26px;border-radius:10px;cursor:pointer;background:conic-gradient(from 0deg, red,yellow,lime,cyan,blue,magenta,red)}
   /* Chat */
-  .chat-container{ width:min(980px, 92vw); border-radius: var(--radius); padding: 18px; display:flex; flex-direction:column; gap:12px; }
-  .header-controls{ display:flex; gap:10px; align-items:center; }
-  .mood-header{ flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background: linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow: 0 4px 8px rgba(168,205,241,.4); }
-  .header-buttons{ display:flex; gap:8px; flex-wrap:wrap }
-  .header-buttons .btn{ height:44px }
-  .mood-selector{ display:flex; gap:10px; flex-wrap:wrap }
-  .mood-btn{ border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px; transition: transform .18s ease, box-shadow .18s ease; }
-  .mood-btn.happy{ background:#c1e6a6 } .mood-btn.sad{ background:#a4c7f9 } .mood-btn.angry{ background:#f9d6d6 } .mood-btn.nervous{ background:#fff3c8 }
-  .mood-btn:hover{ transform: translateY(-3px); box-shadow:0 10px 16px rgba(0,0,0,.22) }
-  .mood-btn[aria-pressed="true"]{ box-shadow:0 0 12px 2px rgba(0,0,0,.22) }
-  #chat-box{ flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background: rgba(232,242,252,.55); }
-  .message{ margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border: 2px solid transparent; font-size:18px; }
-  .message.bot{ background: rgba(0,0,0,0.35); color:#f0f0f0; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .message.user{ background: rgba(0,0,0,0.55); color:#ffffff; align-self:flex-end; text-align:right; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .input-footer{ position:relative; display:none; }
-  #user-input{ width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background: rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none; }
-  #send-btn{ position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5 }
-
+  .chat-container{width:min(980px,92vw);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px}
+  .header-controls{display:flex;gap:10px;align-items:center}
+  .mood-header{flex:1;text-align:center;font-weight:900;font-size:22px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.4)}
+  .mood-selector{display:flex;gap:10px;flex-wrap:wrap}
+  .mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:16px;transition:transform .18s ease,box-shadow .18s ease}
+  .mood-btn.happy{background:#c1e6a6}.mood-btn.sad{background:#a4c7f9}.mood-btn.angry{background:#f9d6d6}.mood-btn.nervous{background:#fff3c8}
+  .mood-btn:hover{transform:translateY(-3px);box-shadow:0 10px 16px rgba(0,0,0,.22)}
+  .mood-btn[aria-pressed="true"]{box-shadow:0 0 12px 2px rgba(0,0,0,.22)}
+  #chat-box{flex:1;min-height:280px;max-height:52vh;overflow-y:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.55)}
+  .message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;border:2px solid transparent;font-size:18px}
+  .message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)}
+  .message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)}
+  .input-footer{position:relative;display:none}
+  #user-input{width:100%;padding:16px 120px 16px 14px;border-radius:12px;border:1px solid #a9c8e8;background:rgba(255,255,255,.72);font-size:18px;color:#0b3c61;outline:none}
+  #send-btn{position:absolute;right:6px;top:6px;bottom:6px;width:108px;color:#fff;background:#88b7e5}
   /* Themes panel */
-  .themes-panel{ position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition: width .3s ease, opacity .25s ease; display:flex; flex-direction:column; }
-  .themes-panel.open{ width:320px; opacity:1; pointer-events:auto; }
-  .panel-shell{ height:100%; display:flex; flex-direction:column }
-  .themes-head{ display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px; }
-  .themes-body{ padding:12px 10px; overflow-y:auto; flex:1 }
-  .swatch-strip{ display:flex; flex-direction:column; gap:16px }
-  .group{ display:flex; flex-direction:column; gap:10px }
-  .group-title{ font-weight:900; font-size:14px; opacity:.85; padding-left:4px }
-  .swatch-row{ display:flex; gap:10px; flex-wrap:wrap }
-  .theme-btn{ width:34px; height:34px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.18); transition: transform .12s ease; }
-  .theme-btn:hover{ transform: scale(1.1) }
-  .theme-btn[title]{ position:relative }
-  .close-btn{ background:none; border:0; font-size:18px; cursor:pointer }
-
-  /* BGM Mini Player */
-  .miniplayer{
-    position:fixed; right:14px; bottom:14px; z-index:1200;
-    display:flex; align-items:center; gap:10px;
-    padding:10px 12px; border-radius:14px;
-  }
-  .mini-btn{
-    border:0; cursor:pointer; border-radius:12px;
-    padding:10px 12px; font-weight:800; font-size:14px;
-    background: rgba(255,255,255,.6);
-    box-shadow: 0 4px 8px rgba(0,0,0,.15);
-    transition:.18s transform, .18s filter;
-  }
-  .mini-btn:hover{ transform: translateY(-2px); filter:brightness(.95) }
-  .mini-meta{ display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:240px }
-  .mini-title{ font-weight:900; font-size:14px; line-height:1.1 }
-  .mini-time{ font-size:12px; opacity:.85 }
-  .mini-progress{
-    appearance:none; width:100%; height:6px; border-radius:6px;
-    background: rgba(255,255,255,.6); outline:none; cursor:pointer;
-  }
-
-  /* Flow Overlay */
-  .flow-pad{
-    position:absolute; left:16px; bottom:16px; z-index:900;
-    display:flex; flex-direction:column; gap:8px; max-width:min(560px, 80vw);
-    padding:10px 12px; border-radius:14px;
-  }
-  .flow-q{ font-weight:900; font-size:16px; line-height:1.25 }
-  .flow-actions{ display:flex; gap:8px; flex-wrap:wrap }
-  .chip{ border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65) }
-  .chip:hover{ filter:brightness(.95) }
-
-  /* Level badge */
-  .level-badge{
-    position:absolute; right:16px; top:64px; z-index:800;
-    padding:8px 12px; border-radius:12px; font-weight:900;
-    background: rgba(255,255,255,.65);
-  }
-
-  @media (max-width: 880px){
-    .mood-selector{ flex-wrap:wrap }
-    .header-controls{ flex-wrap:wrap }
-    .miniplayer{ right:10px; left:10px; bottom:10px; }
-  }
+  .themes-panel{position:fixed;top:0;right:0;height:100%;width:0;opacity:0;pointer-events:none;z-index:1000;transition:width .3s ease,opacity .25s ease;display:flex;flex-direction:column}
+  .themes-panel.open{width:320px;opacity:1;pointer-events:auto}
+  .themes-body{padding:12px 10px;overflow-y:auto;flex:1}
+  .swatch-row{display:flex;gap:10px;flex-wrap:wrap}
+  .theme-btn{width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+  /* Mini player */
+  .miniplayer{position:fixed;right:14px;bottom:14px;z-index:1200;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px}
+  .mini-btn{border:0;cursor:pointer;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:rgba(255,255,255,.6);box-shadow:0 4px 8px rgba(0,0,0,.15)}
+  .mini-meta{display:flex;flex-direction:column;gap:4px;min-width:170px;max-width:240px}
+  .mini-progress{appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(255,255,255,.6);outline:none;cursor:pointer}
+  /* Flow overlays */
+  .flow-pad{position:absolute;left:16px;bottom:16px;z-index:900;display:flex;flex-direction:column;gap:8px;max-width:min(560px,80vw);padding:10px 12px;border-radius:14px}
+  .flow-q{font-weight:900;font-size:16px;line-height:1.25}
+  .flow-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:0;cursor:pointer;border-radius:12px;padding:10px 14px;font-weight:800;background:rgba(255,255,255,.65)}
+  .chip:hover{filter:brightness(.95)}
+  @media (max-width:880px){.mood-selector{flex-wrap:wrap}.header-controls{flex-wrap:wrap}.miniplayer{right:10px;left:10px;bottom:10px}}
 </style>
 </head>
 <body>
 
-  <!-- Hello -->
+  <!-- HELLO -->
   <section id="hello-screen" class="screen active">
     <div class="hello-wrap glass">
       <div class="hello-text">AuraAI</div>
       <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
       <div class="hello-actions">
-        <button class="btn" id="goPlay">🎮 Play a Game</button>
-        <button class="btn" id="goDraw">🎨 Draw Something</button>
-        <button class="btn" id="goTalk">💬 Talk</button>
+        <button id="goPlay" class="btn">🎮 Play a Game</button>
+        <button id="goDraw" class="btn">🎨 Draw Something</button>
+        <button id="goTalk" class="btn">💬 Talk</button>
       </div>
       <div class="hint">You can always go back here from any screen.</div>
     </div>
   </section>
 
-  <!-- Game -->
+  <!-- GAME -->
   <section id="game-screen" class="screen">
     <div class="game-wrap glass">
       <div class="bar">
-        <div class="left-group">
-          <div class="title">🫧 Bubble Pop — calm your mind</div>
-        </div>
+        <div class="left-group"><div class="title">🫧 Bubble Pop — calm your mind</div></div>
         <div class="right-group">
-          <span class="game-ind">Score: <span id="scoreTxt">0</span></span>
-          <span class="game-ind">Level: <span id="levelTxt">1</span>/30</span>
-          <button class="btn" id="resetGame">Reset</button>
-          <button class="btn" id="themeBtnGame" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnGame" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromGame">⬅ Back</button>
+          <span class="game-ind">Level: <span id="levelTxt">1</span> • Score: <span id="scoreTxt">0</span></span>
+          <button id="resetGame" class="btn">Reset</button>
+          <button id="themeBtnGame" class="btn" title="Themes">🎨 Themes</button>
+          <button id="muteBtnGame" class="btn" title="Mute/Unmute">🔇 Mute</button>
+          <button id="backFromGame" class="btn">⬅ Back</button>
         </div>
       </div>
-      <div id="levelBadge" class="level-badge glass" style="display:none"></div>
       <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
-
-      <!-- Flow overlay for Game -->
       <div id="flowGame" class="flow-pad glass" role="group" aria-label="Game Flow" style="display:none">
-        <div class="flow-q" id="flowGameQ"></div>
+        <div id="flowGameQ" class="flow-q"></div>
         <div class="flow-actions">
-          <button class="chip" id="flowGameYes">Yes</button>
-          <button class="chip" id="flowGameNo">No</button>
-          <button class="chip" id="flowGameClose">Close</button>
+          <button id="flowGameOK" class="chip">OK</button>
+          <button id="flowGameNo" class="chip">No</button>
+          <button id="flowGameLater" class="chip">Later</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Draw -->
+  <!-- DRAW -->
   <section id="draw-screen" class="screen">
     <div class="draw-wrap glass">
       <div class="bar">
-        <div class="left-group draw-tools">
+        <div class="left-group">
           <div class="title">🎨 Draw Something — express or doodle</div>
-          <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
-          <button class="swatch" style="background:#000000" data-color="#000000" title="Black"></button>
-          <button class="swatch" style="background:#ffffff" data-color="#ffffff" title="White"></button>
-          <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
-          <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color"/></div>
-          <button class="btn" id="rotateCanvasBtn" title="Rotate Canvas">↻ Rotate</button>
+          <div class="brush">Brush <input id="brushSize" type="range" min="2" max="50" value="10" /></div>
+          <button class="swatch" style="background:#000" data-color="#000" title="Black"></button>
+          <button class="swatch" style="background:#fff" data-color="#fff" title="White"></button>
+          <label class="toggle"><input id="eraserToggle" type="checkbox" /> Eraser</label>
+          <div class="picker">Color <input id="colorPicker" type="color" value="#1e88e5" title="Pick color" /></div>
         </div>
         <div class="right-group">
-          <button class="btn" id="themeBtnDraw" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnDraw" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromDraw">⬅ Back</button>
+          <button id="themeBtnDraw" class="btn" title="Themes">🎨 Themes</button>
+          <button id="muteBtnDraw" class="btn" title="Mute/Unmute">🔇 Mute</button>
+          <button id="backFromDraw" class="btn">⬅ Back</button>
         </div>
       </div>
 
@@ -260,40 +148,38 @@
 
       <div class="draw-bottom">
         <div class="left">
-          <button class="btn" id="clearDraw">Clear</button>
-          <button class="btn" id="saveDraw">Save</button>
+          <button id="clearDraw" class="btn">Clear</button>
+          <button id="saveDraw" class="btn">Save</button>
+          <button id="randomPrompt" class="btn">New Prompt</button>
         </div>
         <div class="right">
-          <button class="btn" id="askPrompt">🧠 Prompt</button>
-          <button class="btn" id="switchPrompt">🔄 New Prompt</button>
-          <button class="btn" id="judgeToggle">✅ Auto‑Check</button>
+          <div id="promptDisplay" style="font-weight:800; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.6);">Prompt: —</div>
         </div>
       </div>
 
-      <!-- Flow overlay for Draw -->
-      <div id="flowDraw" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
-        <div class="flow-q" id="flowDrawQ"></div>
+      <div id="drawFlow" class="flow-pad glass" role="group" aria-label="Draw Flow" style="display:none">
+        <div id="drawFlowQ" class="flow-q"></div>
         <div class="flow-actions">
-          <button class="chip" id="flowDrawYes">OK</button>
-          <button class="chip" id="flowDrawNo">No</button>
-          <button class="chip" id="flowDrawLater">Later</button>
-          <button class="chip" id="flowDrawClose">Close</button>
+          <button id="drawOK" class="chip">OK</button>
+          <button id="drawNo" class="chip">No</button>
+          <button id="drawLater" class="chip">Later</button>
         </div>
       </div>
+
     </div>
   </section>
 
-  <!-- Chat -->
+  <!-- CHAT -->
   <section id="chat-screen" class="screen">
     <div class="chat-container glass">
       <div class="header-controls">
         <div class="mood-header glass">How do you feel?</div>
         <div class="header-buttons">
-          <button class="btn" id="voice-mode-btn" aria-pressed="false" title="Toggle Voice">🎤 Voice</button>
-          <button class="btn" id="speak-reply-btn" aria-pressed="false" title="Speak Replies">🔊 Speak</button>
-          <button class="btn" id="themeBtnChat" title="Themes">🎨 Themes</button>
-          <button class="btn" id="muteBtnChat" title="Mute / Unmute">🔇 Mute</button>
-          <button class="btn" id="backFromChat" title="Back">⬅ Back</button>
+          <button id="voice-mode-btn" class="btn" aria-pressed="false" title="Toggle Voice">🎤 Voice</button>
+          <button id="speak-reply-btn" class="btn" aria-pressed="false" title="Speak Replies">🔊 Speak</button>
+          <button id="themeBtnChat" class="btn" title="Themes">🎨 Themes</button>
+          <button id="muteBtnChat" class="btn" title="Mute/Unmute">🔇 Mute</button>
+          <button id="backFromChat" class="btn">⬅ Back</button>
         </div>
       </div>
 
@@ -307,869 +193,386 @@
       <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
 
       <div class="input-footer">
-        <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
-        <button class="btn" id="send-btn">Send</button>
+        <input id="user-input" type="text" placeholder="Type your response..." autocomplete="off" />
+        <button id="send-btn" class="btn">Send</button>
       </div>
 
-      <!-- Flow overlay for Chat -->
-      <div id="flowChat" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
-        <div class="flow-q" id="flowChatQ"></div>
+      <div id="chatFlow" class="flow-pad glass" role="group" aria-label="Chat Flow" style="display:none">
+        <div id="chatFlowQ" class="flow-q"></div>
         <div class="flow-actions">
-          <button class="chip" id="flowChatYes">Yes</button>
-          <button class="chip" id="flowChatNo">No</button>
-          <button class="chip" id="flowChatClose">Close</button>
+          <button id="chatOK" class="chip">OK</button>
+          <button id="chatNo" class="chip">No</button>
+          <button id="chatLater" class="chip">Later</button>
         </div>
       </div>
+
     </div>
   </section>
 
-  <!-- Themes panel -->
-  <aside class="themes-panel" id="themesPanel" aria-hidden="true">
+  <!-- THEMES PANEL -->
+  <aside id="themesPanel" class="themes-panel" aria-hidden="true">
     <div class="panel-shell glass">
-      <div class="themes-head glass">
+      <div class="themes-head glass" style="display:flex;align-items:center;justify-content:space-between;padding:12px;font-weight:900;">
         <div>🎨 Themes</div>
-        <button class="close-btn" id="closeThemes" aria-label="Close">✕</button>
+        <button id="closeThemes" class="close-btn">✕</button>
       </div>
       <div class="themes-body">
-        <div class="swatch-strip" id="themeStrip"></div>
+        <div id="themeStrip" class="swatch-strip"></div>
       </div>
     </div>
   </aside>
 
-  <!-- BGM Mini Player -->
+  <!-- MINI PLAYER -->
   <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
-    <button id="miniPrev" class="mini-btn" title="Prev">⏮</button>
-    <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
-    <button id="miniNext" class="mini-btn" title="Next">⏭</button>
+    <button id="miniPlayPause" class="mini-btn">⏸</button>
     <div class="mini-meta">
-      <div class="mini-title">Music</div>
-      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek" />
+      <div id="miniTitle" class="mini-title" style="font-weight:900">BGM</div>
+      <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
       <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
     </div>
   </div>
 
+<!-- TensorFlow.js + MobileNet from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@3.1.0/dist/mobilenet.min.js"></script>
+
 <script>
-/* ---------------------------- GLOBAL SOUND ---------------------------- */
+/* ---------- Utilities & quick startup ---------- */
 const Sound = (() => {
-  let ctx;
-  let muted = false;
-  function ensureCtx(){
-    if(!ctx){
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(AC) ctx = new AC();
-    }
-  }
-  function tone(freq=440, dur=0.08, type="sine", gain=0.06){
-    if(muted) return;
-    ensureCtx(); if(!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.value = gain;
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + dur);
-  }
-  function click(){ tone(600,0.05,"triangle",0.05) }
-  function pop(){ tone(900,0.08,"sine",0.07) }
-  function scribble(){ tone(280,0.03,"square",0.03) }
-  function toggle(){ tone(420,0.06,"sawtooth",0.06) }
-  function setMuted(v){ muted = v }
-  function isMuted(){ return muted }
-  return { click, pop, scribble, toggle, setMuted, isMuted };
+  let ctx, muted=false;
+  function ensure(){ if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) ctx=new AC(); } }
+  function tone(f=440,d=0.08,t='sine',g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=t; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
+  return { click:()=>tone(600,0.05,'triangle',0.05), pop:()=>tone(900,0.08,'sine',0.07), scribble:()=>tone(280,0.03,'square',0.03), toggle:()=>tone(420,0.06,'sawtooth',0.06), setMuted:(v)=>muted=v, isMuted:()=>muted };
 })();
 
-/* ----------------------------- SCREENS -------------------------------- */
-const screens = {
-  hello: document.getElementById('hello-screen'),
-  game:  document.getElementById('game-screen'),
-  draw:  document.getElementById('draw-screen'),
-  chat:  document.getElementById('chat-screen'),
+const screens = { hello:document.getElementById('hello-screen'), game:document.getElementById('game-screen'), draw:document.getElementById('draw-screen'), chat:document.getElementById('chat-screen') };
+function switchScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
+
+/* ---------- Theme list (many groups; includes rainbow option) ---------- */
+const THEMES = {
+  "Core":[ ["classic","linear-gradient(135deg,#a8cdf1,#f7b7b9)","#d6e6fb","#517fc4"] ],
+  "Vibrant":[ ["rainbow-loop","linear-gradient(135deg,#ff0000,#ff8000,#ffff00,#008000,#0000ff,#4b0082,#9400d3)", "#ffffff", "#000000"], ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)","#e8f6ff","#1E88E5"] ],
+  "Dark":[ ["poster-black","#000000","#2b2b2b","#0a0a0a"], ["navy","linear-gradient(135deg,#2C3E50,#4b6eaf)","#496177","#1f6592"] ],
+  "Pastel":[ ["cotton-candy","linear-gradient(135deg,#ffb6c1,#add8e6)","#fff8fb","#add8e6"], ["pastel-mint","#C2F5E9","#eafffa","#9edfcf"] ]
 };
-function switchScreen(key){
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  screens[key].classList.add('active');
+const themeStrip = document.getElementById('themeStrip');
+(function buildThemes(){
+  for(const [group,items] of Object.entries(THEMES)){
+    const g=document.createElement('div'); g.style.marginBottom='12px';
+    const t=document.createElement('div'); t.textContent=group; t.style.fontWeight='900'; t.style.marginBottom='6px';
+    g.appendChild(t);
+    const row=document.createElement('div'); row.className='swatch-row';
+    items.forEach(([key,bg,bot,user])=>{
+      const btn=document.createElement('button'); btn.className='theme-btn'; btn.title=key; btn.dataset.key=key; btn.style.background=bg;
+      btn.onclick=()=>{ Sound.toggle(); applyTheme(bg,bot,user); localStorage.setItem('aura-theme',key) };
+      row.appendChild(btn);
+    });
+    g.appendChild(row); themeStrip.appendChild(g);
+  }
+})();
+function applyTheme(background, bot, user){
+  document.body.style.background = background;
+  if(bot) document.documentElement.style.setProperty('--bot-bg', bot);
+  if(user) document.documentElement.style.setProperty('--user-bg', user);
+  const dark = (typeof background==='string' && background.includes('#000')) || (background && background.startsWith('linear-gradient'));
+  document.documentElement.style.setProperty('--glass-bg', dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.20)');
+  document.documentElement.style.setProperty('--glass-border', dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.28)');
 }
+const saved = localStorage.getItem('aura-theme'); if(saved){ /* try to reapply by key */ for(const g of Object.values(THEMES)){ for(const it of g){ if(it[0]===saved) applyTheme(it[1], it[2], it[3]); } } }
+
+/* ---------- Music / BGM ---------- */
+const bgFiles = ['bgm.mp3','bgm2.mp3','bgm3.mp3'];
+let currentTrackIndex = 0;
+const BGM = new Audio(); BGM.loop = true;
+BGM.src = bgFiles[currentTrackIndex];
+BGM.preload = 'auto';
+const mini = { btn: document.getElementById('miniPlayPause'), seek: document.getElementById('miniSeek'), cur: document.getElementById('miniCur'), dur: document.getElementById('miniDur'), title: document.getElementById('miniTitle') };
+function fmt(t){ if(isNaN(t)) return '0:00'; const m=Math.floor(t/60), s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+mini.btn.onclick = ()=>{ Sound.click(); if(BGM.paused){ BGM.play(); mini.btn.textContent='⏸'; } else { BGM.pause(); mini.btn.textContent='▶️'; } };
+mini.seek.addEventListener('input', ()=>{ if(BGM.duration) BGM.currentTime = (mini.seek.value/100)*BGM.duration; });
+BGM.addEventListener('timeupdate', ()=>{ if(BGM.duration){ mini.seek.value = (BGM.currentTime/BGM.duration)*100; mini.cur.textContent = fmt(BGM.currentTime); mini.dur.textContent = fmt(BGM.duration); } mini.btn.textContent = BGM.paused ? '▶️' : '⏸'; });
+function setTrack(i){ currentTrackIndex = i % bgFiles.length; BGM.src = bgFiles[currentTrackIndex]; BGM.load(); BGM.play().catch(()=>{}); mini.title.textContent = `Track ${currentTrackIndex+1}`; }
+
+/* ---------- Screen routing buttons ---------- */
 document.getElementById('goPlay').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('game'); startGameFlow(); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlowIntro(); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('draw'); startDrawFlow(); };
 document.getElementById('goTalk').onclick = ()=>{ Sound.click(); startBGMOnFirstInteraction(); switchScreen('chat'); startChatFlow(); };
 document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
 document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); closeAllFlows(); switchScreen('hello'); };
+document.getElementById('themeBtnGame').onclick = ()=>{ Sound.click(); openThemes(); };
+document.getElementById('themeBtnDraw').onclick = ()=>{ Sound.click(); openThemes(); };
+document.getElementById('themeBtnChat').onclick = ()=>{ Sound.click(); openThemes(); };
+document.getElementById('closeThemes').onclick = ()=>{ Sound.click(); closeThemes(); };
 
-/* ------------------------------ THEMES -------------------------------- */
-const themesPanel = document.getElementById("themesPanel");
-const themeStrip = document.getElementById("themeStrip");
-/* Extra themes added to the original set */
-const THEMES = {
-  "Core": [
-    ["auraaqua","linear-gradient(135deg,#bfe3ff,#ffd6e0)",["#d6e6fb","#074279"],["#517fc4","#e8f3fc"]],
-    ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
-    ["night","linear-gradient(135deg,#141E30,#243B55)",["#3a4f6a","#ffffff"],["#1b2a3d","#ffffff"]],
-  ],
-  "Sunset": [
-    ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
-    ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
-  ],
-  "Ice/Dream": [
-    ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
-    ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
-  ],
-  "Forest & Earth": [
-    ["jade","linear-gradient(135deg,#76B852,#8DC26F)",["#d8f0d0","#0f2a12"],["#5ea55a","#ffffff"]],
-    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
-  ],
-  "Berries": [
-    ["berry","linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)",["#f7dfff","#26123a"],["#f36f52","#ffffff"]],
-    ["mulberry","linear-gradient(135deg,#a044ff,#6a3093)",["#ead9ff","#23123a"],["#7e45c7","#ffffff"]],
-  ],
-  "Soft": [
-    ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
-    ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
-  ],
-};
-function isDarkBackground(bg){
-  if(!bg || typeof bg !== "string") return false;
-  if(bg.startsWith("linear-gradient")) return true;
-  const hex = bg.replace("#","").trim();
-  if(hex.length !== 6) return false;
-  const r = parseInt(hex.slice(0,2),16);
-  const g = parseInt(hex.slice(2,4),16);
-  const b = parseInt(hex.slice(4,6),16);
-  const L = 0.2126*r + 0.7152*g + 0.0722*b;
-  return L < 128;
-}
-function applyThemeRecord(bg, bot, user){
-  document.body.style.background = bg;
-  document.documentElement.style.setProperty("--bot-bg", bot[0]);
-  document.documentElement.style.setProperty("--bot-fg", bot[1]);
-  document.documentElement.style.setProperty("--user-bg", user[0]);
-  document.documentElement.style.setProperty("--user-fg", user[1]);
-  const dark = isDarkBackground(bg);
-  document.documentElement.style.setProperty("--glass-bg", dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.20)");
-  document.documentElement.style.setProperty("--glass-border", dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.28)");
-  document.documentElement.style.setProperty("--glass-shadow", dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
-}
-(function buildThemeDots(){
-  for(const [group, items] of Object.entries(THEMES)){
-    const g = document.createElement('div'); g.className = 'group';
-    const label = document.createElement('div'); label.className = 'group-title'; label.textContent = group;
-    const row = document.createElement('div'); row.className = 'swatch-row';
-    items.forEach(([key,bg,bot,user])=>{
-      const btn = document.createElement('button');
-      btn.className = 'theme-btn'; btn.title = key; btn.setAttribute('data-theme', key); btn.style.background = bg;
-      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
-      row.appendChild(btn);
-    });
-    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
-  }
-})();
-function openThemes(){ themesPanel.classList.add("open"); themesPanel.setAttribute("aria-hidden","false"); }
-function closeThemesPanel(){ themesPanel.classList.remove("open"); themesPanel.setAttribute("aria-hidden","true"); }
-document.getElementById("closeThemes").onclick = ()=>{ Sound.click(); closeThemesPanel(); };
-document.getElementById("themeBtnGame").onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById("themeBtnDraw").onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById("themeBtnChat").onclick = ()=>{ Sound.click(); openThemes(); };
+/* ---------- Themes open/close ---------- */
+const themesPanel = document.getElementById('themesPanel');
+function openThemes(){ themesPanel.classList.add('open'); themesPanel.style.width='320px'; themesPanel.setAttribute('aria-hidden','false'); }
+function closeThemes(){ themesPanel.classList.remove('open'); themesPanel.style.width='0'; themesPanel.setAttribute('aria-hidden','true'); }
 
-/* ------------------------------ BGM ----------------------------------- */
-const BGM = (() => {
-  const playlist = [
-    { src: 'bgm.mp3',  title: 'Flow 1' },
-    { src: 'bgm2.mp3', title: 'Flow 2' },
-    { src: 'bgm3.mp3', title: 'Flow 3' },
-  ];
-  let index = Math.floor(Math.random()*playlist.length);
-  const audio = new Audio(playlist[index].src);
-  audio.loop = true; audio.preload = 'auto'; audio.crossOrigin = 'anonymous';
-  let started = false;
-  let userWantedPlay = true;
+/* ---------- Mute binds ---------- */
+function bindMute(id){ const el = document.getElementById(id); if(!el) return; const setLabel = ()=> el.textContent = Sound.isMuted() ? '🔈 Unmute' : '🔇 Mute'; setLabel(); el.onclick = ()=>{ const will = !Sound.isMuted(); Sound.setMuted && Sound.setMuted(will); setLabel(); if(will) { BGM.pause(); } else { BGM.play().catch(()=>{}); } } }
+bindMute('muteBtnGame'); bindMute('muteBtnDraw'); bindMute('muteBtnChat');
 
-  const ui = {
-    root: document.getElementById('miniPlayer'),
-    playPause: document.getElementById('miniPlayPause'),
-    prev: document.getElementById('miniPrev'),
-    next: document.getElementById('miniNext'),
-    seek: document.getElementById('miniSeek'),
-    cur: document.getElementById('miniCur'),
-    dur: document.getElementById('miniDur'),
-    title: document.querySelector('.mini-title'),
-  };
-
-  function fmt(t){
-    if(isNaN(t)) return "0:00";
-    const m = Math.floor(t/60);
-    const s = Math.floor(t%60).toString().padStart(2,'0');
-    return `${m}:${s}`;
-  }
-  function setMiniState(){
-    ui.playPause.textContent = audio.paused ? "▶️" : "⏸";
-    ui.title.textContent = `Music — ${playlist[index].title}`;
-  }
-  const load = (i) => {
-    index = (i+playlist.length)%playlist.length;
-    const wasPlaying = !audio.paused;
-    audio.src = playlist[index].src;
-    audio.load();
-    setMiniState();
-    if(wasPlaying) play();
-  };
-  const play = async () => {
-    try { await audio.play(); started = true; setMiniState(); } catch(e){}
-  };
-  const pause = () => { audio.pause(); setMiniState(); };
-  const resumeIfWanted = () => { if(userWantedPlay) play(); };
-  const setWantedPlay = (v) => { userWantedPlay = v; };
-
-  ui.playPause.addEventListener('click', ()=>{ Sound.click(); if(audio.paused){ setWantedPlay(true); play(); } else { setWantedPlay(false); pause(); } });
-  ui.prev.addEventListener('click', ()=>{ Sound.click(); load(index-1); });
-  ui.next.addEventListener('click', ()=>{ Sound.click(); load(index+1); });
-  ui.seek.addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (ui.seek.value/100) * audio.duration; });
-  audio.addEventListener('timeupdate', ()=>{
-    if(audio.duration){
-      ui.seek.value = ((audio.currentTime / audio.duration) * 100) || 0;
-      ui.cur.textContent = fmt(audio.currentTime);
-      ui.dur.textContent = fmt(audio.duration);
-    }
-    setMiniState();
-  });
-  audio.addEventListener('loadedmetadata', ()=>{ ui.dur.textContent = fmt(audio.duration); setMiniState(); });
-
-  return { audio, play, pause, resumeIfWanted, setWantedPlay, isPaused:()=>audio.paused };
-})();
-let firstInteractionBound = false;
-function startBGMOnFirstInteraction(){
-  if(firstInteractionBound) return;
-  firstInteractionBound = true;
-  const kick = () => { document.removeEventListener('pointerdown', kick); BGM.play(); };
-  document.addEventListener('pointerdown', kick, { once:true });
-}
-BGM.play();
-
-/* ------------------------------ MUTE ---------------------------------- */
-function bindMute(btnId){
-  const el = document.getElementById(btnId);
-  const setLabel = ()=> el.textContent = Sound.isMuted() ? "🔈 Unmute" : "🔇 Mute";
-  setLabel();
-  el.onclick = ()=>{
-    const willMute = !Sound.isMuted();
-    Sound.setMuted(willMute);
-    setLabel();
-    Sound.toggle();
-    if(willMute){ BGM.setWantedPlay(true); BGM.pause(); } else { BGM.resumeIfWanted(); }
-  };
-}
-bindMute("muteBtnGame");
-bindMute("muteBtnDraw");
-bindMute("muteBtnChat");
-
-/* ------------------------------ GAME ---------------------------------- */
+/* ---------- BUBBLE POP (level system up to 30) ---------- */
 const gameCanvas = document.getElementById('gameCanvas');
-const scoreTxt = document.getElementById('scoreTxt');
-const levelTxt = document.getElementById('levelTxt');
-const resetGameBtn = document.getElementById('resetGame');
-const levelBadge = document.getElementById('levelBadge');
-let gctx, W, H, bubbles = [], score = 0, running = true;
-let lastSpawn = 0;
-let level = 1;
-const MAX_LEVEL = 30;
-const levelCfg = Array.from({length:MAX_LEVEL}, (_,i)=>{
-  const n = i+1;
-  return {
-    spawnMs: Math.max(780 - n*18, 220), // faster spawns every level
-    speed: 0.45 + n*0.03,               // rising speed
-    maxOnScreen: Math.min(6 + n, 40),
-    goal: 10 + Math.floor(n*6.5),       // pops to level up
-  };
-});
-let levelProgress = 0;
+let gctx, bubbles=[], score=0, level=1, lastSpawn=0, running=true, prevT=performance.now();
 
-function resizeGame(){
-  const rect = gameCanvas.getBoundingClientRect();
-  gameCanvas.width = Math.floor(rect.width * devicePixelRatio);
-  gameCanvas.height = Math.floor(rect.height * devicePixelRatio);
-  W = gameCanvas.width; H = gameCanvas.height;
-  gctx = gameCanvas.getContext('2d');
-  gctx.setTransform(1,0,0,1,0,0);
-  gctx.scale(devicePixelRatio, devicePixelRatio);
-}
-window.addEventListener('resize', resizeGame);
-resizeGame();
+function resizeGame(){ const rect=gameCanvas.getBoundingClientRect(); gameCanvas.width=Math.floor(rect.width*devicePixelRatio); gameCanvas.height=Math.floor(rect.height*devicePixelRatio); gctx=gameCanvas.getContext('2d'); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
+window.addEventListener('resize', resizeGame); resizeGame();
 
-function encouragement(){
-  const msgs = [
-    "Nice & steady 🌊",
-    "Smooth pops! 🫧",
-    "You’re in the zone ✨",
-    "Great pace 💫",
-    "Breathe & pop 🌬️",
-    "Love the focus 🔆",
-  ];
-  addTip("Game", msgs[Math.floor(Math.random()*msgs.length)]);
-}
-function milestone(s){
-  const lines = [
-    `Woo! ${s} pops! 🎉`,
-    `You hit ${s}! 🔥`,
-    `Power moves at ${s}! 💪`,
-    `${s} — keep shining! ✨`,
-  ];
-  addTip("Game", lines[Math.floor(Math.random()*lines.length)]);
-}
-
-function spawnBubble(t){
-  const cfg = levelCfg[level-1];
-  if(bubbles.length >= cfg.maxOnScreen) return;
-  if(t - lastSpawn < cfg.spawnMs) return;
-  lastSpawn = t;
-  const r = 20 + Math.random()*26;
+function spawnBubble(){
+  const r = 16 + Math.random()* (22 + level/2);
   const x = r + Math.random()*(gameCanvas.clientWidth - r*2);
   const y = gameCanvas.clientHeight + r + 10;
-  const vy = (cfg.speed + Math.random()*0.7) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')) ;
+  const vy = (0.4 + Math.random()*0.9) * (0.9 + level*0.03) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
   const hue = Math.floor(200 + Math.random()*100);
   bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
 }
-function updateBubble(b, dt){
-  if(!b.popped){
-    b.y -= b.vy * dt * 0.06;
-    if(b.y < -b.r){ b.popped = true; b.alpha = 0; }
-  }else{
-    b.alpha -= 0.04;
-  }
+function updateBubble(b,dt){
+  if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } } else { b.alpha -= 0.04; }
 }
 function drawBubble(b){
-  const ctx = gctx;
-  ctx.save();
-  ctx.globalAlpha = Math.max(0,b.alpha);
-  ctx.shadowColor = `rgba(255,255,255,0.9)`;
-  ctx.shadowBlur = 12;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = `rgba(0,0,0,0.25)`;
-  const cx = b.x, cy = b.y, r = b.r;
+  const ctx = gctx; ctx.save(); ctx.globalAlpha = Math.max(0,b.alpha); ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.25)';
+  const cx=b.x, cy=b.y, r=b.r;
   const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
-  grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`);
-  grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
-  ctx.restore();
+  grad.addColorStop(0, `hsla(${b.hue}, 90%, 96%, .95)`); grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill(); ctx.restore();
 }
-let prevT = performance.now();
+function checkLevelUp(){
+  const next = Math.min(30, Math.floor(score / (10 * level)) + 1);
+  if(next > level){ level = next; document.getElementById('levelTxt').textContent = level; addGameEncouragement(`Level up! Welcome to level ${level}.`); if(level >= 30) addGameEncouragement('Boss chill mode unlocked — breathe.'); }
+}
+function addGameEncouragement(txt){ addMessage(`[Game] ${txt}`, 'bot'); Sound.pop(); }
 function gameLoop(t){
   const dt = t - prevT; prevT = t;
   if(running){
     gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
     const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-    grd.addColorStop(0,'rgba(255,255,255,.28)');
-    grd.addColorStop(1,'rgba(255,255,255,.18)');
-    gctx.fillStyle = grd;
-    gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
-
-    spawnBubble(t);
+    grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)');
+    gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight);
+    const spawnRate = Math.max(450 - level*10, 120);
+    if(t - lastSpawn > spawnRate) { spawnBubble(); lastSpawn = t; }
     bubbles = bubbles.filter(b => b.alpha > 0);
     for(const b of bubbles){ updateBubble(b, dt); drawBubble(b); }
   }
   requestAnimationFrame(gameLoop);
 }
 requestAnimationFrame(gameLoop);
-
 gameCanvas.addEventListener('click', (e)=>{
   const rect = gameCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
   for(const b of bubbles){
     const dx = x - b.x, dy = y - b.y;
     if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
-      b.popped = true; b.vy = 0; score += 1; scoreTxt.textContent = score; Sound.pop();
-      levelProgress += 1;
-      if(score % 8 === 0) encouragement();
-      if([25,50,100,150,200,300,400,500,700,1000].includes(score)) milestone(score);
+      b.popped=true; b.vy=0; score++; document.getElementById('scoreTxt').textContent = score; Sound.pop();
+      if([25,50,100,150,250,500,1000].includes(score)) addGameEncouragement(`Milestone reached: ${score} points! Amazing.`);
       checkLevelUp();
       break;
     }
   }
 });
-function checkLevelUp(){
-  const cfg = levelCfg[level-1];
-  if(levelProgress >= cfg.goal && level < MAX_LEVEL){
-    level += 1;
-    levelTxt.textContent = level;
-    levelProgress = 0;
-    showLevelBadge(`Level ${level} — spawns faster ✨`);
-  }else if(level === MAX_LEVEL && levelProgress >= cfg.goal){
-    showLevelBadge(`Max level! You’re unstoppable ⭐`);
-  }
-}
-function showLevelBadge(text){
-  levelBadge.textContent = text;
-  levelBadge.style.display = 'block';
-  setTimeout(()=> levelBadge.style.display='none', 2000);
-}
-resetGameBtn.onclick = ()=>{ Sound.click(); bubbles = []; score = 0; scoreTxt.textContent = 0; level=1; levelTxt.textContent=1; levelProgress=0; lastSpawn=0; };
+document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; level=1; document.getElementById('scoreTxt').textContent=0; document.getElementById('levelTxt').textContent=1; };
 
-/* ------------------------------ DRAW ---------------------------------- */
+/* ---------- DRAW PAD + 100 prompts ---------- */
 const drawCanvas = document.getElementById('drawCanvas');
 const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
-let drawing = false, brushColor = '#1e88e5', brushSize = 10, lastX=0, lastY=0, erasing=false;
-let rotation = 0; // 0, 90, 180, 270
-function sizeDrawCanvas(){
-  const rect = drawCanvas.getBoundingClientRect();
-  const prev = dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);
-  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
-  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
-  dctx.setTransform(1,0,0,1,0,0);
-  dctx.scale(devicePixelRatio, devicePixelRatio);
-  try{ dctx.putImageData(prev,0,0); }catch{}
-}
-new ResizeObserver(sizeDrawCanvas).observe(drawCanvas);
-setTimeout(sizeDrawCanvas, 0);
-
-function getPointerPos(e){
-  const r = drawCanvas.getBoundingClientRect();
-  if(e.touches && e.touches[0]) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-  return { x: e.clientX - r.left, y: e.clientY - r.top };
-}
-function startDraw(x,y){ drawing = true; lastX=x; lastY=y; Sound.scribble(); }
-function moveDraw(x,y){
-  if(!drawing) return;
-  dctx.save();
-  applyRotationTransform();
-  dctx.lineWidth = brushSize;
-  dctx.lineCap = 'round'; dctx.lineJoin = 'round';
-  if(erasing){
-    dctx.globalCompositeOperation = 'destination-out';
-    dctx.strokeStyle = 'rgba(0,0,0,1)';
-  }else{
-    dctx.globalCompositeOperation = 'source-over';
-    dctx.strokeStyle = brushColor;
-  }
-  dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
-  dctx.restore();
-  lastX=x; lastY=y;
-  if(autoJudgeOn && activePrompt) debounceJudge();
-}
-function endDraw(){ drawing = false; dctx.globalCompositeOperation = 'source-over'; }
-
-drawCanvas.addEventListener('mousedown', e=>{ const p = getPointerPos(e); startDraw(p.x,p.y); });
-drawCanvas.addEventListener('mousemove', e=>{ const p = getPointerPos(e); moveDraw(p.x,p.y); });
+let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0, lastY=0, erasing=false;
+function sizeDrawCanvas(){ const rect=drawCanvas.getBoundingClientRect(); try{ const prev=dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1); drawCanvas.width = Math.floor(rect.width*devicePixelRatio); drawCanvas.height = Math.floor(rect.height*devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); dctx.putImageData(prev,0,0); }catch{ drawCanvas.width = Math.floor(rect.width*devicePixelRatio); drawCanvas.height = Math.floor(rect.height*devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); } }
+new ResizeObserver(sizeDrawCanvas).observe(drawCanvas); setTimeout(sizeDrawCanvas,0);
+function startDraw(x,y){ drawing=true; lastX=x; lastY=y; Sound.scribble(); }
+function moveDraw(x,y){ if(!drawing) return; dctx.lineWidth = brushSize; dctx.lineCap='round'; dctx.lineJoin='round'; if(erasing){ dctx.globalCompositeOperation='destination-out'; dctx.strokeStyle='rgba(0,0,0,1)'; } else { dctx.globalCompositeOperation='source-over'; dctx.strokeStyle = brushColor; } dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke(); lastX=x; lastY=y; }
+function endDraw(){ drawing=false; dctx.globalCompositeOperation='source-over'; }
+drawCanvas.addEventListener('mousedown', e=>{ const r=drawCanvas.getBoundingClientRect(); startDraw(e.clientX - r.left, e.clientY - r.top); });
+drawCanvas.addEventListener('mousemove', e=>{ const r=drawCanvas.getBoundingClientRect(); moveDraw(e.clientX - r.left, e.clientY - r.top); });
 window.addEventListener('mouseup', endDraw);
-drawCanvas.addEventListener('touchstart', e=>{ const p = getPointerPos(e); startDraw(p.x,p.y); e.preventDefault();},{passive:false});
-drawCanvas.addEventListener('touchmove', e=>{ const p = getPointerPos(e); moveDraw(p.x,p.y); e.preventDefault();},{passive:false});
-drawCanvas.addEventListener('touchend', endDraw);
+drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); }, {passive:false});
+drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); }, {passive:false});
+document.querySelectorAll('.swatch').forEach(btn=>btn.addEventListener('click', ()=>{ brushColor = btn.dataset.color; erasing=false; document.getElementById('eraserToggle').checked=false; Sound.click(); }));
 
-document.querySelectorAll('.swatch').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    brushColor = btn.getAttribute('data-color');
-    erasing = false; document.getElementById('eraserToggle').checked = false;
-    Sound.click();
-  });
-});
 document.getElementById('brushSize').addEventListener('input', e=>{ brushSize = +e.target.value; });
-document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing = false; document.getElementById('eraserToggle').checked=false; });
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
 document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
-document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.setTransform(1,0,0,1,0,0); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); rotation=0; };
-document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = url; a.download = 'drawing.png'; a.click(); };
-document.getElementById('rotateCanvasBtn').onclick = ()=>{ Sound.click(); rotation = (rotation + 90) % 360; redrawRotated(); };
+document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); };
+document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); };
 
-function applyRotationTransform(){
-  const w = drawCanvas.width / devicePixelRatio;
-  const h = drawCanvas.height / devicePixelRatio;
-  if(rotation === 0) return;
-  if(rotation === 90){ dctx.translate(w,0); dctx.rotate(Math.PI/2); }
-  if(rotation === 180){ dctx.translate(w,h); dctx.rotate(Math.PI); }
-  if(rotation === 270){ dctx.translate(0,h); dctx.rotate(3*Math.PI/2); }
-}
-function redrawRotated(){
-  const w = drawCanvas.width; const h = drawCanvas.height;
-  const img = dctx.getImageData(0,0,w,h);
-  const off = document.createElement('canvas'); off.width = w; off.height = h; const ox = off.getContext('2d');
-  ox.putImageData(img,0,0);
-  dctx.setTransform(1,0,0,1,0,0);
-  dctx.clearRect(0,0,w,h);
-  dctx.save();
-  applyRotationTransform();
-  dctx.drawImage(off,0,0,w/devicePixelRatio,h/devicePixelRatio);
-  dctx.restore();
-}
-
-/* Prompt engine */
+/* 100 prompts list */
 const PROMPTS = [
-  "a star", "a heart", "a house", "a tree", "a sun", "a moon", "a cloud", "a flower", "a car", "a boat",
-  "a fish", "a bird", "a cat", "a dog", "a butterfly", "a smiley face", "a pizza", "an ice cream cone",
-  "a donut", "a cupcake", "a mug", "a book", "a key", "a lock", "a clock", "a phone", "a guitar", "a balloon",
-  "a rocket", "a mountain", "a river", "a rainbow", "a leaf", "a starfish", "a turtle", "a dolphin", "a whale",
-  "a robot", "a dinosaur", "a crown", "a lightning bolt", "a cactus", "a chair", "a table", "a backpack",
-  "a kite", "a snowman", "a penguin", "a dragon", "a castle", "a treasure chest", "a sword", "a shield",
-  "a ladder", "a bicycle", "a skateboard", "a basketball", "a soccer ball", "a baseball bat", "a tennis racket",
-  "a ring", "a necklace", "a glasses frame", "a camera", "a TV", "a laptop", "a mouse", "a cookie",
-  "a sandwich", "a burger", "a banana", "an apple", "a pear", "a pineapple", "a watermelon slice",
-  "a strawberry", "a carrot", "a mushroom", "a teapot", "a candle", "a lamp", "a rocket ship", "a satellite",
-  "a planet with rings", "a comet", "a galaxy swirl", "a violin", "a piano", "a drum", "a microphone", "a headphone",
-  "a zipper", "a shoe", "a sock", "a T‑shirt", "a pants", "a dress", "a bow tie", "a umbrella", "a mailbox", "a spoon",
-  "a fork", "a knife", "a bowl", "a plate", "a skateboard ramp"
+ "cat","dog","house","sun","tree","car","bicycle","boat","fish","flower","butterfly","bird","star","moon","mountain","cloud","cup","cake","pizza","ice cream","shoe","hat","chair","door","phone","book","pencil","clock","ball","robot","alien","rocket","castle","dragon","horse","cow","sheep","lion","tiger","elephant","snake","whale","dolphin","kite","guitar","piano","violin","camera","lamp","bridge","road","island","volcano","waterfall","train","bus","scooter","skateboard","butterfly","leaf","feather","feast","island","map","key","glasses","mirror","balloon","present","crown","egg","nest","beach","sandcastle","compass","tent","lantern","mushroom","lighthouse","statue","umbrella","socks","pajamas","blanket","garden","bench","harp","microphone","telescope","hourglass","magnet","snowman","penguin","owl","fox","bear","peacock","treehouse","fountain","ferry","submarine","sailboat","jellyfish","seahorse","clocktower","market","bakery","bakery-shop"
 ];
-let activePrompt = null;
-let autoJudgeOn = true;
-const askPromptBtn = document.getElementById('askPrompt');
-const switchPromptBtn = document.getElementById('switchPrompt');
-const judgeToggleBtn = document.getElementById('judgeToggle');
-
-askPromptBtn.onclick = ()=> { Sound.click(); startDrawFlowPromptAsk(); };
-switchPromptBtn.onclick = ()=> { Sound.click(); pickPrompt(true); };
-judgeToggleBtn.onclick = ()=> {
-  Sound.toggle();
-  autoJudgeOn = !autoJudgeOn;
-  judgeToggleBtn.textContent = autoJudgeOn ? "✅ Auto‑Check" : "⛔ Auto‑Check";
-};
-
-function pickPrompt(announce=false){
-  activePrompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
-  if(announce) addTip("Draw", `New prompt: try drawing **${activePrompt}** ✍️`);
-  return activePrompt;
+let currentPrompt = null;
+const promptDisplay = document.getElementById('promptDisplay');
+function pickRandomPrompt(){
+  currentPrompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
+  promptDisplay.textContent = 'Prompt: ' + currentPrompt;
+  return currentPrompt;
 }
+document.getElementById('randomPrompt').onclick = ()=>{ pickRandomPrompt(); showDrawFlow(); };
 
-/* Doodle Judge (self‑contained tiny k‑NN on features) */
-function extractFeatures(canvas){
-  // Downsample to 32x32, compute a coarse edge map and basic shape heuristics
-  const S = 32;
-  const c2 = document.createElement('canvas'); c2.width = S; c2.height = S;
-  const c2x = c2.getContext('2d');
-  c2x.drawImage(canvas, 0, 0, S, S);
-  const img = c2x.getImageData(0,0,S,S).data;
-
-  let sum=0, cx=0, cy=0, cnt=0;
-  const gray = new Float32Array(S*S);
-  for(let i=0;i<S*S;i++){
-    const r = img[i*4], g = img[i*4+1], b = img[i*4+2], a = img[i*4+3];
-    const v = (0.299*r + 0.587*g + 0.114*b) * (a/255);
-    gray[i] = v;
-    sum += v;
-    if(v>30){ cnt++; cx += (i%S); cy += Math.floor(i/S); }
+/* ---------- TensorFlow / MobileNet integration for quick checking ---------- */
+let mobilenetModel = null;
+let tfReady = false;
+async function loadMobileNet(){
+  try{
+    mobilenetModel = await mobilenet.load({version:2, alpha:1.0});
+    tfReady = true;
+    console.warn('MobileNet loaded.');
+  }catch(e){
+    console.warn('Could not load MobileNet (offline or blocked). Auto-check disabled.', e);
+    tfReady = false;
   }
-  cx = cnt ? cx/cnt : S/2; cy = cnt ? cy/cnt : S/2;
-  // Edge energy
-  let edge=0;
-  for(let y=1;y<S-1;y++){
-    for(let x=1;x<S-1;x++){
-      const i = y*S + x;
-      const gx = gray[i+1]-gray[i-1];
-      const gy = gray[i+S]-gray[i-S];
-      edge += Math.sqrt(gx*gx + gy*gy);
-    }
-  }
-  // Horizontal vs vertical variance (helps detect lines/circles)
-  let rowVar=0, colVar=0;
-  for(let y=0;y<S;y++){
-    let mean=0; for(let x=0;x<S;x++) mean += gray[y*S+x]; mean/=S;
-    let v=0; for(let x=0;x<S;x++){ const d=gray[y*S+x]-mean; v+=d*d; } rowVar += v/S;
-  }
-  for(let x=0;x<S;x++){
-    let mean=0; for(let y=0;y<S;y++) mean += gray[y*S+x]; mean/=S;
-    let v=0; for(let y=0;y<S;y++){ const d=gray[y*S+x]-mean; v+=d*d; } colVar += v/S;
-  }
-  // Radial symmetry approximation
-  const cxn = (cx - S/2)/(S/2), cyn = (cy - S/2)/(S/2);
-  const centerDist = Math.sqrt(cxn*cxn + cyn*cyn);
-
-  // Normalize
-  const ink = sum/(S*S*255);
-  const feat = [
-    ink, edge/(S*S*255), rowVar/(255*255), colVar/(255*255), centerDist
-  ];
-  return feat;
 }
-function cosine(a,b){ let s=0, na=0, nb=0; for(let i=0;i<a.length;i++){ s+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return s/(Math.sqrt(na*nb)+1e-6); }
+loadMobileNet();
 
-// Tiny heuristic label vectors (very rough priors)
-const LABEL_PRIORS = {
-  "a heart":[0.25,0.18,0.20,0.20,0.05],
-  "a star":[0.25,0.30,0.25,0.25,0.05],
-  "a sun":[0.3,0.35,0.22,0.22,0.05],
-  "a cloud":[0.28,0.22,0.20,0.20,0.05],
-  "a house":[0.35,0.30,0.32,0.15,0.08],
-  "a tree":[0.32,0.36,0.40,0.18,0.12],
-  "a car":[0.33,0.34,0.28,0.22,0.08],
-  "a flower":[0.30,0.33,0.26,0.26,0.06],
-  "a face":[0.25,0.20,0.18,0.18,0.02],
-  "a pizza":[0.28,0.29,0.24,0.22,0.05],
-  "a mug":[0.30,0.26,0.20,0.28,0.08],
-  "a rocket":[0.30,0.34,0.26,0.30,0.15],
-  "a rainbow":[0.20,0.18,0.12,0.28,0.20],
-  "a starfish":[0.24,0.28,0.25,0.25,0.06],
-  "a cat":[0.28,0.26,0.24,0.24,0.08],
-  "a dog":[0.30,0.27,0.22,0.22,0.08],
-  "a fish":[0.26,0.26,0.20,0.20,0.10],
-  "a bird":[0.24,0.28,0.22,0.24,0.12],
-};
-// Map prompts to a nearest available prior label
-function priorForPrompt(p){
-  const key = p.replace(/^an?\s+/,'').replace('with','').trim();
-  const aliases = {
-    "smiley face":"a face","planet with rings":"a face","galaxy swirl":"a cloud",
-    "umbrella":"a rainbow","crown":"a star","balloon":"a cloud","snowman":"a face",
-    "sun":"a sun","moon":"a cloud","star":"a star","flower":"a flower","car":"a car","house":"a house","tree":"a tree","rocket ship":"a rocket","rocket":"a rocket","pizza":"a pizza","mug":"a mug","rainbow":"a rainbow","starfish":"a starfish","cat":"a cat","dog":"a dog","fish":"a fish","bird":"a bird"
-  };
-  for(const [k,v] of Object.entries(aliases)){ if(key.includes(k)) return LABEL_PRIORS[v]; }
-  // default generic
-  return [0.28,0.28,0.24,0.24,0.08];
-}
-function judgeDrawingForPrompt(prompt, canvas){
-  const f = extractFeatures(canvas);
-  const prior = priorForPrompt(prompt);
-  const sim = cosine(f, prior);
-  // Dynamic threshold: stricter when ink present, looser if light sketch
-  const ink = f[0];
-  const base = 0.90 - Math.min(ink,0.5)*0.35; // 0.9..0.725
-  const pass = sim >= base;
-  return { pass, score: sim.toFixed(2), needMore: !pass && ink < 0.06 };
-}
-let judgeTimer=null;
-function debounceJudge(){ clearTimeout(judgeTimer); judgeTimer = setTimeout(()=> autoJudge(), 550); }
-function autoJudge(){
-  if(!activePrompt) return;
-  const res = judgeDrawingForPrompt(activePrompt, drawCanvas);
-  if(res.pass){
-    addTip("Draw", `Wow! That looks great — **${activePrompt}** nailed! 🌟 (score ${res.score})`);
-    gentleRetryAsk();
-    activePrompt = null;
-  }else{
-    if(res.needMore){
-      addTip("Draw", "Nice start! Add a bit more detail and I’ll recheck. ✍️");
-    }else{
-      addTip("Draw", "So close! Want to try again for fun, or keep it freestyle?");
-      gentleRetryAsk();
-    }
+/* classify drawing: render canvas to 224x224 canvas then call mobilenet.classify */
+async function classifyDrawing(){
+  if(!tfReady || !mobilenetModel) return {ok:false,reason:'model-unavailable'};
+  // create offscreen canvas, draw the user's drawing scaled
+  const off = document.createElement('canvas'); off.width=224; off.height=224; const octx = off.getContext('2d');
+  // white background to help
+  octx.fillStyle = '#ffffff'; octx.fillRect(0,0,224,224);
+  // draw current drawing scaled to fit
+  const src = drawCanvas;
+  octx.drawImage(src, 0, 0, 224, 224);
+  // use mobilenet
+  try{
+    const img = tf.browser.fromPixels(off);
+    const results = await mobilenetModel.classify(img);
+    img.dispose();
+    return {ok:true,results};
+  }catch(e){
+    console.warn('Classification failed', e);
+    return {ok:false,reason:'error'};
   }
 }
 
-/* Draw flow — intro chooser and prompt carousel interaction */
-const flowDrawEl = { wrap: document.getElementById('flowDraw'), q: document.getElementById('flowDrawQ'), yes: document.getElementById('flowDrawYes'), no: document.getElementById('flowDrawNo'), later: document.getElementById('flowDrawLater'), close: document.getElementById('flowDrawClose') };
-function bindDrawFlowHandlers(flow){
-  const setQ = ()=> flowDrawEl.q.textContent = flow.q();
-  setQ(); flowDrawEl.wrap.style.display='flex';
-  flowDrawEl.yes.onclick = ()=>{ Sound.click(); flow.yes(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
-  flowDrawEl.no.onclick = ()=>{ Sound.click(); flow.no(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
-  flowDrawEl.later.onclick = ()=>{ Sound.click(); flow.later && flow.later(); if(flow.atEnd()) flowDrawEl.wrap.style.display='none'; else setQ(); };
-  flowDrawEl.close.onclick = ()=>{ Sound.click(); flow.done(); flowDrawEl.wrap.style.display='none'; };
-}
-function Flow(steps, onDone){
-  let idx = 0;
-  return {
-    q(){ return steps[idx]?.q || ""; },
-    yes(){ const s=steps[idx]; if(!s) return; s.onYes && s.onYes(); idx = s.nextYes ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    no(){ const s=steps[idx]; if(!s) return; s.onNo && s.onNo(); idx = s.nextNo ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    later(){ const s=steps[idx]; if(!s) return; s.onLater && s.onLater(); idx = s.nextLater ?? idx+1; if(idx>=steps.length){ onDone && onDone(); } },
-    done(){ idx = steps.length; onDone && onDone(); },
-    atEnd(){ return idx>=steps.length; },
-  };
-}
-function startDrawFlowIntro(){
-  const flow = Flow([
-    { q:"Do you want a prompt or freestyle? (OK = prompt, No = freestyle, Later = freestyle for now)", 
-      onYes: ()=>{ pickPrompt(true); addTip("Draw","When you’re ready, I’ll auto‑check and cheer you on ✨"); },
-      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle mode — doodle anything you like! 🖌️"); },
-      onLater: ()=>{ activePrompt=null; addTip("Draw","All good — freestyle now. Tap 🧠 Prompt any time."); }
-    },
-    { q:"If I recognize your drawing, want a gentle ‘try again for fun?’ prompt?", 
-      onYes: ()=> addTip("Draw","You got it — gentle retry is ON 😊"),
-      onNo: ()=> addTip("Draw","Okay — I’ll just cheer you on! 🎉"),
-      onLater: ()=> addTip("Draw","We can decide later — no pressure 💙")
-    }
-  ]);
-  bindDrawFlowHandlers(flow);
-}
-function startDrawFlowPromptAsk(){
-  const flow = Flow([
-    { q:`Try drawing a [thing]? (OK/No/Later)`, 
-      onYes: ()=>{ pickPrompt(true); }, 
-      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle it is! ✨"); }, 
-      onLater: ()=>{ activePrompt=null; addTip("Draw","Later works — I’ll be here. 💙"); } 
-    }
-  ]);
-  bindDrawFlowHandlers(flow);
-}
-function gentleRetryAsk(){
-  const flow = Flow([
-    { q:"Omg so nice! Wanna try again for fun, or keep doodling?", 
-      onYes: ()=>{ pickPrompt(true); }, 
-      onNo: ()=>{ activePrompt=null; addTip("Draw","Freestyle unlocked — go wild! 🎨"); } 
-    }
-  ]);
-  bindDrawFlowHandlers(flow);
-}
-
-/* ------------------------------ CHAT ---------------------------------- */
-const chatBox = document.getElementById("chat-box");
-const userInputField = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
-const moodButtons = document.querySelectorAll(".mood-btn");
-const voiceModeBtn = document.getElementById("voice-mode-btn");
-const speakReplyBtn = document.getElementById("speak-reply-btn");
-let dayMood = null, voiceModeOn = false, speakRepliesOn = false, recognition;
-let synth = window.speechSynthesis;
-
-function addMessage(text, sender){
-  const div = document.createElement("div");
-  div.className = "message " + sender;
-  div.textContent = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-  if (speakRepliesOn && sender === "bot") speakText(text);
-}
-function clearChat(){ chatBox.innerHTML=""; }
-function speakText(text){
-  if (!synth) return;
-  if (synth.speaking) synth.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-US";
-  synth.speak(u);
-}
-addMessage("Hi! 👋 How was your day? 😊", "bot");
-
-const MOOD_OPENERS = {
-  happy:  ["Love that energy! 🌟 What made you smile?", "Heck yes—tell me the good stuff! ✨"],
-  sad:    ["I’m sorry you’re feeling low 💙 Want to share what happened?", "I’m here with you. What’s on your mind?"],
-  angry:  ["It’s okay to feel mad 😠 What’s bugging you most?", "Let it out—what crossed the line?"],
-  nervous:["That anxious buzz is tough 😰 What’s stirring it up?", "I’ve got you. Want to unpack it together?"]
-};
-const MOOD_SUGGEST = {
-  happy:  ["Bottle that joy: write 3 things you loved today ✍️", "Share it with someone you like 💬"],
-  sad:    ["Try a 3‑breath reset: in 4, hold 4, out 6 🌬️", "A warm drink and soft music can help ☕🎧"],
-  angry:  ["Box breathing (4‑4‑4‑4) can cool the engine 🌬️", "A quick walk can vent steam 🚶‍♂️"],
-  nervous:["Name 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste 👀✋🎧👃👅", "Slow exhale for 6 sec—repeat x3 🌬️"]
-};
-const KEYWORDS = {
-  happy:["yay","great","awesome","good","love","excited","fun","win","proud"],
-  sad:["sad","down","cry","hurt","lonely","tired","blue","fail","miss"],
-  angry:["angry","mad","annoyed","furious","ugh","frustrated","rage"],
-  nervous:["anxious","nervous","scared","worried","panic","shaky","stress"]
-};
-
-moodButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    Sound.click();
-    moodButtons.forEach((b) => b.setAttribute("aria-pressed","false"));
-    btn.setAttribute("aria-pressed","true");
-    dayMood = btn.classList[1];
-    clearChat();
-    const o = MOOD_OPENERS[dayMood] || ["Tell me more, I’m here. 💙"];
-    addMessage(o[Math.floor(Math.random()*o.length)], "bot");
-    startBGMOnFirstInteraction();
-    startChatFlow();
-  });
-});
-sendBtn.addEventListener("click", ()=>{
-  Sound.click();
-  const txt = userInputField.value.trim();
-  if(!txt) return;
-  addMessage(txt,"user");
-  replySmart(txt);
-  userInputField.value="";
-  toggleChatInput(false);
-});
-function replySmart(text){
-  const t = text.toLowerCase();
-  // Detect mood hints from free text
-  let detected = dayMood;
-  for(const [m, list] of Object.entries(KEYWORDS)){
-    if(list.some(k=>t.includes(k))) { detected = m; break; }
-  }
-  const bank = MOOD_SUGGEST[detected||"happy"] || ["I’m here for you 💙"];
-  const msg = bank[Math.floor(Math.random()*bank.length)];
-  addMessage(msg, "bot");
-}
-
-const voiceReady = ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
-function setupRecognition(){
-  if(!voiceReady){ voiceModeBtn.disabled = true; voiceModeBtn.title = "Voice recognition not supported"; return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = "en-US";
-  recognition.interimResults = false; recognition.maxAlternatives = 1;
-  recognition.addEventListener("result", (event) => {
-    const speech = event.results[0][0].transcript;
-    userInputField.value = speech; // still need to open input via flow
-  });
-  recognition.addEventListener("end", () => { if (voiceModeOn) recognition.start(); });
-}
-voiceModeBtn.addEventListener("click", () => {
-  Sound.toggle(); voiceModeOn = !voiceModeOn; voiceModeBtn.setAttribute("aria-pressed", voiceModeOn);
-  if (voiceModeOn){ setupRecognition(); recognition && recognition.start(); voiceModeBtn.textContent = "🎤 Voice ON"; }
-  else { if (recognition) recognition.stop(); voiceModeBtn.textContent = "🎤 Voice"; }
-});
-speakReplyBtn.addEventListener("click", () => {
-  Sound.toggle(); const now = !speakRepliesOn; speakRepliesOn = now; speakReplyBtn.setAttribute("aria-pressed", now);
-  speakReplyBtn.textContent = now ? "🔊 Speak ON" : "🔊 Speak";
-  if (!now && synth && synth.speaking) synth.cancel();
-});
-
-/* ------------------------------ YES/NO FLOWS -------------------------- */
-const flowGameEl = { wrap: document.getElementById('flowGame'), q: document.getElementById('flowGameQ'), yes: document.getElementById('flowGameYes'), no: document.getElementById('flowGameNo'), close: document.getElementById('flowGameClose') };
-const flowChatEl = { wrap: document.getElementById('flowChat'), q: document.getElementById('flowChatQ'), yes: document.getElementById('flowChatYes'), no: document.getElementById('flowChatNo'), close: document.getElementById('flowChatClose') };
-
-function bindFlowUI(el, flow){
-  el.q.textContent = flow.q();
-  el.wrap.style.display = 'flex';
-  const setQ = ()=> el.q.textContent = flow.q();
-  const yesFn = ()=>{ Sound.click(); flow.yes(); if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
-  const noFn  = ()=>{ Sound.click(); flow.no();  if(flow.atEnd()) el.wrap.style.display='none'; else setQ(); };
-  const closeFn = ()=>{ Sound.click(); flow.done(); el.wrap.style.display='none'; };
-
-  el.yes.onclick = yesFn;
-  el.no.onclick = noFn;
-  el.close.onclick = closeFn;
-}
-
-/* GAME FLOW */
-function startGameFlow(){
-  const flow = Flow([
-    { q:"Want a gentle focus? Pop 5 bubbles slowly to settle in. Start?", onYes:()=>addTip("Game","Nice! Notice the colors and your breath."), onNo:()=>addTip("Game","Cool—free play mode. 🎈") },
-    { q:"Ambient music while you play?", onYes:()=>{ if(BGM.isPaused()) BGM.play(); }, onNo:()=>{ BGM.pause(); } },
-    { q:"Show this guide next time?", onYes:()=>addTip("Game","Guide will appear again."), onNo:()=>{ flowGameEl.wrap.style.display='none'; } },
-  ]);
-  bindFlowUI(flowGameEl, flow);
-}
-
-/* CHAT FLOW (typing opens only if user wants to tell more, then closes) */
-function startChatFlow(){
-  const flow = Flow([
-    { q:"Want to tell?", onYes:()=>{ addMessage("Great—I'm listening. 💬","bot"); }, onNo:()=>{ addMessage("Totally fine. We can sit quietly. 💙","bot"); } },
-    { q:"Do you want to tell more?", onYes:()=>{ toggleChatInput(true); }, onNo:()=>{ addMessage("Okay. Want a quick tip—like 3 slow breaths?", "bot"); } },
-    { q:"Want another coping tool suggestion?", onYes:()=>addMessage("Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×. 🌬️","bot"), onNo:()=>addMessage("Got it. I’m here when you need me. 💙","bot") },
-  ], ()=>{ /* end */ });
-  bindFlowUI(flowChatEl, flow);
-}
-
-function toggleChatInput(show){
-  const footer = document.querySelector('.input-footer');
-  footer.style.display = show ? 'block' : 'none';
-}
-
-/* Tip helper */
-function addTip(area, text){
-  const t = `[${area}] ${text}`;
-  addMessage(t, "bot");
-}
-
-/* Apply theme by key if exists anywhere */
-function applyAnyThemeByKey(key){
-  for(const group of Object.values(THEMES)){
-    const found = group.find(([k])=>k===key);
-    if(found){ const [,bg,bot,user] = found; applyThemeRecord(bg,bot,user); return true; }
+/* evaluate whether classified labels match the prompt roughly */
+function matchResultsToPrompt(results, prompt){
+  if(!results || !results.length) return false;
+  const p = (prompt||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const labels = results.map(r=> (r.className || '').toLowerCase());
+  for(const lab of labels){
+    const clean = lab.replace(/[^a-z0-9]+/g,'');
+    if(clean.includes(p) || p.includes(clean)) return true;
+    if(p.split(' ').some(tok => lab.includes(tok))) return true;
   }
   return false;
 }
 
-function closeAllFlows(){
-  flowGameEl.wrap.style.display='none';
-  flowDrawEl.wrap.style.display='none';
-  flowChatEl.wrap.style.display='none';
+/* UI flow for the draw OK/No/Later buttons */
+const drawFlow = { wrap: document.getElementById('drawFlow'), q: document.getElementById('drawFlowQ'), ok: document.getElementById('drawOK'), no: document.getElementById('drawNo'), later: document.getElementById('drawLater') };
+function showDrawFlow(){
+  const prompt = currentPrompt || pickRandomPrompt();
+  drawFlow.q.textContent = `Try drawing a ${prompt}? (OK / No / Later)`;
+  drawFlow.wrap.style.display = 'flex';
 }
-document.addEventListener('keydown', (e)=>{ if(e.key==="Escape"){ if(themesPanel.classList.contains('open')) closeThemesPanel(); else closeAllFlows(); } });
+drawFlow.ok.onclick = async ()=>{
+  Sound.click();
+  addMessage(`Okay — checking your ${currentPrompt || 'drawing'}...`, 'bot');
+  const res = await classifyDrawing();
+  if(!res.ok){ addMessage(`That was a great try — mobile model not available or couldn't evaluate automatically. Want to try again or keep free-drawing?`, 'bot'); return; }
+  const match = matchResultsToPrompt(res.results, currentPrompt);
+  if(match){ addMessage(`Wow! That looks great — nice job! 🎉`, 'bot'); } else { addMessage(`So nice! Wanna try again or try a different angle?`, 'bot'); }
+  drawFlow.wrap.style.display = 'none';
+};
+drawFlow.no.onclick = ()=>{ Sound.click(); addMessage('No worries — want another prompt or free-draw?', 'bot'); drawFlow.wrap.style.display='none'; };
+drawFlow.later.onclick = ()=>{ Sound.click(); addMessage('Cool — free-draw unlocked. Have fun!', 'bot'); drawFlow.wrap.style.display='none'; toggleDrawInput(true); };
 
-/* ------------------------------ FUN STUB ------------------------------ */
-/* Multiplayer mode — coming soon */
-console.log("Multiplayer mode — coming soon 👀 (no signups!)");
+/* ---------- Chat flow (Yes/No/Later) ---------- */
+const chatFlow = {wrap:document.getElementById('chatFlow'), q:document.getElementById('chatFlowQ'), ok:document.getElementById('chatOK'), no:document.getElementById('chatNo'), later:document.getElementById('chatLater')};
+function startChatFlow(){
+  chatFlow.q.textContent = `Want to tell me about your day? (OK / No / Later)`;
+  chatFlow.wrap.style.display = 'flex';
+}
+chatFlow.ok.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Great — I'm listening. 💬", 'bot'); toggleChatInput(true); };
+chatFlow.no.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Totally fine. We can just sit here quietly. 💙", 'bot'); };
+chatFlow.later.onclick = ()=>{ Sound.click(); chatFlow.wrap.style.display='none'; addMessage("Whenever you're ready — I'm here.", 'bot'); };
+
+/* ---------- Game flow ---------- */
+const gameFlow = {wrap:document.getElementById('flowGame'), q:document.getElementById('flowGameQ'), ok:document.getElementById('flowGameOK'), no:document.getElementById('flowGameNo'), later:document.getElementById('flowGameLater')};
+function startGameFlow(){ gameFlow.q.textContent = 'Want a gentle focus? Try popping 5 bubbles slowly. (OK / No / Later)'; gameFlow.wrap.style.display = 'flex'; }
+gameFlow.ok.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Nice! Take it slow and notice the colors.', 'bot'); };
+gameFlow.no.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Cool—free play mode. 🎈', 'bot'); };
+gameFlow.later.onclick = ()=>{ Sound.click(); gameFlow.wrap.style.display='none'; addMessage('Alright — hop in when ready!', 'bot'); };
+
+/* ---------- helpers ---------- */
+function closeAllFlows(){ drawFlow.wrap.style.display='none'; gameFlow.wrap.style.display='none'; chatFlow.wrap.style.display='none'; }
+function addMessage(text, sender){ const chatBox=document.getElementById('chat-box'); const d=document.createElement('div'); d.className='message '+sender; d.textContent=text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight; if(sender==='bot' && speakRepliesOn) speakText(text); }
+let speakRepliesOn=false;
+function speakText(t){ if(!window.speechSynthesis) return; const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; window.speechSynthesis.speak(u); }
+
+/* ---------- Chat minimal bot (improved rules + fuzzy) ---------- */
+const synonyms = {
+  happy:['happy','glad','great','good','amazing','awesome','joy'],
+  sad:['sad','down','unhappy','depressed','blue','cry'],
+  anxious:['anxious','nervous','worried','scared','panic'],
+  angry:['angry','mad','furious','annoyed','irritated'],
+};
+function detectIntent(text){
+  const s=text.toLowerCase();
+  for(const [k,arr] of Object.entries(synonyms)) if(arr.some(w=>s.includes(w))) return k;
+  if(/thank|thanks|ty\b/.test(s)) return 'thanks';
+  if(/help|support|advice/.test(s)) return 'support';
+  if(/draw|paint|doodle/.test(s)) return 'draw';
+  return null;
+}
+function getReplyForIntent(key){
+  switch(key){
+    case 'happy': return ["That's wonderful — want to tell me what made you smile?","So glad! Keep that feeling — anything fun to share?"];
+    case 'sad': return ["I'm sorry you're feeling low — want to tell me what happened?","It's okay to feel sad. Would a breathing exercise help?"];
+    case 'anxious': return ["Take a slow breath with me: inhale 4s, hold 4s, exhale 6s — want me to guide you?","You're safe here. Want a grounding exercise?"];
+    case 'angry': return ["It's okay to be angry. Want to vent or try a quick cooldown?","You're allowed to feel that — want a 60s distraction?"];
+    case 'thanks': return ["You're welcome! 💙","Anytime — I'm here."];
+    case 'support': return ["Tell me what's up; we can make a tiny plan together.","I can help with a calming step or someone to reach out to."];
+    case 'draw': return ["Love drawing — want a prompt or free-draw?","We can start a drawing prompt — want one?"];
+    default: return ["I'm here to listen — can you tell me a bit more?","Got you. Want a suggestion to start?"];
+  }
+}
+document.getElementById('send-btn').addEventListener('click', ()=>{
+  const t = document.getElementById('user-input').value.trim(); if(!t) return;
+  addMessage(t, 'user'); document.getElementById('user-input').value=''; toggleChatInput(false);
+  const intent = detectIntent(t);
+  const reply = getReplyForIntent(intent)[Math.floor(Math.random()*getReplyForIntent(intent).length)];
+  setTimeout(()=> addMessage(reply, 'bot'), 700);
+});
+
+/* mood buttons */
+document.querySelectorAll('.mood-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    Sound.click(); document.querySelectorAll('.mood-btn').forEach(b=>b.setAttribute('aria-pressed','false')); btn.setAttribute('aria-pressed','true');
+    const mood = btn.classList[1];
+    const mapping = {happy:'happy', sad:'sad', angry:'angry', nervous:'anxious'};
+    const reply = getReplyForIntent(mapping[mood])[0];
+    addMessage(reply,'bot'); startChatFlow();
+  });
+});
+
+/* chat voice toggles */
+document.getElementById('voice-mode-btn').addEventListener('click', ()=>{ Sound.toggle(); alert('Voice mode placeholder: browser support varies.'); });
+document.getElementById('speak-reply-btn').addEventListener('click', ()=>{ Sound.toggle(); speakRepliesOn = !speakRepliesOn; document.getElementById('speak-reply-btn').textContent = speakRepliesOn ? '🔊 Speak ON' : '🔊 Speak'; if(!speakRepliesOn && window.speechSynthesis) window.speechSynthesis.cancel(); });
+
+/* toggle chat input */
+function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block' : 'none'; }
+
+/* start flows for draw / game / chat from main buttons */
+function startDrawFlow(){ if(!currentPrompt) pickRandomPrompt(); showDrawFlow(); }
+function startBGMOnFirstInteraction(){ document.removeEventListener('pointerdown', kickStartBGM); BGM.play().catch(()=>{}); }
+function kickStartBGM(){ BGM.play().catch(()=>{}); document.removeEventListener('pointerdown', kickStartBGM); }
+document.addEventListener('pointerdown', kickStartBGM, {once:true});
+
+/* ---------- small UX: when open draw screen, show prompt chooser ---------- */
+document.getElementById('randomPrompt').addEventListener('click', ()=>{ pickRandomPrompt(); });
+
+/* ---------- initial bot message ---------- */
+addMessage("Hi! 👋 How was your day? 😊","bot");
+
+/* ---------- Expose helper to set track externally (if you want switching) ---------- */
+window.setTrack = setTrack;
+
+/* ---------- simple keyboard escape to close panels ---------- */
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeThemes(); closeAllFlows(); } });
+
 </script>
 </body>
 </html>
