@@ -1,740 +1,630 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AuraAI — All‑In‑One</title>
-
-<!-- TF.js + MobileNet (client will fetch these from CDN at runtime) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
-
+<title>Aura AI — Tahoe Edition</title>
+<!--
+ Single-file AuraAI with:
+  - organized theme system (100+)
+  - drawing pad with 100 tasks and Auto-Check (TF.js + MobileNet)
+  - music player (bgm.mp3, bgm2.mp3, bgm3.mp3 in same folder)
+  - bubble pop, chat preserved
+-->
 <style>
-  /* ========== macOS Tahoe - inspired glass UI ========== */
-  :root{
-    --glass-bg: rgba(255,255,255,0.18);
-    --glass-border: rgba(255,255,255,0.28);
-    --accent: #1e88e5;
-    --radius: 22px;
-    --pad: 18px;
-    --muted: #6b7a90;
-    --text: #07203a;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter, "SF Pro Text", "San Francisco", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
-  body{
-    background: linear-gradient(180deg,#e6f0ff 0%, #f7eef7 100%);
-    display:flex;align-items:center;justify-content:center;
-    padding:28px;color:var(--text);-webkit-font-smoothing:antialiased;
-  }
-  /* Root container keeps your original three-app layout */
-  .app-shell{ width:min(1160px,96vw); height:min(820px,92vh); position:relative; border-radius:28px; overflow:hidden; box-shadow:0 20px 60px rgba(9,30,66,.18); display:grid; grid-template-columns: 1fr; grid-auto-rows:1fr; }
+:root{
+  --pad:20px; --radius:16px;
+  --glass-bg: rgba(255,255,255,0.20);
+  --glass-border: rgba(255,255,255,0.28);
+  --glass-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  --accent-grad: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
+  --text: #0b3c61;
+  --muted: rgba(11,60,97,0.65);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:"Comic Neue",Arial,sans-serif;background:#a8cdf1;color:var(--text)}
+body{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
+.screen.active{display:grid}
+.glass{background:var(--glass-bg);backdrop-filter: blur(14px);-webkit-backdrop-filter: blur(14px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);border-radius:var(--radius)}
+.btn{border:0;cursor:pointer;border-radius:12px;padding:12px 14px;font-weight:800;font-size:15px;background:var(--accent-grad);color:var(--text);box-shadow:0 6px 16px rgba(168,205,241,.6)}
+.btn:hover{transform:translateY(-2px);filter:brightness(.95)}
+/* main hello */
+.hello-wrap{width:min(980px,92vw);padding:28px;text-align:center;border-radius:18px}
+.hello-text{font-weight:900;font-size:clamp(36px,7vw,72px);margin:6px 0;background:linear-gradient(90deg,#fff,#f7b7b9,#a8cdf1,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
+.hello-sub{font-size:clamp(15px,2.4vw,20px);opacity:.9;margin-bottom:16px}
+.hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hint{margin-top:12px;font-size:13px;opacity:.8}
 
-  /* Top navigation area */
-  .topbar{ height:84px; display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08)); border-bottom:1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
-  .brand{ font-weight:800; font-size:20px; letter-spacing:0.6px; display:flex; gap:12px; align-items:center; }
-  .brand .logo{ width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#ffffff,#e6f0ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--accent); box-shadow:0 6px 18px rgba(30,136,229,.12) }
-  .nav{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+/* game */
+.game-wrap{width:min(1000px,95vw);height:min(70vh,680px);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px;border-radius:16px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.title{font-weight:900;font-size:18px}
+.game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.6)}
 
-  /* Main content area with three 'apps' stacked like before (keeps original screens) */
-  .main{ position:relative; height:calc(100% - 84px); background:transparent; display:grid; place-items:center; }
+/* draw */
+.draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px;border-radius:16px}
+.draw-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.brush{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
+.swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.toggle{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.55);font-weight:800}
+.draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.85);outline:2px solid rgba(255,255,255,.5)}
+.draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
+.picker input[type=color]{border:none;width:42px;height:26px;border-radius:10px}
 
-  .screen{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; padding:var(--pad); }
-  .screen.active{ display:flex; }
-  .glass{
-    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius);
-    padding:18px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
+/* chat */
+.chat-container{width:min(980px,92vw);padding:18px;display:flex;flex-direction:column;gap:12px;border-radius:16px}
+.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mood-header{flex:1;text-align:center;font-weight:900;font-size:20px;padding:12px 16px;border-radius:14px;background:var(--accent-grad)}
+.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.mood-selector{display:flex;gap:10px;flex-wrap:wrap}
+.mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:15px}
+.mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
+#mood-strip{display:flex;gap:8px}
+#chat-box{flex:1;min-height:260px;max-height:52vh;overflow:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.65)}
+.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;font-size:16px}
+.message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;backdrop-filter:blur(6px)} .message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right}
 
-  /* Hello card */
-  .hello-card{ width:100%; max-width:980px; text-align:center; border-radius:20px; padding:28px; }
-  .hello-title{ font-size:44px; font-weight:900; margin:6px 0; background:linear-gradient(90deg,#fff,#fde7f0,#dff0ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .hello-sub{ font-size:16px; margin-bottom:18px; color:var(--muted) }
+/* Themes panel - Tahoe macOS style */
+.themes-panel{position:fixed;right:20px;top:60px;width:420px;max-height:70vh;overflow:auto;padding:12px;border-radius:14px;background:rgba(255,255,255,0.88);box-shadow:0 20px 40px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,0.06);z-index:1200}
+.themes-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.group{margin-bottom:12px}
+.group-title{font-weight:900;margin-bottom:8px}
+.swatch-row{display:flex;gap:8px;flex-wrap:wrap}
+.theme-btn{width:46px;height:46px;border-radius:8px;border:0;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.12);position:relative;overflow:hidden}
+.theme-btn .thumb-label{position:absolute;bottom:4px;left:6px;font-size:11px;background:rgba(0,0,0,0.28);color:#fff;padding:2px 6px;border-radius:8px}
 
-  .actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
-  .btn{ background:linear-gradient(90deg,#eaf5ff,#fff0f6); padding:12px 18px; border-radius:12px; border:0; cursor:pointer; font-weight:800; box-shadow:0 6px 18px rgba(15,80,170,.08); color:var(--text) }
-  .btn:active{ transform:translateY(1px) }
+/* mini player */
+.miniplayer{position:fixed;right:18px;bottom:18px;background:rgba(255,255,255,0.9);padding:10px;border-radius:12px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);z-index:1300}
+.mini-meta{display:flex;flex-direction:column;gap:6px;min-width:200px}
+.mini-progress{width:220px}
 
-  /* Game UI — keep the same proportions as your original */
-  .game-wrap{ width:min(1000px,96%); height:min(680px,74vh); display:flex; flex-direction:column; gap:12px; }
-  .bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .title{ font-weight:900 }
-  canvas#gameCanvas{ width:100%; height:100%; border-radius:14px; display:block; background:linear-gradient(135deg,#eaf6ff,#f6f0ff); outline:2px solid rgba(255,255,255,.5) }
+/* drawing control card integrated into UI */
+.draw-card{position:relative;display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;background:rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.08);margin-bottom:8px}
+.draw-card .label{font-weight:900}
+.control-buttons{display:flex;gap:8px;align-items:center}
 
-  .game-stats{ display:flex; gap:10px; align-items:center; }
-  .stat{ background:rgba(255,255,255,.6); padding:8px 12px; border-radius:12px; font-weight:800; }
+/* yes/no/later buttons style */
+.choice-btn{padding:8px 10px;border-radius:10px;border:0;cursor:pointer;background:rgba(11,60,97,0.06);font-weight:800}
+.choice-btn.primary{background:linear-gradient(90deg,#a8cdf1,#f7b7b9);color:var(--text)}
+.choice-btn:hover{transform:translateY(-1px)}
 
-  /* Level UI */
-  .level-panel{ display:flex; gap:8px; align-items:center }
-  .badge{ background:linear-gradient(90deg,#ffefc7,#ffd9a8); padding:8px 12px;border-radius:10px;font-weight:800 }
+/* small helpers */
+.small{font-size:13px;color:var(--muted)}
+.tooltip{font-size:12px;opacity:.85}
 
-  /* Drawing UI */
-  .draw-wrap{ width:min(1100px,96%); height:min(740px,80vh); display:flex; flex-direction:column; gap:12px; }
-  .draw-toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
-  .draw-canvas{ flex:1; border-radius:14px; background:rgba(255,255,255,.92); outline:2px solid rgba(0,0,0,.06); }
-  .draw-bottom{ display:flex; justify-content:space-between; gap:8px; align-items:center }
-
-  /* Challenge card integrated into UI (no bottom-left hack) */
-  .challenge-card{
-    display:flex; gap:12px; align-items:center; padding:12px; border-radius:14px; background:rgba(255,255,255,.6);
-    box-shadow:0 8px 24px rgba(17,24,39,.06); min-width:360px;
-  }
-  .challenge-title{ font-weight:900; font-size:14px }
-  .chips{ display:flex; gap:8px }
-  .chip{ padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.9); font-weight:800; border:1px solid rgba(0,0,0,.04); cursor:pointer }
-
-  /* Chat UI — app-like bubble card */
-  .chat-wrap{ width:min(980px,96%); height:min(740px,80vh); display:flex; flex-direction:column; gap:12px; border-radius:18px; overflow:hidden }
-  .chat-top{ display:flex; align-items:center; gap:10px; padding:10px; background:linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.12)); }
-  .mood-dock{ display:flex; gap:8px; align-items:center }
-  .mood-btn{ border-radius:12px; padding:8px 10px; border:0; cursor:pointer; font-weight:800 }
-  .chat-body{ flex:1; padding:14px; overflow:auto; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); }
-  .bubble{ max-width:76%; padding:12px 14px; border-radius:14px; margin:8px 0; display:inline-block; line-height:1.35; box-shadow: 0 8px 20px rgba(6,18,38,.06) }
-  .bubble.bot{ background: linear-gradient(90deg,#f6f9ff,#eaf6ff); color:#052239; border-radius:16px 16px 16px 4px; }
-  .bubble.user{ background:linear-gradient(90deg,#1e88e5,#1358a6); color:white; align-self:flex-end; border-radius:16px 16px 4px 16px; }
-  .bubble.fade-in{ animation:fadeIn .28s ease both }
-  @keyframes fadeIn{ from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
-
-  .chat-input-row{ display:flex; gap:8px; padding:12px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)) }
-  .text-field{ flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:white }
-
-  /* Mini player */
-  .mini-player{ position:fixed; right:20px; bottom:20px; z-index:2400; display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.88); box-shadow:0 18px 40px rgba(10,20,40,.08) }
-  .progress{ width:220px; appearance:none; height:6px; border-radius:6px; background:linear-gradient(90deg,#e6f0ff,#ffdede) }
-
-  /* Themes panel (system preferences style) */
-  .themes-panel{ position:fixed; left:20px; top:20px; width:320px; max-height:84vh; overflow:auto; padding:12px; border-radius:14px; background:rgba(255,255,255,.8); box-shadow:0 20px 60px rgba(7,20,40,.12) }
-  .theme-group{ margin-bottom:12px }
-  .theme-grid{ display:flex; gap:8px; flex-wrap:wrap }
-  .theme-swatch{ width:64px; height:48px; border-radius:10px; cursor:pointer; border:1px solid rgba(0,0,0,.04); box-shadow:0 8px 20px rgba(0,0,0,.04); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:12px }
-
-  /* Misc */
-  .small{ font-size:13px; color:var(--muted) }
-  .hidden{ display:none }
-
-  @media (max-width:980px){
-    .app-shell{ width:96vw; height:92vh }
-    .themes-panel{ display:none }
-  }
+/* responsive */
+@media (max-width:880px){
+  .themes-panel{right:10px;left:10px;width:auto}
+  .miniplayer{left:10px;right:10px;bottom:10px}
+}
 </style>
 </head>
 <body>
-  <div class="app-shell">
 
-    <!-- top bar -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">A</div>
-        <div>
-          <div style="font-size:13px;color:var(--muted)">Project</div>
-          <div style="font-weight:900">AuraAI</div>
-        </div>
+<!-- AUDIO TRACKS (expected in repo) -->
+<audio id="bg1" src="bgm.mp3" crossorigin="anonymous"></audio>
+<audio id="bg2" src="bgm2.mp3" crossorigin="anonymous"></audio>
+<audio id="bg3" src="bgm3.mp3" crossorigin="anonymous"></audio>
+
+<!-- HELLO -->
+<section id="hello" class="screen active">
+  <div class="hello-wrap glass">
+    <div class="hello-text">AuraAI</div>
+    <div class="hello-sub">Hi 👋 I’m your support buddy. What would you like to do today?</div>
+    <div class="hello-actions">
+      <button class="btn" id="btnPlay">🎮 Play</button>
+      <button class="btn" id="btnDraw">🎨 Draw</button>
+      <button class="btn" id="btnChat">💬 Talk</button>
+    </div>
+    <div class="hint">This is Aura inside the app — an app inside an app (macOS Tahoe look).</div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen">
+  <div class="game-wrap glass">
+    <div class="bar">
+      <div class="left-group"><div class="title">🫧 Bubble Pop — levels & calm</div></div>
+      <div class="right-group">
+        <span class="game-ind">Level: <span id="levelNum">1</span></span>
+        <span class="game-ind">Score: <span id="score">0</span></span>
+        <button class="btn" id="resetBtn">Reset</button>
+        <button class="btn" id="backGame">⬅ Back</button>
       </div>
-      <div class="nav">
-        <div class="small">macOS Tahoe • Self-contained</div>
+    </div>
+    <canvas id="gameCanvas" aria-label="Bubble pop canvas"></canvas>
+  </div>
+</section>
+
+<!-- DRAW -->
+<section id="draw" class="screen">
+  <div class="draw-wrap glass">
+    <div class="bar">
+      <div class="left-group">
+        <div class="title">🎨 Draw — practice & check</div>
+      </div>
+      <div class="right-group">
+        <button class="btn" id="themesDraw">🎨 Themes</button>
+        <button class="btn" id="backDraw">⬅ Back</button>
       </div>
     </div>
 
-    <!-- main area -->
-    <div class="main">
-      <!-- HELLO -->
-      <section id="hello" class="screen active">
-        <div class="glass hello-card">
-          <div class="hello-title">Hello — AuraAI</div>
-          <div class="hello-sub">Welcome. Pick an app: Bubble Pop (game), Draw (canvas challenge), or Talk (support bot).</div>
-          <div class="actions">
-            <button class="btn" id="btnPlay">🎮 Bubble Pop</button>
-            <button class="btn" id="btnDraw">🎨 Drawing Pad</button>
-            <button class="btn" id="btnChat">💬 Talk to Aura</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- GAME -->
-      <section id="game" class="screen">
-        <div class="glass game-wrap">
-          <div class="bar">
-            <div class="title">🫧 Bubble Pop — Level Mode</div>
-            <div class="game-stats">
-              <div class="stat">Level: <span id="levelTxt">1</span></div>
-              <div class="stat">Score: <span id="scoreTxt">0</span></div>
-              <div class="stat">Bubbles Popped: <span id="poppedTxt">0</span></div>
-              <div class="stat"><button class="btn" id="btnBackGame">⬅ Back</button></div>
-            </div>
-          </div>
-          <canvas id="gameCanvas"></canvas>
-
-          <div style="display:flex;gap:10px;margin-top:8px;align-items:center;justify-content:space-between">
-            <div class="small">Milestones: 25, 50, 100, 200, 500, 1000 — earn cheers & level unlocks</div>
-            <div>
-              <button class="btn" id="resetGame">Reset</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- DRAW -->
-      <section id="draw" class="screen">
-        <div class="glass draw-wrap">
-          <div class="draw-toolbar">
-            <div style="display:flex;gap:10px;align-items:center">
-              <div class="title">🎨 Drawing Pad — Challenges</div>
-              <div class="small">Choose "Try" or FreeStyle anytime</div>
-            </div>
-
-            <!-- integrated challenge card -->
-            <div style="margin-left:auto">
-              <div id="challengeCard" class="challenge-card" title="Try/No/Later controls">
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <div class="challenge-title" id="challengeText">Try drawing a cat</div>
-                  <div class="small">Auto-check: <span id="autoCheckState">ON</span></div>
-                </div>
-                <div class="chips" style="margin-left:12px">
-                  <button class="chip" id="btnOk">✅ OK</button>
-                  <button class="chip" id="btnNo">❌ No</button>
-                  <button class="chip" id="btnLater">⏭ Later</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <canvas id="drawCanvas" class="draw-canvas"></canvas>
-
-          <div class="draw-bottom">
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn" id="clearDraw">Clear</button>
-              <button class="btn" id="saveDraw">Save</button>
-              <button class="btn" id="newChallenge">🔄 New</button>
-              <label style="display:flex;align-items:center;gap:8px;margin-left:10px"><input type="checkbox" id="autoCheck" checked/> Auto‑Check</label>
-            </div>
-            <div class="small">Tip: Press OK to auto-check your drawing against the challenge</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- CHAT -->
-      <section id="chat" class="screen">
-        <div class="glass chat-wrap">
-          <div class="chat-top">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#fff,#e6f0ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--accent)">A</div>
-              <div>
-                <div style="font-weight:900">AuraAI</div>
-                <div class="small">Support buddy • quick coping tools</div>
-              </div>
-            </div>
-            <div style="margin-left:auto" class="mood-dock">
-              <!-- Four emotions always present -->
-              <button class="mood-btn" id="mHappy">😊</button>
-              <button class="mood-btn" id="mSad">😢</button>
-              <button class="mood-btn" id="mAngry">😠</button>
-              <button class="mood-btn" id="mNerv">😰</button>
-              <button class="btn" id="btnBackChat">⬅ Back</button>
-            </div>
-          </div>
-
-          <div id="chatBody" class="chat-body"></div>
-
-          <div class="chat-input-row">
-            <input id="chatInput" class="text-field" placeholder="Type to Aura — or choose a mood" />
-            <button class="btn" id="sendChat">Send</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Themes panel -->
-      <div class="themes-panel glass" id="themesPanel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-weight:900">Themes</div>
-          <div class="small">macOS Tahoe picker</div>
-        </div>
-
-        <!-- grouped themes -->
-        <div class="theme-group">
-          <div style="font-weight:800;margin-bottom:8px">Glassy</div>
-          <div class="theme-grid" id="themeGridGlassy"></div>
-        </div>
-        <div class="theme-group">
-          <div style="font-weight:800;margin-bottom:8px">Metallic</div>
-          <div class="theme-grid" id="themeGridMetallic"></div>
-        </div>
-        <div class="theme-group">
-          <div style="font-weight:800;margin-bottom:8px">Pastels</div>
-          <div class="theme-grid" id="themeGridPastel"></div>
-        </div>
-        <div class="theme-group">
-          <div style="font-weight:800;margin-bottom:8px">Poster & Gradient</div>
-          <div class="theme-grid" id="themeGridPoster"></div>
-        </div>
-        <div class="small">Hover for tooltip. Click to apply.</div>
+    <!-- integrated draw control card -->
+    <div class="draw-card" id="drawCard">
+      <div style="flex:1">
+        <div class="label">🧠 Idea</div>
+        <div id="taskText" class="small">Try drawing a ...</div>
       </div>
-
-      <!-- Mini Player -->
-      <div class="mini-player" id="miniPlayer">
-        <button class="btn" id="playPause">▶️</button>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="font-weight:900">Background music</div>
-          <input id="prog" class="progress" type="range" min="0" max="100" value="0" />
-        </div>
+      <div class="control-buttons">
+        <button class="choice-btn" id="newTaskBtn" title="New idea">🔄 New</button>
+        <button class="choice-btn" id="autoCheckToggle" title="Auto-check">✅ Auto‑Check</button>
+        <button class="choice-btn primary" id="askBtn">Try this</button>
       </div>
+    </div>
 
+    <canvas id="drawCanvas" class="draw-canvas" aria-label="Drawing canvas"></canvas>
+
+    <div class="draw-bottom">
+      <div>
+        <button class="btn" id="clearBtn">Clear</button>
+        <button class="btn" id="saveBtn">Save</button>
+        <button class="btn" id="freestyleBtn">Free‑style</button>
+      </div>
+      <div class="small">Guides & checks are gentle — you can always redo.</div>
     </div>
   </div>
+</section>
 
-<!-- Scripts: All logic in-page -->
+<!-- CHAT -->
+<section id="chat" class="screen">
+  <div class="chat-container glass">
+    <div class="header-controls">
+      <div class="mood-header glass">How do you feel?</div>
+      <div class="header-buttons">
+        <button class="btn" id="voiceBtn">🎤 Voice</button>
+        <button class="btn" id="speakBtn">🔊 Speak</button>
+        <button class="btn" id="themesChat">🎨 Themes</button>
+        <button class="btn" id="backChat">⬅ Back</button>
+      </div>
+    </div>
+
+    <div id="mood-strip" class="mood-selector">
+      <button class="mood-btn happy" data-mood="happy">😊 Happy</button>
+      <button class="mood-btn sad" data-mood="sad">😢 Sad</button>
+      <button class="mood-btn angry" data-mood="angry">😠 Angry</button>
+      <button class="mood-btn nervous" data-mood="nervous">😰 Nervous</button>
+    </div>
+
+    <div id="chat-box" role="log" aria-live="polite"></div>
+
+    <div style="display:flex;gap:10px;align-items:center">
+      <input id="chatInput" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.06)" placeholder="Type when you want to share..." />
+      <button class="btn" id="sendChat">Send</button>
+    </div>
+  </div>
+</section>
+
+<!-- THEMES PANEL -->
+<div class="themes-panel glass" id="themesPanel" aria-hidden="false">
+  <div class="themes-head">
+    <div style="font-weight:900">Themes — Tahoe Library</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn" id="surpriseBtn" title="Surprise me">🎲 Surprise</button>
+      <button class="btn" id="closeThemes">✕</button>
+    </div>
+  </div>
+  <div id="themesBody">
+    <!-- categories injected here -->
+  </div>
+</div>
+
+<!-- MINI PLAYER -->
+<div class="miniplayer glass" id="miniPlayer" role="region" aria-label="Music player">
+  <button id="miniPlay" class="btn">▶️</button>
+  <div class="mini-meta">
+    <div id="miniTitle" style="font-weight:900">BGM</div>
+    <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
+    <div style="font-size:12px;color:var(--muted)"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
+  </div>
+</div>
+
+<!-- TensorFlow + MobileNet loaded only if needed -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.2/dist/mobilenet.min.js"></script>
+
 <script>
-/* ---------------------------
-  Util & sound (simple beeps)
---------------------------- */
-const Sound = (() => {
-  let ctx, muted=false;
-  const ensure = ()=>{ if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) ctx=new AC(); } };
-  function tone(f=440,t=0.06,type='sine',g=0.04){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(); const gg=ctx.createGain(); o.type=type; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+t); }
-  return { click:()=>tone(600,0.04,'triangle',0.04), pop:()=>tone(900,0.06,'sine',0.06), scribble:()=>tone(260,0.02,'square',0.02), toggle:()=>tone(420,0.06,'sawtooth',0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
-})();
+/* ---------- Helpers & initial wiring ---------- */
+const screens = { hello:document.getElementById('hello'), game:document.getElementById('game'), draw:document.getElementById('draw'), chat:document.getElementById('chat')};
+function showScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
+document.getElementById('btnPlay').onclick = ()=>{ startGame(); showScreen('game'); }
+document.getElementById('btnDraw').onclick = ()=>{ prepareDraw(); showScreen('draw'); }
+document.getElementById('btnChat').onclick = ()=>{ showScreen('chat'); }
+document.getElementById('backGame').onclick = ()=>{ showScreen('hello'); }
+document.getElementById('backDraw').onclick = ()=>{ showScreen('hello'); }
+document.getElementById('backChat').onclick = ()=>{ showScreen('hello'); }
 
-/* ---------------------------
-  Simple screen router
---------------------------- */
-const screens = { hello:document.getElementById('hello'), game:document.getElementById('game'), draw:document.getElementById('draw'), chat:document.getElementById('chat') };
-function show(screen){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[screen].classList.add('active'); }
-
-/* wire top buttons */
-document.getElementById('btnPlay').onclick = ()=>{ Sound.click(); show('game'); initGameIfNeeded(); };
-document.getElementById('btnDraw').onclick = ()=>{ Sound.click(); show('draw'); initDrawIfNeeded(); nextChallengeIfFirst(); };
-document.getElementById('btnChat').onclick = ()=>{ Sound.click(); show('chat'); initChatIfNeeded(); };
-
-document.getElementById('btnBackGame').onclick = ()=>{ Sound.click(); show('hello'); };
-document.getElementById('btnBackChat').onclick = ()=>{ Sound.click(); show('hello'); };
-
-/* ---------------------------
-  Themes — many swatches, tooltips
---------------------------- */
-const glassy = [
-  {name:'Tahoe Glass', bg:'linear-gradient(135deg,#f8fbff,#eef6ff)'},
-  {name:'Aurora Mist', bg:'linear-gradient(135deg,#e6f8ff,#e6f0ff)'},
-  {name:'Calm Sky', bg:'linear-gradient(135deg,#dff1ff,#f7eefc)'},
-  {name:'Frost', bg:'linear-gradient(135deg,#ffffff,#e6f1ff)'},
-  {name:'Peach Glass', bg:'linear-gradient(135deg,#fff7f6,#fff2f0)'}
+/* ---------- THEME LIBRARY (100+ surprise themes in groups) ---------- */
+const THEMES_CATEGORIES = [
+  {title:"Metallic", items:[
+    ["Space Gray","linear-gradient(135deg,#3b3b3f,#8b8b8f)"],
+    ["Silver","linear-gradient(135deg,#f3f4f6,#d6d8db)"],
+    ["Gold","linear-gradient(135deg,#f4d58d,#c99b4c)"],
+    ["Rose Gold","linear-gradient(135deg,#ffd1dc,#c88b85)"],
+    ["Steel Blue","linear-gradient(135deg,#4b6b88,#2b445a)"],
+    ["Titanium","linear-gradient(135deg,#2f2f33,#6a6a6e)"],
+    ["Copper","linear-gradient(135deg,#b26a4a,#4e2314)"],
+    ["Chrome","linear-gradient(135deg,#e9eef2,#9aa4ad)"],
+    ["Liquid Mercury","linear-gradient(135deg,#a7a9ac,#e7e8ea)"],
+    ["Neon Metal","linear-gradient(135deg,#06f7ff,#00ff9d)"]
+  ]},
+  {title:"Gradients", items: generateGradients(22) },
+  {title:"Poster / Bold", items:[
+    ["Pure Red","#E53935"],["Pop Cyan","#00BCD4"],["Lemon Yellow","#FFEB3B"],["Magenta","#FF00A8"],
+    ["Royal Blue","#2E5CB8"],["Acid Green","#B8FF00"],["Coral","#FF6F61"],["Tangerine","#FF8C42"],
+    ["Hot Pink","#FF4FA3"],["Bright Purple","#9B5DE5"],["Electric Indigo","#6F42C1"],["Neon Punch","#FF2D95"],
+    ["Turquoise","#1ABC9C"],["Cobalt","#3B82F6"],["Sunshine","#FFD166"]
+  ]},
+  {title:"Pastels", items:[
+    ["Peach","#FFD2B8"],["Lavender","#EAD7FF"],["Mint","#CFFFE1"],["Baby Blue","#CFE9FF"],
+    ["Blush","#FFDDE2"],["Powder","#E8F0FF"],["Cream","#FFF7E6"],["Light Jade","#D8F7E8"],
+    ["Soft Coral","#FFD7D0"],["Pale Yellow","#FFF8C4"],["Pastel Lilac","#E4D7FF"],["Pastel Sky","#D6EEFF"]
+  ]},
+  {title:"Grayscale/Minimal", items:[
+    ["Black","#000000"],["Charcoal","#2C2C2E"],["Slate","#6B7280"],["Fog","#F3F4F6"],["Paper","#FFFFFF"],
+    ["Ash","#9CA3AF"],["Graphite","#374151"],["Silver Mist","#ECEFF1"],["Steel","#B0BEC5"],["Smoke","#CFD8DC"]
+  ]},
+  {title:"Artistic / Patterned", items:[
+    ["Aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)"],["Galaxy","linear-gradient(135deg,#0f0c29,#302b63)"],
+    ["Marble","linear-gradient(135deg,#f6f7fb,#e9eef6)"],["Neon Waves","linear-gradient(135deg,#ff6a88,#ff9a9e)"],
+    ["Vintage","linear-gradient(135deg,#f0d5b3,#d1b3a1)"],["Fabric","linear-gradient(135deg,#e6eef8,#cfd9ea)"],
+    ["Noise","linear-gradient(135deg,#f1f3f5,#e6e9ee)"],["Checker","linear-gradient(135deg,#fff,#eee)"]
+  ]},
+  {title:"User Upload", items:[
+    ["Custom Upload","upload://custom"]
+  ]},
 ];
-const metallic = [
-  {name:'Space Gray', bg:'#0f1720'}, {name:'Brushed Steel', bg:'linear-gradient(135deg,#bfc8d6,#8d98a6)'}, {name:'Chrome', bg:'linear-gradient(135deg,#e6eef6,#d7dfe9)'}
-];
-const pastels = [
-  {name:'Mint', bg:'linear-gradient(135deg,#dffaf1,#e6fff7)'}, {name:'Lavender', bg:'linear-gradient(135deg,#f2e9ff,#efe7ff)'}, {name:'Peach', bg:'linear-gradient(135deg,#fff0e6,#fff8f2)'}
-];
-const poster = [
-  {name:'Poster Red', bg:'#E53935'}, {name:'Sunset', bg:'linear-gradient(135deg,#FF8008,#FFC837)'}, {name:'Rainbow Loop', bg:'linear-gradient(135deg,#ff0000,#ff8000,#ffff00,#008000,#0000ff,#4b0082,#9400d3)'}
-];
 
-function buildThemeGrid(containerId, list){
-  const cont = document.getElementById(containerId);
-  list.forEach(t=>{
-    const sw = document.createElement('div');
-    sw.className='theme-swatch';
-    sw.title=t.name;
-    sw.style.background=t.bg;
-    sw.textContent=''; // no name overlay
-    sw.onclick=()=>{
-      document.body.style.background=t.bg;
-      Sound.click();
-    };
-    cont.appendChild(sw);
+function generateGradients(n){
+  const base = [
+    ["Aurora","linear-gradient(135deg,#00d2ff,#3a7bd5)"],
+    ["Sunset Glow","linear-gradient(135deg,#f857a6,#ff5858)"],
+    ["Deep Ocean","linear-gradient(135deg,#2b5876,#4e4376)"],
+    ["Cotton Candy","linear-gradient(135deg,#ffb6c1,#add8e6)"],
+    ["Rainbow Loop","rainbow-loop"],
+    ["Firestorm","linear-gradient(135deg,#ff416c,#ff4b2b)"],
+    ["Galaxy Fade","linear-gradient(135deg,#512da8,#7b1fa2)"],
+    ["Mint Dream","linear-gradient(135deg,#a8ff78,#78ffd6)"],
+    ["Polar","linear-gradient(135deg,#21D4FD,#B721FF)"],
+    ["Berry","linear-gradient(135deg,#833ab4,#fd1d1d)"]
+  ];
+  const items = [];
+  for(let i=0;i<n;i++){
+    items.push(base[i%base.length]);
+  }
+  return items;
+}
+
+const themesBody = document.getElementById('themesBody');
+function buildThemesUI(){
+  themesBody.innerHTML = '';
+  THEMES_CATEGORIES.forEach(cat=>{
+    const g = document.createElement('div'); g.className='group';
+    const t = document.createElement('div'); t.className='group-title'; t.textContent = cat.title;
+    g.appendChild(t);
+    const row = document.createElement('div'); row.className='swatch-row';
+    cat.items.forEach(([name, bg])=>{
+      const btn = document.createElement('button'); btn.className='theme-btn'; btn.title = name;
+      if(bg === 'rainbow-loop'){
+        btn.style.background = 'linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)';
+        btn.dataset.special = 'rainbow';
+      } else if(bg && bg.startsWith('upload://')){
+        btn.style.background = 'repeating-linear-gradient(45deg,#eee,#eee 10px,#fff 10px,#fff 20px)';
+        btn.innerHTML = '<div style="padding:6px 8px;font-size:12px">Upload</div>';
+        btn.dataset.theme = 'custom';
+      } else {
+        btn.style.background = bg;
+        btn.dataset.bg = bg;
+      }
+      const label = document.createElement('div'); label.className='thumb-label'; label.textContent = name; btn.appendChild(label);
+      btn.addEventListener('click', ()=>{ applyTheme(name,bg); });
+      row.appendChild(btn);
+    });
+    g.appendChild(row); themesBody.appendChild(g);
   });
 }
-buildThemeGrid('themeGridGlassy', glassy);
-buildThemeGrid('themeGridMetallic', metallic);
-buildThemeGrid('themeGridPastel', pastels);
-buildThemeGrid('themeGridPoster', poster);
-
-/* ---------------------------
-  Mini BGM player (local files in repo)
---------------------------- */
-const tracks = ['bgm.mp3','bgm2.mp3','bgm3.mp3'];
-let trackIdx = 0;
-const audio = new Audio();
-audio.loop=false; audio.preload='auto';
-audio.src = tracks[trackIdx];
-const playPauseBtn = document.getElementById('playPause');
-const prog = document.getElementById('prog');
-playPauseBtn.onclick = ()=>{
-  if(audio.paused){ audio.play().catch(()=>{}); playPauseBtn.textContent='⏸'; } else { audio.pause(); playPauseBtn.textContent='▶️'; }
-};
-audio.addEventListener('timeupdate', ()=>{ if(audio.duration){ prog.value = (audio.currentTime/audio.duration)*100; } });
-prog.addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (prog.value/100)*audio.duration; });
-audio.addEventListener('ended', ()=>{ trackIdx = (trackIdx+1)%tracks.length; audio.src=tracks[trackIdx]; audio.play().catch(()=>{}); });
-
-/* ---------------------------
-  Bubble Pop — level based (30 levels)
---------------------------- */
-let gameInited=false;
-function initGameIfNeeded(){
-  if(gameInited) return;
-  gameInited=true;
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  let dpr = devicePixelRatio || 1;
-  function resize(){ canvas.width = Math.floor(canvas.clientWidth*dpr); canvas.height = Math.floor(canvas.clientHeight*dpr); ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr); }
-  new ResizeObserver(resize).observe(canvas); setTimeout(resize,50);
-
-  let bubbles=[],score=0,popped=0,level=1,spawnRate=900,lastSpawn=0, lastT=performance.now();
-
-  function spawn(){
-    const r = 16 + Math.random()*30;
-    const x = r + Math.random()*(canvas.clientWidth - r*2);
-    const y = canvas.clientHeight + r + 10;
-    const vy = (0.6 + Math.random()*1.1) * (1 + level*0.02);
-    const hue = Math.floor(160 + Math.random()*160);
-    bubbles.push({x,y,r,vy,hue,alpha:1,popped:false});
-  }
-  function drawBubble(b){
-    ctx.save();
-    ctx.globalAlpha = b.alpha;
-    ctx.shadowColor = `rgba(255,255,255,0.9)`; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.18)';
-    const cx=b.x, cy=b.y, r=b.r;
-    const grad = ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r);
-    grad.addColorStop(0,`hsla(${b.hue},90%,95%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,60%,.65)`);
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill();
-    ctx.restore();
-  }
-
-  function levelForScore(s){
-    // simple: every 50 score + small boost
-    return Math.min(30, 1 + Math.floor(s / 50));
-  }
-
-  function loop(t){
-    const dt = t-lastT; lastT=t;
-    ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-    // soft background
-    let g = ctx.createLinearGradient(0,0,canvas.clientWidth,canvas.clientHeight); g.addColorStop(0,'rgba(255,255,255,.28)'); g.addColorStop(1,'rgba(255,255,255,.18)');
-    ctx.fillStyle=g; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-
-    if(t - lastSpawn > Math.max(200, spawnRate - level*10)){ spawn(); lastSpawn=t; }
-    bubbles = bubbles.filter(b=>b.alpha>0.02);
-    for(let b of bubbles){
-      if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } }
-      else b.alpha -= 0.02;
-      drawBubble(b);
-    }
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-  canvas.addEventListener('click', (ev)=>{
-    const rect = canvas.getBoundingClientRect();
-    const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-    for(let b of bubbles){
-      const dx = x-b.x, dy = y-b.y;
-      if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
-        b.popped=true; b.alpha=1; score+=1; popped+=1; Sound.pop();
-        document.getElementById('scoreTxt').textContent=score;
-        document.getElementById('poppedTxt').textContent=popped;
-        const newLevel = levelForScore(score);
-        if(newLevel>level){
-          level=newLevel; document.getElementById('levelTxt').textContent=level;
-          celebrateLevel(level);
-        }
-        checkMilestones(score);
-        break;
-      }
-    }
-  });
-
-  document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; popped=0; level=1; document.getElementById('scoreTxt').textContent=0; document.getElementById('poppedTxt').textContent=0; document.getElementById('levelTxt').textContent=1; };
-
-  function celebrateLevel(lvl){
-    addChatBotTip('Game','Level up! You reached level '+lvl+' — awesome! 🎉');
-  }
-  const milestones = [25,50,100,150,250,400,600,1000];
-  function checkMilestones(s){
-    for(let m of milestones){ if(s===m){ addChatBotTip('Game','Milestone: '+m+' popped! Keep going — you rock! 🌟'); } }
+function applyTheme(name,bg){
+  if(bg==='rainbow-loop'){ document.body.style.background = 'linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)'; // animated
+    document.body.style.animation = 'rainbow 8s linear infinite';
+    document.body.style.backgroundSize = '400% 400%';
+    injectRainbowKeyframes();
+  } else if(bg && bg.startsWith('linear-gradient')){
+    document.body.style.background = bg; document.body.style.animation = '';
+  } else if(name === 'Custom Upload'){
+    promptUploadBackground();
+  } else if(bg){
+    document.body.style.background = bg; document.body.style.animation = '';
   }
 }
+function injectRainbowKeyframes(){
+  if(document.getElementById('kf-rainbow')) return;
+  const s = document.createElement('style'); s.id='kf-rainbow';
+  s.textContent = '@keyframes rainbow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}';
+  document.head.appendChild(s);
+}
+document.getElementById('closeThemes').onclick = ()=>{ document.getElementById('themesPanel').style.display='none' };
+document.getElementById('surpriseBtn').onclick = ()=>{ const cats = THEMES_CATEGORIES.flatMap(c=>c.items); const pick = cats[Math.floor(Math.random()*cats.length)]; applyTheme(pick[0],pick[1]); }
 
-/* ---------------------------
-  Drawing pad + 100 challenge list + TF auto-check
---------------------------- */
-let drawInited=false;
-const challenges = [
-  "cat","dog","house","tree","sun","moon","star","car","bicycle","cup",
-  "mug","apple","banana","chair","table","key","lock","book","open book",
-  "castle","rocket","boat","fish","butterfly","flower","mountain","cloud","rain","umbrella",
-  "hat","glasses","mask","shoe","sock","cake","ice cream","cookie","ball","leaf",
-  "penguin","owl","lion","tiger","elephant","giraffe","panda","horse","sheep","cow",
-  "duck","chicken","piano","guitar","violin","drum","camera","phone","computer","lamp",
-  "clock","watch","map","train","bus","truck","plane","kite","flag","ring",
-  "gift","heart","diamond","starfish","shell","anchor","crown","torch","keycard","laptop",
-  "microphone","telescope","binoculars","sword","shield","hammer","wrench","spoon","fork","knife",
-  "umbrella","basket","paintbrush","palette","scissors","leaf","pear","orange","grapes","strawberry",
-  "saxophone","radio","teapot","lantern","nest","owl mask","mask","wizard hat","potion","scroll"
+/* ---------- MINI PLAYER ---------- */
+const tracks = [document.getElementById('bg1'),document.getElementById('bg2'),document.getElementById('bg3')];
+let currentTrack = 0;
+const miniPlay = document.getElementById('miniPlay'); const miniSeek = document.getElementById('miniSeek');
+const miniCur = document.getElementById('miniCur'); const miniDur = document.getElementById('miniDur'); const miniTitle = document.getElementById('miniTitle');
+function playTrack(idx){
+  tracks.forEach((t,i)=>{ try{ t.pause(); t.currentTime=0 }catch{} });
+  currentTrack = idx; const a = tracks[currentTrack];
+  a.volume = 0.35; a.play().catch(()=>{});
+  miniTitle.textContent = 'BGM ' + (currentTrack+1);
+}
+miniPlay.onclick = ()=>{
+  const a = tracks[currentTrack];
+  if(a.paused){ a.play(); miniPlay.textContent='⏸'; } else { a.pause(); miniPlay.textContent='▶️'; }
+}
+tracks.forEach(t=>{
+  t.addEventListener('timeupdate', ()=>{ if(t.duration){ miniSeek.value = (t.currentTime/t.duration)*100; miniCur.textContent = fmtTime(t.currentTime); miniDur.textContent = fmtTime(t.duration); }});
+  t.addEventListener('ended', ()=>{ currentTrack = (currentTrack+1) % tracks.length; playTrack(currentTrack); });
+});
+miniSeek.oninput = ()=>{ const a = tracks[currentTrack]; if(a.duration) a.currentTime = (miniSeek.value/100)*a.duration; }
+function fmtTime(s){ if(!s || isNaN(s)) return '0:00'; const m=Math.floor(s/60); const sec=Math.floor(s%60).toString().padStart(2,'0'); return m+':'+sec; }
+playTrack(0);
+
+/* ---------- DRAWING pad + 100 tasks ---------- */
+const prompts = [
+"cat","dog","house","tree","car","bicycle","boat","fish","sun","moon","star","flower","cup","cake","ice cream",
+"rocket","robot","key","chair","shoe","hat","glasses","book","phone","clock","guitar","piano","bird","butterfly","leaf","mountain",
+"castle","train","bus","truck","lamp","window","door","hand","smiley face","heart","umbrella","balloon","crown","map","island","island palm",
+"hat","camera","penguin","elephant","lion","tiger","zebra","panda","koala","dolphin","whale","shark","octopus","lighthouse","bridge",
+"cake slice","cookie","spoon","fork","knife","bottle","kite","present","ball","ring","diamond","starfish","seashell","leafy plant",
+"mushroom","ant","bee","snail","owl","fox","squirrel","hedgehog","pineapple","banana","apple","grapes","pear","strawberry","cherry",
+"lantern","compass","tent","campfire","backpack","boots","scarf","glove","parrot","peacock","candle","skate","roller skate","sword","shield",
+"wizard hat","wand","treasure chest","maple leaf","geyser","volcano","satellite","planet","telescope","hourglass","anchor","trophy","microphone",
+"headphones","paintbrush","palette"
 ];
-// shuffle utility
-function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+// ensure 100 by repeating if necessary
+while(prompts.length < 100) prompts.push(...prompts.slice(0,100-prompts.length));
 
-/* MobileNet model variable */
-let mobilenetModel = null;
-async function loadMobileNet(){
-  if(mobilenetModel) return mobilenetModel;
-  try{
-    mobilenetModel = await mobilenet.load({version:2,alpha:1.0});
-  }catch(e){
-    console.warn('MobileNet load failed',e);
-  }
-  return mobilenetModel;
-}
+const taskText = document.getElementById('taskText');
+const newTaskBtn = document.getElementById('newTaskBtn');
+const askBtn = document.getElementById('askBtn');
+const autoCheckBtn = document.getElementById('autoCheckToggle');
+const clearBtn = document.getElementById('clearBtn');
+const saveBtn = document.getElementById('saveBtn');
+const freestyleBtn = document.getElementById('freestyleBtn');
+let currentTask = null;
+let autoCheck = false;
+let model = null;
+let modelLoading = false;
 
-function initDrawIfNeeded(){
-  if(drawInited) return;
-  drawInited=true;
-  // canvas setup
-  const canvas = document.getElementById('drawCanvas');
-  const ctx = canvas.getContext('2d');
-  let dpr = devicePixelRatio || 1;
-  function resize(){
-    const rect = canvas.getBoundingClientRect();
-    const prev = ctx.getImageData(0,0,canvas.width||1,canvas.height||1);
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr);
-    try{ ctx.putImageData(prev,0,0); }catch(e){}
-  }
-  new ResizeObserver(resize).observe(canvas); setTimeout(resize,50);
-  ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=10; ctx.strokeStyle='#1e88e5';
+function pickRandomTask(){ currentTask = prompts[Math.floor(Math.random()*prompts.length)]; taskText.textContent = `Try drawing a ${currentTask}? (OK / No / Later)`; }
+newTaskBtn.onclick = ()=>{ pickRandomTask(); }
+askBtn.onclick = ()=>{ showTaskChoices() }
+autoCheckBtn.onclick = ()=>{ autoCheck = !autoCheck; autoCheckBtn.textContent = autoCheck ? '✅ Auto‑Check ON' : '✅ Auto‑Check'; if(autoCheck && !model && !modelLoading){ loadModel(); } }
 
-  let painting=false, lastX=0, lastY=0, brush=8;
-  canvas.addEventListener('pointerdown', (e)=>{ painting=true; const r=canvas.getBoundingClientRect(); lastX=e.clientX-r.left; lastY=e.clientY-r.top; Sound.scribble(); });
-  canvas.addEventListener('pointermove', (e)=>{ if(!painting) return; const r=canvas.getBoundingClientRect(); const x = e.clientX-r.left, y=e.clientY-r.top; ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.lineWidth=brush; ctx.stroke(); lastX=x; lastY=y; });
-  canvas.addEventListener('pointerup', ()=>{ painting=false; });
-  canvas.addEventListener('pointerleave', ()=>{ painting=false; });
-
-  // toolbar wiring
-  document.getElementById('clearDraw').onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); Sound.click(); };
-  document.getElementById('saveDraw').onclick = ()=>{
-    const url = canvas.toDataURL('image/png');
-    const a = document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); Sound.click();
-  };
-
-  // challenge logic
-  let currentChallenge=null;
-  const challengeText = document.getElementById('challengeText');
-  const autoCheckBox = document.getElementById('autoCheck');
-
-  function pickRandomChallenge(){
-    const ch = randChoice(challenges);
-    currentChallenge = ch;
-    challengeText.textContent = `Try drawing a ${ch}`;
-    return ch;
-  }
-
-  document.getElementById('newChallenge').onclick = ()=>{ pickRandomChallenge(); Sound.click(); };
-
-  document.getElementById('btnOk').onclick = async ()=>{
-    Sound.click();
-    if(!currentChallenge) pickRandomChallenge();
-    const shouldAuto = autoCheckBox.checked;
-    if(shouldAuto){
-      await ensureModelAndCheck();
-    } else {
-      addChatBotTip('Draw','OK pressed — you can choose to auto-check in settings.');
-    }
-  };
-  document.getElementById('btnNo').onclick = ()=>{
-    Sound.click();
-    // if no, give another challenge
-    const alt = pickRandomChallenge();
-    addChatBotTip('Draw','Cool — new challenge: '+alt);
-  };
-  document.getElementById('btnLater').onclick = ()=>{
-    Sound.click();
-    challengeText.textContent = 'FreeStyle mode — draw anything';
-    currentChallenge = null;
-    addChatBotTip('Draw','No problem — freedraw mode active.');
-  };
-
-  // first challenge on open
-  function nextChallengeIfFirst(){ if(!currentChallenge) pickRandomChallenge(); }
-  window.nextChallengeIfFirst = nextChallengeIfFirst;
-
-  async function ensureModelAndCheck(){
-    const model = await loadMobileNet();
-    if(!model){ addChatBotTip('Draw','Auto-check failed to load model — try again later'); return; }
-    // capture a smaller thumbnail of canvas for classification
-    const thumbW = 224, thumbH = 224;
-    const temp = document.createElement('canvas'); temp.width = thumbW; temp.height = thumbH;
-    const tctx = temp.getContext('2d');
-    // draw original canvas scaled to thumb
-    tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,thumbW,thumbH);
-    tctx.drawImage(canvas, 0, 0, thumbW, thumbH);
-    // classify
-    addChatBotTip('Draw','Checking your drawing…');
-    const predictions = await model.classify(temp);
-    // predictions array: {className,probability}
-    console.log('preds',predictions);
-    handlePredictions(predictions);
-  }
-
-  // synonyms map to match common labels to challenges
-  const synonyms = {
-    'cat':['cat','kitten','tabby','persian'], 'dog':['dog','puppy'], 'car':['car','vehicle'], 'bicycle':['bicycle','bike'], 'cup':['cup','mug'],
-    'apple':['apple','fruit'], 'tree':['tree','oak','pine','fir'], 'house':['house','home','cabin'], 'boat':['boat','ship'],
-    'bird':['bird','sparrow','parrot','penguin','owl'], 'flower':['flower','daisy','rose','tulip'], 'fish':['fish','goldfish']
-    // extend as needed
-  };
-  function matchesChallenge(preds, challenge){
-    const target = (challenge||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').split(' ')[0];
-    // check direct substring in predictions
-    for(let p of preds){
-      const label = p.className.toLowerCase();
-      if(label.includes(target)) return true;
-      // synonyms
-      if(synonyms[target]){
-        for(let s of synonyms[target]) if(label.includes(s)) return true;
-      }
-    }
-    return false;
-  }
-
-  function handlePredictions(predictions){
-    const ok = matchesChallenge(predictions, currentChallenge);
-    if(ok){
-      // success
-      const tips = ["Wow! That looks great! 🎉","Nice job — that looks like a match! ✨","Amazing — you nailed it!"];
-      addChatBotTip('Draw', tips[Math.floor(Math.random()*tips.length)]);
-    } else {
-      // gentle retry message with playful tone
-      const tips = [
-        "So close — it's got the vibe! Want to try again or keep going?",
-        "Omg that's lovely — maybe a little tweak? Try emphasizing the shape!",
-        "Nice strokes! Wanna try once more for a perfect match, or free-draw?"
-      ];
-      addChatBotTip('Draw', tips[Math.floor(Math.random()*tips.length)]);
-    }
-  }
-}
-
-/* ---------------------------
-  Chatbot — improved rule-based with varied responses
---------------------------- */
-let chatInited=false;
-function initChatIfNeeded(){
-  if(chatInited) return;
-  chatInited=true;
-  const chatBody = document.getElementById('chatBody');
-  const input = document.getElementById('chatInput');
-  const send = document.getElementById('sendChat');
-
-  function pushBubble(text,who='bot'){
-    const b = document.createElement('div');
-    b.className = 'bubble '+who+' fade-in';
-    b.textContent = text;
-    chatBody.appendChild(b);
-    chatBody.scrollTop = chatBody.scrollHeight;
-  }
-
-  // initial friendly lines
-  pushBubble("Hi! 👋 How was your day? 😊",'bot');
-
-  // mood quick conversations (10 lines-ish)
-  function moodConversation(mood){
-    const lines = {
-      sad:[
-        "I’m really sorry you’re feeling low — I’m here. 💙",
-        "Want to tell me what happened, or would you prefer a calming exercise?",
-        "If it helps, try naming three small good things around you—I'll wait.",
-        "You're brave for sharing. Should we try a 4‑4‑6 breathing now?",
-        "Sometimes tiny steps stack into big change. Do you want a suggestion?"
-      ],
-      nervous:[
-        "Feeling nervous is valid — you’re not alone. 💙",
-        "Would a grounding game help? Name 5 things you can see.",
-        "Try breathing with me: in 4, hold 4, out 6. Want me to pace you?",
-        "We can practice a short script if you have to talk to someone.",
-        "Okay — want tips to reduce sensory overload right now?"
-      ],
-      happy:[
-        "Yay! I love hearing that ✨ What made you smile today?",
-        "Share the good vibes — tell me one tiny win from today!",
-        "That's wonderful. Hold onto that feeling — want a celebratory GIF idea?"
-      ],
-      angry:[
-        "It's okay to be angry — your feelings matter. Want to vent?",
-        "Let's do a 60‑second cool-down: stomp, breathe, count, release.",
-        "If you want, we can plan a calm response together."
-      ]
-    };
-    const seq = lines[mood] || ["I'm here if you want to share."];
-    // push a short ~5-line exchange with small delays to simulate "live" chat
-    seq.slice(0,5).forEach((ln,i)=> setTimeout(()=> pushBubble(ln,'bot'), 300*i + 120));
-  }
-
-  // mood buttons
-  document.getElementById('mHappy').onclick = ()=>{ Sound.click(); pushBubble("😊", 'user'); moodConversation('happy'); };
-  document.getElementById('mSad').onclick = ()=>{ Sound.click(); pushBubble("😢", 'user'); moodConversation('sad'); };
-  document.getElementById('mAngry').onclick = ()=>{ Sound.click(); pushBubble("😠", 'user'); moodConversation('angry'); };
-  document.getElementById('mNerv').onclick = ()=>{ Sound.click(); pushBubble("😰", 'user'); moodConversation('nervous'); };
-
-  // send handler (smarter-ish)
-  send.onclick = ()=>{ const txt = input.value.trim(); if(!txt) return; Sound.click(); pushBubble(txt,'user'); input.value=''; respondToUser(txt); };
-  input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') send.click(); });
-
-  function respondToUser(text){
-    const s = text.toLowerCase();
-    // quick intent detection
-    const intents = [
-      {k:'thanks', pat:/(thanks|thank you|ty|thx)/i, replies:["You're welcome! 😊","Anytime — I'm here.","Glad to help."]},
-      {k:'help', pat:/(help|support|advice|need help)/i, replies:["Tell me what feels hardest right now.","We can break it into tiny steps — wanna try?","Would you like breathing or grounding first?"]},
-      {k:'breathe', pat:/(breath|breathe|breathing|relax)/i, replies:["Let's breathe: in 4, hold 4, out 6. Ready?","I'll pace you: inhale... hold... exhale... repeat 3×."]},
-      {k:'music', pat:/(music|song|play)/i, replies:["You can try soft ambient music. Want me to start a track?","Music can help — press the mini player ▶️ to start."]},
-      {k:'draw', pat:/(draw|doodle|sketch)/i, replies:["Head to the Draw app — try 'Try' to get a challenge, or free style.","When you're done press OK to auto-check your drawing."]}
-    ];
-    for(let it of intents){
-      if(it.pat.test(s)){ const r = it.replies[Math.floor(Math.random()*it.replies.length)]; pushBubble(r,'bot'); return; }
-    }
-    // fallback: empathetic and probing
-    const fallback = [
-      "I'm listening. Tell me more — small steps are fine.",
-      "Thanks for sharing. What's one tiny next step you can do?",
-      "I won't rush you. Want a short exercise or to chat more?",
-      "I might not be perfect but I'm trying. Want a coping tool suggestion?"
-    ];
-    pushBubble(fallback[Math.floor(Math.random()*fallback.length)],'bot');
-  }
-}
-
-/* ---------------------------
-  Small helpers / tips
---------------------------- */
-function addChatBotTip(area, text){
-  // show as bot bubble in chat if chat exists, otherwise quick system hint
-  const cb = document.getElementById('chatBody');
-  if(cb){
-    const b = document.createElement('div');
-    b.className='bubble bot fade-in';
-    b.textContent = `[${area}] ${text}`;
-    cb.appendChild(b); cb.scrollTop = cb.scrollHeight;
+function showTaskChoices(){
+  // integrated dialog style
+  const ok = confirm(`Try drawing a ${currentTask}?\nOK → I want to try\nCancel → No / Later (choose later in UI)`);
+  if(ok) {
+    toggleCanvasInput(true);
   } else {
-    // fallback: console + toast (toast not implemented)
-    console.log('TIP',area,text);
+    // ask later -> free draw
+    alert("You can freestyle anytime — opening free-style.");
+    toggleCanvasInput(true);
   }
 }
 
-/* ---------------------------
-  Init shortcuts
---------------------------- */
-document.addEventListener('DOMContentLoaded', ()=>{
-  // lazy-load model but do not block UI
-  loadMobileNet().then(()=>console.log('mobilenet loaded')).catch(()=>console.log('mobilenet load error'));
-  // initial UI state
-  // show hello (already active)
+/* canvas draw */
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+let drawing=false, lastX=0,lastY=0,brush='#1e88e5',brushSize=8,erasing=false;
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+  const dp = devicePixelRatio || 1;
+  const w = Math.floor(rect.width*dp), h = Math.floor(rect.height*dp);
+  const image = ctx.getImageData(0,0,canvas.width||1,canvas.height||1);
+  canvas.width = w; canvas.height = h;
+  ctx.setTransform(1,0,0,1,0,0); ctx.scale(dp,dp);
+  try{ ctx.putImageData(image,0,0) } catch(e){}
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas,50);
+
+canvas.addEventListener('pointerdown', (e)=>{ drawing=true; const r=canvas.getBoundingClientRect(); lastX = (e.clientX - r.left); lastY = (e.clientY - r.top); });
+canvas.addEventListener('pointermove', (e)=>{ if(!drawing) return; const r=canvas.getBoundingClientRect(); const x = (e.clientX - r.left); const y = (e.clientY - r.top); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=brushSize; ctx.strokeStyle = erasing ? 'rgba(0,0,0,1)' : brush; if(erasing) ctx.globalCompositeOperation='destination-out'; else ctx.globalCompositeOperation='source-over'; ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); lastX=x; lastY=y; });
+canvas.addEventListener('pointerup', ()=>{ drawing=false; ctx.globalCompositeOperation='source-over'; });
+canvas.addEventListener('pointerleave', ()=>{ drawing=false; });
+
+clearBtn.onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); }
+saveBtn.onclick = ()=>{ const url = canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); if(autoCheck) runAutoCheck(); }
+freestyleBtn.onclick = ()=>{ currentTask = null; taskText.textContent = 'Free‑style — create whatever you like'; toggleCanvasInput(true); }
+
+/* Auto-check using MobileNet: best-effort on sketches (mobileNet classifies photographic-like input) */
+async function loadModel(){
+  if(model) return model;
+  modelLoading = true;
+  taskText.textContent = 'Auto‑Check model loading...';
+  try{
+    model = await mobilenet.load(); // from CDN
+    taskText.textContent = currentTask ? `Try drawing a ${currentTask}? (Auto‑Check ready)` : 'Free‑style';
+  }catch(e){
+    taskText.textContent = 'Auto‑Check unavailable';
+    model = null;
+  } finally { modelLoading = false; }
+}
+async function runAutoCheck(){
+  if(!currentTask){ addEncouragement("Nice free-style!"); return; }
+  if(!model){ await loadModel(); if(!model) return; }
+  // create a temporary image scaled for model
+  const temp = document.createElement('canvas'); temp.width = 224; temp.height = 224;
+  const tctx = temp.getContext('2d');
+  // fill white behind transparent drawings for better classification
+  tctx.fillStyle = '#ffffff'; tctx.fillRect(0,0,224,224);
+  tctx.drawImage(canvas,0,0,224,224);
+  const img = tf.browser.fromPixels(temp);
+  const preds = await model.classify(img);
+  img.dispose();
+  if(!preds || preds.length===0){ gentleRetry(); return; }
+  const top = preds[0].className.toLowerCase();
+  // matching heuristic: check if any word in currentTask appears in prediction string
+  const taskWords = (currentTask||'').toLowerCase().split(/[\s,-]+/);
+  const match = taskWords.some(w=> w && top.includes(w));
+  if(match){
+    addEncouragement("Wow! That looks great! 🎉 Nice job!");
+  } else {
+    gentleRetry(top);
+  }
+}
+function gentleRetry(prediction){
+  if(prediction){
+    const msg = `Nice try — model saw: "${prediction}". Wanna try again or try a new idea?`;
+    addGentle(msg);
+  } else {
+    addGentle("That was cool — want to try again? Maybe rotate, add more details or try a new idea.");
+  }
+}
+function addEncouragement(txt){ alert(txt); } // simple; can be replaced by fancier UI
+function addGentle(txt){ alert(txt); }
+
+/* toggle canvas input (open drawing mode) */
+function toggleCanvasInput(on){
+  // shows the cursor and lets user draw; this is always available; just focus
+  canvas.focus();
+}
+
+/* show initial task & pick random */
+function prepareDraw(){
+  pickRandomTask();
+  // clear canvas on open
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+/* ---------- GAME: bubble pop with levels ---------- */
+const gCanvas = document.getElementById('gameCanvas'), gCtx = gCanvas.getContext('2d');
+let bubbles = [], gScore=0, gLevel=1, lastSpawn=0;
+function resizeGameCanvas(){
+  const rect = gCanvas.getBoundingClientRect();
+  const dp = devicePixelRatio || 1;
+  gCanvas.width = Math.floor(rect.width * dp);
+  gCanvas.height = Math.floor(rect.height * dp);
+  gCtx.setTransform(1,0,0,1,0,0); gCtx.scale(dp,dp);
+}
+window.addEventListener('resize', resizeGameCanvas);
+setTimeout(resizeGameCanvas,50);
+function spawnBubble(){
+  const r = 18 + Math.random()*28;
+  const x = r + Math.random()*(gCanvas.clientWidth - r*2);
+  const y = gCanvas.clientHeight + r + 10;
+  const vy = (0.6 + Math.random()*1.2) * (1 + (gLevel-1)*0.04);
+  const hue = Math.floor(180 + Math.random()*160);
+  bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
+}
+function updateBubbles(dt){
+  bubbles = bubbles.filter(b=>b.alpha>0);
+  for(const b of bubbles){
+    if(!b.popped){ b.y -= b.vy * dt * 0.06; if(b.y < -b.r){ b.popped=true; b.alpha=0; } }
+    else b.alpha -= 0.05;
+  }
+}
+function drawBubbles(){
+  gCtx.clearRect(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
+  const grd = gCtx.createLinearGradient(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
+  grd.addColorStop(0,'rgba(255,255,255,.24)'); grd.addColorStop(1,'rgba(255,255,255,.12)');
+  gCtx.fillStyle = grd; gCtx.fillRect(0,0,gCanvas.clientWidth,gCanvas.clientHeight);
+  for(const b of bubbles){
+    gCtx.save(); gCtx.globalAlpha = Math.max(0,b.alpha);
+    gCtx.shadowColor = 'rgba(255,255,255,.9)'; gCtx.shadowBlur = 14; gCtx.lineWidth = 2; gCtx.strokeStyle = 'rgba(0,0,0,.16)';
+    const cx=b.x,cy=b.y,r=b.r; const grad = gCtx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r);
+    grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`);
+    gCtx.fillStyle=grad; gCtx.beginPath(); gCtx.arc(cx,cy,r,0,Math.PI*2); gCtx.fill(); gCtx.stroke();
+    gCtx.beginPath(); gCtx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); gCtx.fillStyle='rgba(255,255,255,.6)'; gCtx.fill();
+    gCtx.restore();
+  }
+}
+let lastPaint = performance.now();
+function gameLoop(t){
+  const dt = t - lastPaint; lastPaint = t;
+  if(t - lastSpawn > Math.max(2000 - gLevel*40, 400)){ spawnBubble(); lastSpawn=t; }
+  updateBubbles(dt);
+  drawBubbles();
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+gCanvas.addEventListener('click',(e)=>{
+  const rect = gCanvas.getBoundingClientRect(), x=e.clientX-rect.left, y=e.clientY-rect.top;
+  for(const b of bubbles){ const dx=x-b.x, dy=y-b.y; if(!b.popped && dx*dx+dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; gScore++; document.getElementById('score').textContent=gScore; SoundPop(); checkLevelUp(); break; } }
+});
+function checkLevelUp(){
+  const milestones = 25;
+  if(gScore % milestones === 0){
+    gLevel = Math.min(30, gLevel+1); document.getElementById('levelNum').textContent = gLevel;
+    addBubblePraise(gScore);
+  }
+}
+function addBubblePraise(score){
+  const praises = ["Nice!", "Amazing!", "You're on fire!", "Calm and steady!", "Keep going!"];
+  const idx = Math.floor(Math.min(praises.length-1, Math.log(score+1)));
+  alert(`${praises[idx]} — score ${score}`);
+}
+function SoundPop(){ try{ const o=new (window.AudioContext||window.webkitAudioContext)(); const osc=o.createOscillator(); const g=o.createGain(); osc.type='sine'; osc.frequency.value=900; g.gain.value=0.05; osc.connect(g).connect(o.destination); osc.start(); osc.stop(o.currentTime+0.08);}catch(e){} }
+document.getElementById('resetBtn').onclick = ()=>{ bubbles=[]; gScore=0; gLevel=1; document.getElementById('score').textContent=gScore; document.getElementById('levelNum').textContent=gLevel; }
+
+/* ---------- CHAT: improved responses (basic but better rules) ---------- */
+const chatBox = document.getElementById('chat-box'), chatInput=document.getElementById('chatInput'), sendChat=document.getElementById('sendChat');
+const moodButtons = document.querySelectorAll('.mood-btn');
+function addChat(text,who='bot'){ const d=document.createElement('div'); d.className='message '+(who==='bot'?'bot':'user'); d.textContent=text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight; }
+addChat("Hi! 👋 How was your day? 😊");
+sendChat.onclick = ()=>{ const t = chatInput.value.trim(); if(!t) return; addChat(t,'user'); chatInput.value=''; setTimeout(()=>{ const rep = smartReply(t); addChat(rep,'bot'); },650); }
+function smartReply(input){
+  const s = input.toLowerCase();
+  if(/(sad|upset|depressed|down)/.test(s)) return "I hear you. Do you want a small comfort idea or to talk it through?";
+  if(/(happy|great|good|awesome)/.test(s)) return "That's wonderful — tell me one thing that made you smile today.";
+  if(/(anxious|nervous|scared|afraid)/.test(s)) return "Breathing trick: inhale 4s, hold 4s, exhale 6s — want me to guide you?";
+  if(/(help|advice|support)/.test(s)) return "I’m here. Tell me a bit and we’ll make a tiny plan together.";
+  if(/(game|play)/.test(s)) return "Want to try Bubble Pop? It's calming. Open Play from the home screen.";
+  if(/(draw|doodle|sketch)/.test(s)) return "Open Draw and I'll give an idea or you can freestyle.";
+  return "Thanks for sharing — tell me more or pick an activity above.";
+}
+moodButtons.forEach(b=>b.onclick = ()=>{
+  const m = b.dataset.mood;
+  addChat(`Mood set to ${m}`, 'user');
+  const map = {happy:"Love it — want a cheerful activity?", sad:"I'm sorry. Want a calming breathing or a small activity?", angry:"Okay — want a quick vent or grounding?", nervous:"Let's try a short grounding — name 5 things you see."};
+  addChat(map[m] || "I'm here.", 'bot');
 });
 
-/* expose a helper to pick challenge on first open */
-function nextChallengeIfFirst(){ /* placeholder */ }
+/* ---------- Misc helpers ---------- */
+function startGame(){ /* placeholder to open game screen */ }
+function prepareDraw(){ pickRandomTask(); ctx.clearRect(0,0,canvas.width,canvas.height); }
+pickRandomTask(); buildThemesUI();
+
+/* ---------- Minimal UX polish: tooltips, uploads ---------- */
+function promptUploadBackground(){
+  const input = document.createElement('input'); input.type='file'; input.accept='image/*';
+  input.onchange = e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      document.body.style.background = `url(${ev.target.result}) center/cover no-repeat`;
+      localStorage.setItem('aura-custom-bg', ev.target.result);
+    };
+    reader.readAsDataURL(f);
+  };
+  input.click();
+}
+const saved = localStorage.getItem('aura-custom-bg'); if(saved){ document.body.style.background = `url(${saved}) center/cover no-repeat`; }
+
+/* ---------- Auto-check on close/save shortcut ---------- */
+document.addEventListener('keydown', (e)=>{ if(e.key==='s' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); saveBtn.click(); } });
 
 </script>
 </body>
