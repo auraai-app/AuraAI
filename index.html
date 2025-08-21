@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AuraAI — All-in-One</title>
-<!-- Fonts omitted (keeps look similar). All styling kept close to your previous design. -->
+<title>Aura AI — All in One</title>
 <style>
+/* (Style kept compact to preserve your look) */
 :root{
   --bot-bg:#d6e6fb; --bot-fg:#074279;
   --user-bg:#517fc4; --user-fg:#e8f3fc;
@@ -13,107 +13,93 @@
   --glass-border: rgba(255,255,255,0.28);
   --glass-shadow: 0 18px 40px rgba(0,0,0,0.22);
   --glass-blur: blur(18px);
-  --pad: 20px; --radius:18px; --motion-scale:0.75;
+  --pad:20px; --radius:18px; --motion-scale:0.75;
 }
 *{box-sizing:border-box} html,body{height:100%}
 body{
-  margin:0; font-family:"Comic Neue", Arial, sans-serif; color:#0b3c61;
-  background:#a8cdf1; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  margin:0;font-family:"Comic Neue",Arial,sans-serif;color:#0b3c61;
+  background:#a8cdf1;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
-.screen{position:absolute; inset:0; display:none; place-items:center; padding:var(--pad);}
-.screen.active{display:grid;}
-.glass{background:var(--glass-bg); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
-.btn{border:0; cursor:pointer; border-radius:14px; padding:14px 18px; font-weight:800; font-size:16px; color:#0b3c61; background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%); box-shadow:0 4px 8px rgba(168,205,241,.7); transition:filter .18s, transform .18s;}
-.btn:hover{filter:brightness(.92); transform:translateY(-1px);}
+/* screens */
+.screen{position:absolute;inset:0;display:none;place-items:center;padding:var(--pad)}
+.screen.active{display:grid}
+.glass{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
+.btn{border:0;cursor:pointer;border-radius:14px;padding:14px 18px;font-weight:800;font-size:16px;color:#0b3c61;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.7);transition:filter .18s,transform .18s}
+.btn:hover{filter:brightness(.92);transform:translateY(-1px)}
 
 /* Hello */
-.hello-wrap{width:min(980px,92vw); border-radius:var(--radius); padding:28px; text-align:center;}
-.hello-text{font-weight:900; line-height:1; user-select:none; margin:14px 0 8px; font-size:clamp(42px,8vw,92px); letter-spacing:1px; background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff); -webkit-background-clip:text; background-clip:text; color:transparent; animation:hueflow 12s linear infinite; filter:saturate(.9);}
+.hello-wrap{width:min(980px,92vw);border-radius:var(--radius);padding:28px;text-align:center}
+.hello-text{font-weight:900;line-height:1;user-select:none;margin:14px 0 8px;font-size:clamp(42px,8vw,92px);letter-spacing:1px;background:linear-gradient(90deg,#ffffff,#f7b7b9,#a8cdf1,#ffffff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:hueflow 12s linear infinite;filter:saturate(.9)}
 @keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
-.hello-sub{font-size:clamp(16px,2.6vw,22px); opacity:.9; margin-bottom:18px;}
-.hello-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
-.hint{margin-top:14px; font-size:14px; opacity:.8;}
+.hello-sub{font-size:clamp(16px,2.6vw,22px);opacity:.9;margin-bottom:18px}
+.hello-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hint{margin-top:14px;font-size:14px;opacity:.8}
 
 /* Game */
-.game-wrap{width:min(1000px,95vw); height:min(70vh,680px); border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr; gap:10px;}
-.bar{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
-.left-group,.right-group{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-.title{font-weight:900; font-size:20px;}
-.game-ind{font-weight:800; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.55);}
-#gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5);}
+.game-wrap{width:min(1000px,95vw);height:min(70vh,680px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr;gap:10px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.left-group,.right-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.title{font-weight:900;font-size:20px}
+.game-ind{font-weight:800;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.55)}
+#gameCanvas{width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#eaf6ff,#f6f0ff);display:block;outline:2px solid rgba(255,255,255,.5)}
 
 /* Draw */
-.draw-wrap{width:min(1100px,96vw); height:min(76vh,740px); border-radius:var(--radius); padding:12px; display:grid; grid-template-rows:auto 1fr auto; gap:10px;}
-.draw-tools{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-.brush{display:flex; align-items:center; gap:8px; font-weight:800; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px;}
-.swatch{width:26px; height:26px; border-radius:50%; border:0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2);}
-.toggle{display:flex; align-items:center; gap:6px; font-weight:800; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.55)}
-.draw-canvas{width:100%; height:100%; border-radius:14px; background:rgba(255,255,255,.65); outline:2px solid rgba(255,255,255,.5);}
-.draw-bottom{display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;}
-.picker{display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.55); padding:6px 10px; border-radius:12px; font-weight:800;}
-.picker input[type="color"]{appearance:none; -webkit-appearance:none; border:none; width:42px; height:26px; border-radius:10px; cursor:pointer; background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);}
+.draw-wrap{width:min(1100px,96vw);height:min(76vh,740px);border-radius:var(--radius);padding:12px;display:grid;grid-template-rows:auto 1fr auto;gap:10px}
+.brush{display:flex;align-items:center;gap:8px;font-weight:800;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px}
+.swatch{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.picker{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);padding:6px 10px;border-radius:12px;font-weight:800}
+.draw-canvas{width:100%;height:100%;border-radius:14px;background:rgba(255,255,255,.65);outline:2px solid rgba(255,255,255,.5)}
+.draw-bottom{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
 
 /* Chat */
-.chat-container{width:min(980px,92vw); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:12px;}
-.header-controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-.mood-header{flex:1; text-align:center; font-weight:900; font-size:22px; padding:12px 16px; border-radius:14px; background:linear-gradient(90deg,#a8cdf1 0%, #f7b7b9 100%); box-shadow:0 4px 8px rgba(168,205,241,.4);}
-.header-buttons{display:flex; gap:8px; flex-wrap:wrap;}
-.header-buttons .btn{height:44px}
-.mood-selector{display:flex; gap:10px; flex-wrap:wrap;}
-.mood-btn{border:0; flex:1; cursor:pointer; padding:12px 14px; border-radius:14px; font-weight:800; font-size:16px;}
+.chat-container{width:min(980px,92vw);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px}
+.header-controls{display:flex;gap:10px;align-items:center}
+.mood-header{flex:1;text-align:center;font-weight:900;font-size:22px;padding:12px 16px;border-radius:14px;background:linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);box-shadow:0 4px 8px rgba(168,205,241,.4)}
+.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.mood-selector{display:flex;gap:10px;flex-wrap:wrap}
+.mood-btn{border:0;flex:1;cursor:pointer;padding:12px 14px;border-radius:14px;font-weight:800;font-size:16px;transition:transform .18s,box-shadow .18s}
 .mood-btn.happy{background:#c1e6a6} .mood-btn.sad{background:#a4c7f9} .mood-btn.angry{background:#f9d6d6} .mood-btn.nervous{background:#fff3c8}
-#chat-box{flex:1; min-height:280px; max-height:52vh; overflow-y:auto; padding:14px; border-radius:14px; background:rgba(232,242,252,.55);}
-.message{margin:10px 0; padding:12px 14px; border-radius:14px; max-width:75%; border:2px solid transparent; font-size:18px;}
-.message.bot{background:rgba(0,0,0,0.35); color:#f0f0f0; border:1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px);}
-.message.user{background:rgba(0,0,0,0.55); color:#fff; align-self:flex-end; text-align:right; border:1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px);}
-.input-footer{position:relative; display:none;}
-#user-input{width:100%; padding:16px 120px 16px 14px; border-radius:12px; border:1px solid #a9c8e8; background:rgba(255,255,255,.72); font-size:18px; color:#0b3c61; outline:none;}
-#send-btn{position:absolute; right:6px; top:6px; bottom:6px; width:108px; color:#fff; background:#88b7e5}
+#moodHint{opacity:.85;font-size:14px}
+#chat-box{flex:1;min-height:280px;max-height:52vh;overflow-y:auto;padding:14px;border-radius:14px;background:rgba(232,242,252,.55)}
+.message{margin:10px 0;padding:12px 14px;border-radius:14px;max-width:75%;border:2px solid transparent;font-size:18px}
+.message.bot{background:rgba(0,0,0,0.35);color:#f0f0f0;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.message.user{background:rgba(0,0,0,0.55);color:#fff;align-self:flex-end;text-align:right;border:1px solid rgba(255,255,255,0.25)}
+.input-footer{position:relative;display:none}
+#user-input{width:100%;padding:16px 120px 16px 14px;border-radius:12px;border:1px solid #a9c8e8;background:rgba(255,255,255,.72);font-size:18px;color:#0b3c61;outline:none}
+#send-btn{position:absolute;right:6px;top:6px;bottom:6px;width:108px;color:#fff;background:#88b7e5}
 
 /* Themes */
-.themes-panel{position:fixed; top:0; right:0; height:100%; width:0; opacity:0; pointer-events:none; z-index:1000; transition:width .3s ease, opacity .25s ease; display:flex; flex-direction:column;}
-.themes-panel.open{width:360px; opacity:1; pointer-events:auto;}
-.panel-shell{height:100%; display:flex; flex-direction:column;}
-.themes-head{display:flex; align-items:center; justify-content:space-between; padding:12px; font-weight:900; border-radius:0 0 12px 12px;}
-.themes-body{padding:12px 10px; overflow-y:auto; flex:1;}
-.swatch-strip{display:flex; flex-direction:column; gap:14px;}
-.group{display:flex; flex-direction:column; gap:10px;}
-.group-title{font-weight:900; font-size:14px; opacity:.85; padding-left:4px;}
-.swatch-row{display:flex; gap:10px; flex-wrap:wrap;}
-.theme-btn{width:42px; height:42px; border-radius:8px; border:0; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:transform .12s; position:relative; overflow:hidden;}
-.theme-btn:hover{transform:scale(1.04);}
+.themes-panel{position:fixed;top:0;right:0;height:100%;width:0;opacity:0;pointer-events:none;z-index:1000;transition:width .28s,opacity .2s;display:flex;flex-direction:column}
+.themes-panel.open{width:320px;opacity:1;pointer-events:auto}
+.panel-shell{height:100%;display:flex;flex-direction:column}
+.themes-head{display:flex;align-items:center;justify-content:space-between;padding:12px;font-weight:900}
+.themes-body{padding:12px;overflow-y:auto;flex:1}
+.swatch-strip{display:flex;flex-direction:column;gap:12px}
+.group-title{font-weight:900;font-size:14px;opacity:.85;padding-left:4px}
+.swatch-row{display:flex;gap:10px;flex-wrap:wrap}
+.theme-btn{width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18);transition:transform .12s}
+.theme-btn:hover{transform:scale(1.08)}
 
-/* mini player */
-.miniplayer{position:fixed; right:14px; bottom:14px; z-index:1200; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px;}
-.mini-btn{border:0; cursor:pointer; border-radius:12px; padding:10px 12px; font-weight:800; font-size:14px; background:rgba(255,255,255,.6); box-shadow:0 4px 8px rgba(0,0,0,.15)}
-.mini-meta{display:flex; flex-direction:column; gap:4px; min-width:170px; max-width:260px;}
-.mini-title{font-weight:900; font-size:14px;}
-.mini-progress{appearance:none; width:100%; height:6px; border-radius:6px; background:rgba(255,255,255,.6); outline:none; cursor:pointer;}
+.miniplayer{position:fixed;right:14px;bottom:14px;z-index:1200;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px}
+.mini-btn{border:0;cursor:pointer;border-radius:12px;padding:10px 12px;font-weight:800;font-size:14px;background:rgba(255,255,255,.6);box-shadow:0 4px 8px rgba(0,0,0,.15)}
+.mini-meta{display:flex;flex-direction:column;gap:4px;min-width:170px;max-width:240px}
+.mini-progress{appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(255,255,255,.6);outline:none;cursor:pointer}
 
-/* Flow overlay */
-.flow-pad{position:absolute; left:16px; bottom:16px; z-index:900; display:flex; flex-direction:column; gap:8px; max-width:min(560px,80vw); padding:10px 12px; border-radius:14px;}
-.flow-q{font-weight:900; font-size:16px; line-height:1.25}
-.flow-actions{display:flex; gap:8px; flex-wrap:wrap;}
-.chip{border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:rgba(255,255,255,.65)}
+/* Flow overlay (challenge UI) */
+.flow-pad{position:absolute;left:16px;bottom:16px;z-index:900;display:flex;flex-direction:column;gap:8px;max-width:min(560px,80vw);padding:10px 12px;border-radius:14px}
+.flow-q{font-weight:900;font-size:16px}
+.flow-actions{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:0;cursor:pointer;border-radius:12px;padding:10px 14px;font-weight:800;background:rgba(255,255,255,.65)}
 .chip:hover{filter:brightness(.95)}
 
-/* Prompt UI (draw) */
-.prompt-panel{position:absolute; right:20px; top:20px; z-index:950; width:280px; border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px;}
-.prompt-row{display:flex; gap:8px; align-items:center; justify-content:space-between;}
-.prompt-title{font-weight:900}
-.small-controls{display:flex; gap:8px; align-items:center;}
-.toggle-auto{display:flex; align-items:center; gap:6px; font-weight:700}
-
-/* tooltip */
-.theme-btn .tt { position:absolute; bottom:6px; left:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:11px; padding:4px 6px; border-radius:6px; opacity:0; transform:translateY(6px); transition:all .16s; text-align:center;}
-.theme-btn:hover .tt{ opacity:1; transform:translateY(0); }
-
-/* responsive */
-@media (max-width:880px){ .prompt-panel{ right:10px; left:10px; top:auto; bottom:10px; width:auto } .miniplayer{ right:10px; left:10px; bottom:10px; } }
+@media(max-width:880px){
+  .mood-selector{flex-wrap:wrap}
+  .header-controls{flex-wrap:wrap}
+  .miniplayer{right:10px;left:10px;bottom:10px}
+}
 </style>
 </head>
 <body>
-<!-- THEME: keep layout identical to your prior design; below we add prompt UI and auto-check features. -->
 
 <!-- HELLO -->
 <section id="hello-screen" class="screen active">
@@ -126,6 +112,10 @@ body{
       <button class="btn" id="goTalk">💬 Talk</button>
     </div>
     <div class="hint">You can always go back here from any screen.</div>
+  </div>
+  <div style="position:fixed;right:18px;bottom:18px;display:flex;gap:10px">
+    <button class="btn" id="openThemesGlobal">🎨 Themes</button>
+    <button class="btn" id="toggleMusicGlobal">🎶 Music</button>
   </div>
 </section>
 
@@ -143,6 +133,16 @@ body{
       </div>
     </div>
     <canvas id="gameCanvas" aria-label="Bubble Pop Canvas"></canvas>
+
+    <div id="flowGame" class="flow-pad glass" style="display:none">
+      <div class="flow-q" id="flowGameQ"></div>
+      <div class="flow-actions">
+        <button class="chip" id="flowGameOK">OK</button>
+        <button class="chip" id="flowGameNo">No</button>
+        <button class="chip" id="flowGameLater">Later</button>
+        <button class="chip" id="flowGameClose">Close</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -151,12 +151,12 @@ body{
   <div class="draw-wrap glass">
     <div class="bar">
       <div class="left-group">
-        <div class="title">🎨 Draw Something — express or doodle</div>
-        <div class="brush">Brush <input type="range" id="brushSize" min="2" max="50" value="10" /></div>
+        <div class="title">🎨 Doodle — express or doodle</div>
+        <div class="brush">Brush <input id="brushSize" type="range" min="2" max="50" value="10" /></div>
         <button class="swatch" style="background:#000" data-color="#000" title="Black"></button>
         <button class="swatch" style="background:#fff" data-color="#fff" title="White"></button>
-        <label class="toggle"><input type="checkbox" id="eraserToggle" /> Eraser</label>
-        <div class="picker">Color <input type="color" id="colorPicker" value="#1e88e5" title="Pick any color" /></div>
+        <label class="toggle"><input id="eraserToggle" type="checkbox" /> Eraser</label>
+        <div class="picker">Color <input id="colorPicker" type="color" value="#1e88e5" /></div>
       </div>
       <div class="right-group">
         <button class="btn" id="themeBtnDraw">🎨 Themes</button>
@@ -171,29 +171,21 @@ body{
       <div class="left">
         <button class="btn" id="clearDraw">Clear</button>
         <button class="btn" id="saveDraw">Save</button>
+        <button class="btn" id="newChallengeBtn">🔄 New</button>
+        <button class="btn" id="autoCheckToggle" aria-pressed="true">✅ Auto‑Check</button>
       </div>
-      <div class="right"></div>
+      <div class="right"><div id="drawStatus" style="opacity:.9"></div></div>
     </div>
 
-    <!-- Prompt UI (draw) -->
-    <div class="prompt-panel glass" id="promptPanel" role="region" aria-label="Drawing Prompt">
-      <div class="prompt-row"><div class="prompt-title">🧠 Prompt</div>
-        <div class="small-controls">
-          <button class="btn" id="newPromptBtn" title="Shuffle prompt">🔄 New</button>
-          <label class="toggle toggle-auto"><input type="checkbox" id="autoCheckToggle" /> Auto‑Check</label>
-        </div>
+    <div id="flowDraw" class="flow-pad glass" style="display:flex">
+      <div class="flow-q" id="challengeText">Try drawing a <strong id="challengeWord">cat</strong>. (OK / No / Later)</div>
+      <div class="flow-actions">
+        <button class="chip" id="challengeOK">OK</button>
+        <button class="chip" id="challengeNo">No</button>
+        <button class="chip" id="challengeLater">Later</button>
+        <button class="chip" id="challengeClose">Close</button>
       </div>
-      <div id="currentPrompt" style="font-weight:800; padding:6px 4px; min-height:44px;">Loading...</div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn" id="okPrompt">OK</button>
-        <button class="btn" id="noPrompt">No</button>
-        <button class="btn" id="laterPrompt">Later</button>
-        <button class="btn" id="closePrompt">Close</button>
-      </div>
-      <div style="margin-top:6px; font-size:13px; opacity:.85;" id="promptHint">Try drawing the prompt, then press OK to auto-check.</div>
-      <div style="margin-top:8px;"><button id="clearSaveBtn" class="btn">Clear & Save</button></div>
     </div>
-
   </div>
 </section>
 
@@ -203,8 +195,8 @@ body{
     <div class="header-controls">
       <div class="mood-header glass">How do you feel?</div>
       <div class="header-buttons">
-        <button class="btn" id="voice-mode-btn" aria-pressed="false">🎤 Voice</button>
-        <button class="btn" id="speak-reply-btn" aria-pressed="false">🔊 Speak</button>
+        <button class="btn" id="voice-mode-btn">🎤 Voice</button>
+        <button class="btn" id="speak-reply-btn">🔊 Speak</button>
         <button class="btn" id="themeBtnChat">🎨 Themes</button>
         <button class="btn" id="muteBtnChat">🔇 Mute</button>
         <button class="btn" id="backFromChat">⬅ Back</button>
@@ -212,27 +204,36 @@ body{
     </div>
 
     <div class="mood-selector">
-      <button class="mood-btn happy" aria-pressed="false">😊 Happy</button>
-      <button class="mood-btn sad" aria-pressed="false">😢 Sad</button>
-      <button class="mood-btn angry" aria-pressed="false">😠 Angry</button>
-      <button class="mood-btn nervous" aria-pressed="false">😰 Nervous</button>
+      <button class="mood-btn happy">😊 Happy</button>
+      <button class="mood-btn sad">😢 Sad</button>
+      <button class="mood-btn angry">😠 Angry</button>
+      <button class="mood-btn nervous">😰 Nervous</button>
     </div>
 
     <div id="chat-box" class="glass" role="log" aria-live="polite"></div>
 
     <div class="input-footer">
-      <input type="text" id="user-input" placeholder="Type your response..." autocomplete="off" />
+      <input id="user-input" type="text" placeholder="Type your response..." autocomplete="off" />
       <button class="btn" id="send-btn">Send</button>
+    </div>
+
+    <div id="flowChat" class="flow-pad glass" style="display:none">
+      <div class="flow-q" id="flowChatQ"></div>
+      <div class="flow-actions">
+        <button class="chip" id="flowChatYes">Yes</button>
+        <button class="chip" id="flowChatNo">No</button>
+        <button class="chip" id="flowChatClose">Close</button>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- THEMES PANEL -->
-<aside class="themes-panel" id="themesPanel" aria-hidden="true">
+<aside id="themesPanel" class="themes-panel" aria-hidden="true">
   <div class="panel-shell glass">
     <div class="themes-head glass">
       <div>🎨 Themes</div>
-      <button class="close-btn" id="closeThemes">✕</button>
+      <button class="close-btn btn" id="closeThemes">✕</button>
     </div>
     <div class="themes-body">
       <div class="swatch-strip" id="themeStrip"></div>
@@ -240,198 +241,186 @@ body{
   </div>
 </aside>
 
-<!-- MINI PLAYER -->
+<!-- MINI MUSIC PLAYER -->
 <div id="miniPlayer" class="miniplayer glass" role="region" aria-label="Background Music Player">
-  <button id="miniPlayPause" class="mini-btn" title="Play/Pause">⏸</button>
+  <button id="miniPlayPause" class="mini-btn">⏸</button>
   <div class="mini-meta">
-    <div class="mini-title" id="miniTrackTitle">Ambient</div>
-    <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" aria-label="Seek">
+    <div class="mini-title" id="miniTitle">BGM</div>
+    <input id="miniSeek" class="mini-progress" type="range" min="0" max="100" value="0" />
     <div class="mini-time"><span id="miniCur">0:00</span> / <span id="miniDur">0:00</span></div>
   </div>
 </div>
 
-<!-- AUDIO: 3 tracks expected in repo root: bgm.mp3, bgm2.mp3, bgm3.mp3 -->
-<audio id="bgmPlayer" crossorigin="anonymous"></audio>
+<!-- Audio elements (sources must be in repo) -->
+<audio id="bgm1" src="bgm.mp3" crossorigin="anonymous"></audio>
+<audio id="bgm2" src="bgm2.mp3" crossorigin="anonymous"></audio>
+<audio id="bgm3" src="bgm3.mp3" crossorigin="anonymous"></audio>
 
-<!-- TensorFlow & MobileNet from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.1/dist/mobilenet.min.js"></script>
+<!-- TensorFlow & MobileNet CDN (for auto-check) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.2/dist/mobilenet.min.js"></script>
 
 <script>
-/* ---------- Utilities (sound engine, fuzzy matching, shuffle) ---------- */
+/* ---------------------- Utilities & sound ---------------------- */
 const Sound = (() => {
   let ctx, muted=false;
   function ensure(){ if(!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) ctx = new AC(); } }
-  function tone(f=440,d=0.08,type="sine",g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=type; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
-  return { click:()=>tone(600,0.05,"triangle",0.04), pop:()=>tone(900,0.06,"sine",0.06), scribble:()=>tone(280,0.02,"square",0.03), toggle:()=>tone(420,0.06,"sawtooth",0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
+  function tone(f=440,d=0.06,t='sine',g=0.06){ if(muted) return; ensure(); if(!ctx) return; const o=ctx.createOscillator(), gg=ctx.createGain(); o.type=t; o.frequency.value=f; gg.gain.value=g; o.connect(gg).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d); }
+  return { click:()=>tone(600,0.04,'triangle',0.04), pop:()=>tone(900,0.07,'sine',0.07), scribble:()=>tone(280,0.03,'square',0.03), toggle:()=>tone(420,0.05,'sawtooth',0.05), setMuted:(v)=>muted=v, isMuted:()=>muted };
 })();
 
-function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
-
-function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9 ]+/g,'').trim(); }
-function lev(a,b){ const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=0;i<=m;i++)dp[i][0]=i; for(let j=0;j<=n;j++)dp[0][j]=j; for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){ const cost=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);} return dp[m][n];}
-
-/* ---------- Screen routing ---------- */
+/* ---------------------- Screen router ---------------------- */
 const screens = { hello:document.getElementById('hello-screen'), game:document.getElementById('game-screen'), draw:document.getElementById('draw-screen'), chat:document.getElementById('chat-screen') };
 function switchScreen(k){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[k].classList.add('active'); }
 
-/* ---------- Bind start/back buttons ---------- */
+/* Start/back */
 document.getElementById('goPlay').onclick = ()=>{ Sound.click(); switchScreen('game'); };
-document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); loadPromptIfNeeded(); };
+document.getElementById('goDraw').onclick = ()=>{ Sound.click(); switchScreen('draw'); };
 document.getElementById('goTalk').onclick = ()=>{ Sound.click(); switchScreen('chat'); };
 document.getElementById('backFromGame').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromDraw').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 document.getElementById('backFromChat').onclick = ()=>{ Sound.click(); switchScreen('hello'); };
 
-/* ---------- Themes: build full set + tooltips ---------- */
-const THEMES = {
-  "Black & White (solid)": [
-    ["poster-black","#000000",["#2b2b2b","#ffffff"],["#0a0a0a","#ffffff"]],
-    ["deep-charcoal","#2C3E50",["#3e5368","#ffffff"],["#1c2a36","#ffffff"]],
-    ["slate-gray","#7F8C8D",["#a1adae","#1e2b30"],["#5e6a6b","#ffffff"]],
-    ["poster-white","#ffffff",["#f3f7ff","#08345a"],["#dce9fb","#0a2a4a"]],
-    ["silver-mist","linear-gradient(135deg,#ECEFF1,#B0BEC5)",["#f5f8fa","#0a3358"],["#d6e3ee","#0b2a47"]],
-  ],
-  "Red (solid)": [
-    ["poster-red","#E53935",["#f6b6b4","#6c0b0b"],["#b9221f","#ffffff"]],
-    ["rose-red","#FF6F61",["#ffd0ca","#5c1713"],["#e2574a","#ffffff"]],
-    ["crimson","#B71C1C",["#d86464","#ffffff"],["#8f1414","#ffffff"]],
-    ["wine-red","#8B0000",["#a43b3b","#ffffff"],["#5b0000","#ffffff"]],
-  ],
-  "Orange (solid)": [
-    ["poster-orange","#F57C00",["#ffc07e","#4b2a00"],["#d66700","#ffffff"]],
-    ["pumpkin","#D35400",["#f0a870","#3d2300"],["#b94900","#ffffff"]],
-    ["amber","#FFB300",["#ffe18a","#4a3a00"],["#e2a200","#231d00"]],
-  ],
-  "Yellow (solid)": [
-    ["poster-yellow","#FDD835",["#fff6b0","#3c3600"],["#eacb2f","#2a2300"]],
-    ["sun-yellow","#FFEB3B",["#fff7a6","#3a3400"],["#ecd835","#231e00"]],
-    ["goldenrod","#DAA520",["#f0d584","#2d2500"],["#c0911c","#ffffff"]],
-  ],
-  "Green (solid)": [
-    ["poster-green","#43A047",["#bfe6c3","#0f2a12"],["#2f7a33","#ffffff"]],
-    ["mint","#98FF98",["#e4ffe4","#0f2a12"],["#7be47b","#0f2a12"]],
-    ["emerald","#2ECC71",["#b8f0cf","#0f2a12"],["#20a85a","#ffffff"]],
-    ["forest","#228B22",["#74c874","#ffffff"],["#176117","#ffffff"]],
-  ],
-  "Blue (solid)": [
-    ["poster-blue","#1E88E5",["#cfe6ff","#08345a"],["#166fba","#ffffff"]],
-    ["sky-blue","#87CEEB",["#eef9ff","#08345a"],["#6dbfe1","#08345a"]],
-    ["ocean-blue","#2980B9",["#c8e3f8","#082b45"],["#1f6592","#ffffff"]],
-    ["navy","#2C3E50",["#496177","#ffffff"],["#1b2835","#ffffff"]],
-  ],
-  "Purple/Pink (solid)": [
-    ["poster-violet","#8E44AD",["#e3c7f1","#29123a"],["#6f3588","#ffffff"]],
-    ["poster-pink","#FF69B4",["#ffd1e7","#4a0f2c"],["#eb4f9f","#ffffff"]],
-    ["lavender","#E6E6FA",["#ffffff","#0a2a4a"],["#d7d7f5","#0a2a4a"]],
-    ["grape","#6A0DAD",["#c79be9","#ffffff"],["#4e0980","#ffffff"]],
-  ],
-  "Gradients — Sunset":[
-    ["sunset-red","linear-gradient(135deg,#FF512F,#DD2476)",["#ffb6a8","#5b1234"],["#d43d3b","#ffffff"]],
-    ["sunset-orange","linear-gradient(135deg,#FF8008,#FFC837)",["#ffe3a6","#4a3a00"],["#f39b10","#2a1e00"]],
-    ["tangerine","linear-gradient(135deg,#f7971e,#ffd200)",["#fff1bf","#3d2e00"],["#e6a217","#2a1f00"]],
-  ],
-  "Gradients — Ice/Dream":[
-    ["ice","linear-gradient(135deg,#89F7FE,#66A6FF)",["#e8f6ff","#08345a"],["#72b3ff","#0a2a4a"]],
-    ["dream","linear-gradient(135deg,#A18CD1,#FBC2EB)",["#efe6fb","#0a2a4a"],["#c6a9ea","#29123a"]],
-    ["cotton-candy","linear-gradient(135deg,#f6d365,#fda085)",["#fff0cf","#3a2e0a"],["#f18c6a","#2a1408"]],
-  ],
-  "Pastels":[
-    ["pastel-mint","#C2F5E9",["#eafffa","#0f2a20"],["#9edfcf","#0f2a20"]],
-    ["pastel-peach","#FFD1BA",["#fff1ea","#2a1a0f"],["#ffb899","#2a1a0f"]],
-    ["pastel-lilac","#D9C2FF",["#f6efff","#211a2a"],["#c1a3ff","#211a2a"]],
-    ["pastel-sky","#C7E9FF",["#f0f8ff","#0a2a4a"],["#a8d8ff","#0a2a4a"]],
-  ],
-  "Neons":[
-    ["neon-cyan","#00F5FF",["#d4fdff","#002a2e"],["#00c8d0","#00181b"]],
-    ["neon-magenta","#FF00E5",["#ffd4fb","#2a0025"],["#d100bf","#2a0025"]],
-    ["neon-lime","#B6FF00",["#f0ffd4","#1a2a00"],["#8be000","#1a2a00"]],
-    ["neon-blue","#00A2FF",["#d9f0ff","#0a2740"],["#0087d1","#0a2740"]],
-  ],
-  "Earth Tones":[
-    ["earth-clay","#B5651D",["#e7c39d","#2a1807"],["#8e4a12","#ffffff"]],
-    ["earth-sand","#C2B280",["#f5edd4","#2a240f"],["#a99a65","#2a240f"]],
-    ["earth-olive","#556B2F",["#cfe0a8","#0f1a06"],["#3f4f22","#ffffff"]],
-    ["earth-ocean","#2E8B57",["#bfe7d0","#0a2a1f"],["#226b43","#ffffff"]],
-    ["earth-slate","#708090",["#dbe3ea","#0a1a2a"],["#53606a","#ffffff"]],
-  ]
-};
-
+/* ---------------------- Themes (50+ + rainbow loop) ---------------------- */
 const themeStrip = document.getElementById('themeStrip');
-(function buildThemeDots(){
-  for(const [group, items] of Object.entries(THEMES)){
-    const g = document.createElement('div'); g.className='group';
-    const label = document.createElement('div'); label.className='group-title'; label.textContent = group;
-    const row = document.createElement('div'); row.className='swatch-row';
-    items.forEach(([key,bg,bot,user])=>{
-      const btn = document.createElement('button'); btn.className='theme-btn'; btn.title=key; btn.dataset.key=key;
-      btn.style.background = typeof bg==='string' ? bg : bg;
-      const tt = document.createElement('div'); tt.className='tt'; tt.textContent = key; btn.appendChild(tt);
-      btn.addEventListener('click', ()=>{ Sound.toggle(); applyThemeRecord(bg,bot,user); });
-      row.appendChild(btn);
-    });
-    g.appendChild(label); g.appendChild(row); themeStrip.appendChild(g);
+const THEMES = [
+  {name:"Classic", bg:"linear-gradient(90deg,#a8cdf1,#f7b7b9)", bot:["#d6e6fb","#074279"], user:["#517fc4","#e8f3fc"]},
+  {name:"Poster Black", bg:"#000000", bot:["#2b2b2b","#ffffff"], user:["#0a0a0a","#ffffff"]},
+  {name:"Deep Charcoal", bg:"#2C3E50", bot:["#3e5368","#ffffff"], user:["#1c2a36","#ffffff"]},
+  {name:"Sky Blue", bg:"#87CEEB", bot:["#eef9ff","#08345a"], user:["#6dbfe1","#08345a"]},
+  {name:"Ocean", bg:"#2980B9", bot:["#c8e3f8","#082b45"], user:["#1f6592","#ffffff"]},
+  {name:"Sunset Orange", bg:"linear-gradient(135deg,#FF8008,#FFC837)", bot:["#ffe3a6","#4a3a00"], user:["#f39b10","#2a1e00"]},
+  {name:"Aurora", bg:"linear-gradient(135deg,#00d2ff,#3a7bd5)", bot:["#e6f8ff","#0a2a4a"], user:["#4aa0ef","#0a2a4a"]},
+  {name:"Berry", bg:"linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)", bot:["#f7dfff","#26123a"], user:["#f36f52","#ffffff"]},
+  {name:"Cotton Candy", bg:"linear-gradient(135deg,#ffb6c1,#add8e6)", bot:["#ffe6f0","#552a4e"], user:["#b0e0e6","#552a4e"]},
+  {name:"Galaxy", bg:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)", bot:["#2e2e4a","#ffffff"], user:["#5a5a7f","#ffffff"]},
+  {name:"Mint Pastel", bg:"#C2F5E9", bot:["#eafffa","#0f2a20"], user:["#9edfcf","#0f2a20"]},
+  {name:"Neon Cyan", bg:"#00F5FF", bot:["#d4fdff","#002a2e"], user:["#00c8d0","#00181b"]},
+  {name:"Earth Clay", bg:"#B5651D", bot:["#e7c39d","#2a1807"], user:["#8e4a12","#ffffff"]},
+  // add more programmatically to exceed 50
+];
+/* programmatically add shades to reach many themes */
+for(let i=0;i<40;i++){
+  const h = (i*17)%360;
+  THEMES.push({name:`Shade ${i+1}`, bg:`linear-gradient(135deg,hsl(${h} 70% 70%), hsl(${(h+40)%360} 70% 60%))`, bot:["#ffffff","#08345a"], user:["#517fc4","#e8f3fc"]});
+}
+/* special rainbow loop theme (cycles) */
+THEMES.unshift({name:"Rainbow Loop", bg:"linear-gradient(90deg,#ff0000,#ff8000,#ffff00,#00a000,#0000ff,#4b0082,#9400d3)", bot:["#ffffff","#000000"], user:["#000000","#ffffff"], rainbow:true});
+
+function isDarkBackground(bg){
+  if(!bg) return false;
+  if(bg.startsWith("linear-gradient")) return true;
+  if(bg[0]==='#' && bg.length===7){ const r=parseInt(bg.slice(1,3),16), g=parseInt(bg.slice(3,5),16), b=parseInt(bg.slice(5,7),16); const L=0.2126*r+0.7152*g+0.0722*b; return L<128; }
+  return false;
+}
+function applyTheme(t){
+  document.body.style.background = t.bg;
+  document.documentElement.style.setProperty('--bot-bg', t.bot[0]);
+  document.documentElement.style.setProperty('--bot-fg', t.bot[1]);
+  document.documentElement.style.setProperty('--user-bg', t.user[0]);
+  document.documentElement.style.setProperty('--user-fg', t.user[1]);
+  const dark = isDarkBackground(t.bg);
+  document.documentElement.style.setProperty('--glass-bg', dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.20)");
+  document.documentElement.style.setProperty('--glass-border', dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.28)");
+  document.documentElement.style.setProperty('--glass-shadow', dark ? "0 18px 44px rgba(0,0,0,0.35)" : "0 18px 40px rgba(0,0,0,0.22)");
+  if(t.rainbow){
+    // gently animate background hue rotate
+    document.body.animate([{filter:'hue-rotate(0deg)'},{filter:'hue-rotate(360deg)'}],{duration:20000,iterations:Infinity});
+  } else {
+    document.body.getAnimations().forEach(a=>a.cancel());
+  }
+}
+
+/* build swatches */
+function buildSwatches(){
+  themeStrip.innerHTML='';
+  THEMES.forEach(t=>{
+    const btn=document.createElement('button');
+    btn.className='theme-btn';
+    btn.title=t.name;
+    btn.style.background = t.bg;
+    btn.addEventListener('click', ()=>{ Sound.toggle(); applyTheme(t); localStorage.setItem('aura-theme', t.name); });
+    // tooltip via title already
+    themeStrip.appendChild(btn);
+  });
+}
+buildSwatches();
+document.getElementById('closeThemes').onclick = ()=>{ Sound.click(); document.getElementById('themesPanel').classList.remove('open'); };
+document.getElementById('openThemesGlobal').onclick = ()=>{ Sound.click(); document.getElementById('themesPanel').classList.add('open'); };
+document.querySelectorAll('#themeBtnGame,#themeBtnDraw,#themeBtnChat').forEach(b=>b.addEventListener('click', ()=>{ Sound.click(); document.getElementById('themesPanel').classList.add('open'); }));
+
+/* apply saved theme */
+(function(){
+  const saved = localStorage.getItem('aura-theme');
+  if(saved){
+    const t = THEMES.find(x=>x.name===saved);
+    if(t) applyTheme(t);
   }
 })();
-function isDarkBackground(bg){
-  if(!bg || typeof bg!=="string") return false;
-  if(bg.startsWith("linear-gradient")) return true;
-  const hex = bg.replace("#","").trim();
-  if(hex.length!==6) return false;
-  const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
-  const L = 0.2126*r + 0.7152*g + 0.0722*b; return L < 128;
-}
-function applyThemeRecord(bg,bot,user){
-  document.body.style.background = bg;
-  document.documentElement.style.setProperty("--bot-bg", bot[0]); document.documentElement.style.setProperty("--bot-fg", bot[1]);
-  document.documentElement.style.setProperty("--user-bg", user[0]); document.documentElement.style.setProperty("--user-fg", user[1]);
-  const dark=isDarkBackground(bg);
-  document.documentElement.style.setProperty("--glass-bg", dark? "rgba(255,255,255,0.12)":"rgba(255,255,255,0.20)");
-  document.documentElement.style.setProperty("--glass-border", dark? "rgba(255,255,255,0.22)":"rgba(255,255,255,0.28)");
-  document.documentElement.style.setProperty("--glass-shadow", dark? "0 18px 44px rgba(0,0,0,0.35)":"0 18px 40px rgba(0,0,0,0.22)");
-}
-document.getElementById('themeBtnGame').onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById('themeBtnDraw').onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById('themeBtnChat').onclick = ()=>{ Sound.click(); openThemes(); };
-document.getElementById('closeThemes').onclick = ()=>{ Sound.click(); closeThemes(); };
-function openThemes(){ document.getElementById('themesPanel').classList.add('open'); document.getElementById('themesPanel').setAttribute('aria-hidden','false'); }
-function closeThemes(){ document.getElementById('themesPanel').classList.remove('open'); document.getElementById('themesPanel').setAttribute('aria-hidden','true'); }
 
-/* ---------- BGM player with 3 tracks (files to be in repo) ---------- */
-const tracks = [
-  {file:'bgm.mp3', title:'Ambient 1'},
-  {file:'bgm2.mp3', title:'Ambient 2'},
-  {file:'bgm3.mp3', title:'Ambient 3'}
-];
-const audio = document.getElementById('bgmPlayer'); let trackIndex=0;
-function loadTrack(i){ trackIndex = (i%tracks.length+tracks.length)%tracks.length; audio.src = tracks[trackIndex].file; document.getElementById('miniTrackTitle').textContent = tracks[trackIndex].title; audio.load(); }
-loadTrack(0);
-const miniPlay = document.getElementById('miniPlayPause'); miniPlay.onclick = ()=>{ Sound.click(); if(audio.paused) { audio.play().catch(()=>{}); } else audio.pause(); updateMini(); };
-function updateMini(){ miniPlay.textContent = audio.paused ? "▶️" : "⏸"; }
-audio.addEventListener('timeupdate', ()=>{ const s=document.getElementById('miniSeek'); if(audio.duration){ s.value = (audio.currentTime/audio.duration)*100; document.getElementById('miniCur').textContent = fmt(audio.currentTime); document.getElementById('miniDur').textContent = fmt(audio.duration);} updateMini(); });
-document.getElementById('miniSeek').addEventListener('input', ()=>{ if(audio.duration) audio.currentTime = (document.getElementById('miniSeek').value/100)*audio.duration; });
-function fmt(t){ if(isNaN(t)) return "0:00"; const m=Math.floor(t/60); const s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+/* ---------------------- Music player (mini) ---------------------- */
+const tracks = [document.getElementById('bgm1'), document.getElementById('bgm2'), document.getElementById('bgm3')];
+let currentTrack = 0;
+const mini = { btn:document.getElementById('miniPlayPause'), seek:document.getElementById('miniSeek'), cur:document.getElementById('miniCur'), dur:document.getElementById('miniDur'), title:document.getElementById('miniTitle') };
+function fmt(t){ if(isNaN(t)) return '0:00'; const m=Math.floor(t/60), s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+function setTrack(i){
+  tracks.forEach((tr,idx)=>{ if(idx===i) tr.volume=0.45; else { tr.pause(); tr.currentTime=0 }});
+  currentTrack = i;
+  mini.title.textContent = `BGM ${i+1}`;
+  tracks[i].addEventListener('timeupdate', ()=>{ if(tracks[i].duration){ mini.seek.value = (tracks[i].currentTime / tracks[i].duration) * 100; mini.cur.textContent = fmt(tracks[i].currentTime); mini.dur.textContent = fmt(tracks[i].duration);} });
+}
+setTrack(0);
+mini.btn.onclick = ()=>{ const tr = tracks[currentTrack]; if(tr.paused){ tr.play(); mini.btn.textContent='⏸'; } else { tr.pause(); mini.btn.textContent='▶️'; } };
+document.getElementById('toggleMusicGlobal').onclick = ()=>{ Sound.click(); const tr=tracks[currentTrack]; if(tr.paused){ tr.play(); mini.btn.textContent='⏸'; } else { tr.pause(); mini.btn.textContent='▶️'; } };
 
-/* ---------- Bubble pop game (kept, with levels + encouragements) ---------- */
-const gameCanvas = document.getElementById('gameCanvas'); const scoreTxt = document.getElementById('scoreTxt'); const resetGameBtn = document.getElementById('resetGame');
-let gctx, W, H, bubbles = [], score = 0, lastSpawn = 0, running = true, level = 1, poppedTotal = 0;
-function resizeGame(){ const rect = gameCanvas.getBoundingClientRect(); gameCanvas.width = Math.floor(rect.width * devicePixelRatio); gameCanvas.height = Math.floor(rect.height * devicePixelRatio); W = gameCanvas.width; H = gameCanvas.height; gctx = gameCanvas.getContext('2d'); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
+/* allow clicking any mini progress to seek */
+mini.seek.addEventListener('input', ()=>{ const tr = tracks[currentTrack]; if(tr.duration) tr.currentTime = (mini.seek.value/100)*tr.duration; });
+
+/* ---------------------- Mute buttons ---------------------- */
+function bindMute(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.onclick = ()=>{ Sound.toggle(); };
+}
+bindMute('muteBtnGame'); bindMute('muteBtnDraw'); bindMute('muteBtnChat');
+
+/* ---------------------- Bubble pop (level-ish) ---------------------- */
+const gameCanvas = document.getElementById('gameCanvas'); const gctx = gameCanvas.getContext('2d');
+let bubbles=[],score=0,lastSpawn=0,prevT=performance.now(),running=true,level=1;
+function resizeGame(){ const r=gameCanvas.getBoundingClientRect(); gameCanvas.width=Math.floor(r.width*devicePixelRatio); gameCanvas.height=Math.floor(r.height*devicePixelRatio); gctx.setTransform(1,0,0,1,0,0); gctx.scale(devicePixelRatio,devicePixelRatio); }
 window.addEventListener('resize', resizeGame); resizeGame();
-function spawnBubble(){ const r = 18 + Math.random()*30*Math.max(1,1 - level*0.02); const x = r + Math.random()*(gameCanvas.clientWidth - r*2); const y = gameCanvas.clientHeight + r + 10; const vy = (0.6 + Math.random()*1.2) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')); const hue = Math.floor(180 + Math.random()*140); const points = Math.ceil((r-18)/6)+1; bubbles.push({x,y,r,vy,alpha:1,hue,popped:false,points}); }
-function updateBubble(b,dt){ if(!b.popped){ b.y -= b.vy * dt * 0.06 * (1 + level*0.01); if(b.y < -b.r){ b.popped = true; b.alpha = 0; } } else b.alpha -= 0.04; }
-function drawBubble(b){ const ctx=gctx; ctx.save(); ctx.globalAlpha = Math.max(0,b.alpha); ctx.shadowColor = `rgba(255,255,255,0.9)`; ctx.shadowBlur = 12; ctx.lineWidth = 2; ctx.strokeStyle = `rgba(0,0,0,0.25)`; const cx=b.x,cy=b.y,r=b.r; const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx,cy,r); grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`); ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.fill(); ctx.restore(); }
-let prevT = performance.now();
-function gameLoop(t){ const dt = t - prevT; prevT = t; if(running){ gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); const grd = gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)'); gctx.fillStyle = grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); if(t - lastSpawn > Math.max(350,900 - level*20)){ spawnBubble(); lastSpawn = t; } bubbles = bubbles.filter(b => b.alpha > 0); for(const b of bubbles){ updateBubble(b,dt); drawBubble(b); } checkLevelUp(); } requestAnimationFrame(gameLoop); }
+function spawnBubble(){ const r=12 + Math.random()*36; const x=r+Math.random()*(gameCanvas.clientWidth - r*2); const y=gameCanvas.clientHeight + r +10; const vy=(0.4+Math.random()*1.2) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')); const hue=Math.floor(200+Math.random()*100); bubbles.push({x,y,r,vy,alpha:1,hue,popped:false}); }
+function updateBubble(b,dt){ if(!b.popped){ b.y -= b.vy * dt * 0.06 * (1 + (level-1)*0.03); if(b.y < -b.r){ b.popped=true; b.alpha=0;} } else b.alpha -= 0.04; }
+function drawBubble(b){ gctx.save(); gctx.globalAlpha=Math.max(0,b.alpha); gctx.shadowColor='rgba(255,255,255,0.9)'; gctx.shadowBlur=12; gctx.lineWidth=2; gctx.strokeStyle='rgba(0,0,0,0.25)'; const cx=b.x,cy=b.y,r=b.r; const grad=gctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.2,cx,cy,r); grad.addColorStop(0,`hsla(${b.hue},90%,96%,.95)`); grad.addColorStop(1,`hsla(${b.hue},70%,65%,.65)`); gctx.fillStyle=grad; gctx.beginPath(); gctx.arc(cx,cy,r,0,Math.PI*2); gctx.fill(); gctx.stroke(); gctx.beginPath(); gctx.arc(cx-r*0.38,cy-r*0.38,r*0.22,0,Math.PI*2); gctx.fillStyle='rgba(255,255,255,.6)'; gctx.fill(); gctx.restore(); }
+function gameLoop(t){ const dt = t - prevT; prevT=t; if(running){ gctx.clearRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); const grd=gctx.createLinearGradient(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); grd.addColorStop(0,'rgba(255,255,255,.28)'); grd.addColorStop(1,'rgba(255,255,255,.18)'); gctx.fillStyle=grd; gctx.fillRect(0,0,gameCanvas.clientWidth,gameCanvas.clientHeight); if(t-lastSpawn > Math.max(220,900 - level*10)){ spawnBubble(); lastSpawn = t; } bubbles = bubbles.filter(b=>b.alpha>0); for(const b of bubbles){ updateBubble(b,dt); drawBubble(b); } } requestAnimationFrame(gameLoop); }
 requestAnimationFrame(gameLoop);
-gameCanvas.addEventListener('click', (e)=>{ const rect = gameCanvas.getBoundingClientRect(); const x = e.clientX - rect.left, y = e.clientY - rect.top; for(const b of bubbles){ const dx = x - b.x, dy = y - b.y; if(!b.popped && dx*dx + dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; score += b.points; poppedTotal++; scoreTxt.textContent = score; Sound.pop(); maybeEncourage(); break; } }});
-resetGameBtn.onclick = ()=>{ Sound.click(); bubbles=[]; score=0; scoreTxt.textContent=0; level=1; poppedTotal=0; };
-function maybeEncourage(){ const milestones=[25,50,100,150,250,500,1000]; for(const m of milestones){ if(score>=m && (score - bubbles.length) < m){ addTip('Game', `✨ Milestone ${m}! Nicely done!`); Sound.toggle(); } } if(Math.random()<0.12) addTip('Game', ["Nice flow ✨","Breathe and pop 🌬️","Steady! Keep going 🙂"][Math.floor(Math.random()*3)]); }
-function checkLevelUp(){ const next = Math.floor(poppedTotal/15)+1; if(next>level){ level=next; addTip('Game', `Level up! You reached level ${level}.`); } }
 
-/* ---------- Drawpad logic + prompt management + TF auto-check ---------- */
-const drawCanvas = document.getElementById('drawCanvas'); const dctx = drawCanvas.getContext('2d', { willReadFrequently: true });
-let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0, lastY=0, erasing=false;
-function sizeDrawCanvas(){ const rect = drawCanvas.getBoundingClientRect(); const prev = (()=>{ try{return dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);}catch(e){return null;} })(); drawCanvas.width = Math.floor(rect.width * devicePixelRatio); drawCanvas.height = Math.floor(rect.height * devicePixelRatio); dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio); try{ if(prev) dctx.putImageData(prev,0,0);}catch(e){} }
+gameCanvas.addEventListener('click',(e)=>{ const rect=gameCanvas.getBoundingClientRect(); const x=e.clientX-rect.left, y=e.clientY-rect.top; for(const b of bubbles){ const dx=x-b.x, dy=y-b.y; if(!b.popped && dx*dx+dy*dy <= b.r*b.r){ b.popped=true; b.vy=0; score+=1; document.getElementById('scoreTxt').textContent = score; Sound.pop(); checkMilestones(); level = Math.min(30,1 + Math.floor(score/10)); break; } } });
+document.getElementById('resetGame').onclick = ()=>{ Sound.click(); bubbles=[]; score=0; level=1; document.getElementById('scoreTxt').textContent=0; };
+
+function checkMilestones(){
+  const milestones = [5,10,25,50,75,100,150,250,500,1000];
+  for(const m of milestones){
+    if(score === m){
+      addBubbleHint(`Nice — ${m} popped! You're doing great 🎉`);
+    }
+  }
+}
+function addBubbleHint(text){
+  addMessage(text,'bot'); // reuse chat message style in chat-box (separate)
+}
+
+/* ---------------------- Drawing canvas ---------------------- */
+const drawCanvas = document.getElementById('drawCanvas'); const dctx = drawCanvas.getContext('2d',{willReadFrequently:true});
+let drawing=false, brushColor='#1e88e5', brushSize=10, lastX=0,lastY=0,erasing=false;
+function sizeDrawCanvas(){
+  const rect = drawCanvas.getBoundingClientRect();
+  const prev = (()=>{try{return dctx.getImageData(0,0,drawCanvas.width||1,drawCanvas.height||1);}catch(e){return null;}})();
+  drawCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  drawCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  dctx.setTransform(1,0,0,1,0,0); dctx.scale(devicePixelRatio,devicePixelRatio);
+  if(prev) try{ dctx.putImageData(prev,0,0); }catch(e){}
+}
 new ResizeObserver(sizeDrawCanvas).observe(drawCanvas); setTimeout(sizeDrawCanvas,0);
 function startDraw(x,y){ drawing=true; lastX=x; lastY=y; Sound.scribble(); }
 function moveDraw(x,y){ if(!drawing) return; dctx.lineWidth = brushSize; dctx.lineCap='round'; dctx.lineJoin='round'; if(erasing){ dctx.globalCompositeOperation='destination-out'; dctx.strokeStyle='rgba(0,0,0,1)'; } else { dctx.globalCompositeOperation='source-over'; dctx.strokeStyle = brushColor; } dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke(); lastX=x; lastY=y; }
@@ -439,167 +428,207 @@ function endDraw(){ drawing=false; dctx.globalCompositeOperation='source-over'; 
 drawCanvas.addEventListener('mousedown', e=>{ const r=drawCanvas.getBoundingClientRect(); startDraw(e.clientX - r.left, e.clientY - r.top); });
 drawCanvas.addEventListener('mousemove', e=>{ const r=drawCanvas.getBoundingClientRect(); moveDraw(e.clientX - r.left, e.clientY - r.top); });
 window.addEventListener('mouseup', endDraw);
-drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
-drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; const r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
-drawCanvas.addEventListener('touchend', endDraw);
-document.querySelectorAll('.swatch').forEach(btn=>btn.addEventListener('click', ()=>{ brushColor = btn.dataset.color; erasing=false; document.getElementById('eraserToggle').checked=false; Sound.click(); }));
-document.getElementById('brushSize').addEventListener('input', e=>brushSize=+e.target.value);
-document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor=e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
+drawCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0], r=drawCanvas.getBoundingClientRect(); startDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
+drawCanvas.addEventListener('touchmove', e=>{ const t=e.touches[0], r=drawCanvas.getBoundingClientRect(); moveDraw(t.clientX - r.left, t.clientY - r.top); e.preventDefault(); },{passive:false});
+document.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click', e=>{ brushColor = e.currentTarget.dataset.color; erasing=false; document.getElementById('eraserToggle').checked=false; Sound.click(); }));
+document.getElementById('brushSize').addEventListener('input', e=>brushSize = +e.target.value);
+document.getElementById('colorPicker').addEventListener('input', e=>{ brushColor = e.target.value; erasing=false; document.getElementById('eraserToggle').checked=false; });
 document.getElementById('eraserToggle').addEventListener('change', e=>{ erasing = e.target.checked; Sound.toggle(); });
-document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); };
-document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url=drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); };
+document.getElementById('clearDraw').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); document.getElementById('drawStatus').textContent=''; };
+document.getElementById('saveDraw').onclick = ()=>{ Sound.click(); const url = drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='doodle.png'; a.click(); };
 
-/* ---------- 100 drawing prompts ---------- */
-const PROMPTS = [
-  "cat","dog","house","tree","sun","moon","boat","car","flower","cup",
-  "bird","fish","butterfly","star","cloud","mountain","heart","cake","book","pencil",
-  "bicycle","rocket","guitar","shoe","hat","robot","dinosaur","elephant","lion","turtle",
-  "apple","banana","ice cream","camera","clock","lamp","chair","candle","key","map",
-  "window","door","bridge","island","island with palm tree","kite","balloon","penguin","owl","squirrel",
-  "castle","dragon","wizard","fairy","treasure chest","train","submarine","skyscraper","stadium","garden",
-  "forest","volcano","waterfall","lighthouse","ferris wheel","carousel","sandcastle","giraffe","zebra","koala",
-  "penguin sliding","skateboard","soccer ball","basketball hoop","microphone","headphones","piano","violin","calendar","envelope",
-  "mountain lake","campfire","tent","compass","backpack","binoculars","cactus","mushroom","lantern","sailboat",
-  "mermaid","spaceship","alien","satellite","hourglass","snowman","igloo","palm tree","road sign","traffic light"
+/* ---------------------- 100 challenges (embedded) ---------------------- */
+const CHALLENGES = [
+ "cat","dog","house","tree","sun","moon","star","flower","car","bicycle","boat","fish","bird","apple","banana","cup","cake","hat","shoe","clock",
+ "book","chair","telephone","key","lock","umbrella","cloud","mountain","rocket","train","rocketship","guitar","piano","drum","balloon","leaf","grass","bridge","lamp","eye",
+ "hand","foot","clock-face","map","camera","glass","spoon","fork","knife","truck","motorbike","penguin","panda","elephant","lion","tiger","bear","hippo","whale","octopus",
+ "house-plant","teapot","mushroom","jellyfish","crown","diamond","ring","sword","shield","anchor","compass","paper-boat","kite","stairs","door","window","keyhole","owl","fox","squirrel",
+ "lollipop","icecream","donut","sandwich","pencil","marker","eraser","paperclip","magnet","globe","tent","campfire","saxophone","violin","microphone","starfish","seahorse","shell","feather","scroll"
 ];
-let promptPool = shuffle([...PROMPTS]);
-const currentPromptEl = document.getElementById('currentPrompt');
-const autoCheckToggle = document.getElementById('autoCheckToggle');
-function pickPrompt(){ if(promptPool.length===0) promptPool = shuffle([...PROMPTS]); return promptPool.pop(); }
-let currentPrompt = null;
-function showNewPrompt(){ currentPrompt = pickPrompt(); currentPromptEl.textContent = `Try drawing a ${currentPrompt}`; }
-document.getElementById('newPromptBtn').onclick = ()=>{ Sound.click(); showNewPrompt(); }
-document.getElementById('laterPrompt').onclick = ()=>{ Sound.click(); addTip('Draw','Alright—free drawing unlocked.'); toggleChatInput(false); }
-document.getElementById('closePrompt').onclick = ()=>{ Sound.click(); document.getElementById('promptPanel').style.display='none'; }
-document.getElementById('noPrompt').onclick = ()=>{ Sound.click(); addTip('Draw','Awesome — try another prompt?'); showNewPrompt(); }
-document.getElementById('clearSaveBtn').onclick = ()=>{ Sound.click(); dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); const url=drawCanvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='drawing.png'; a.click(); }
-
-/* When user clicks OK: auto-check if enabled, otherwise treat as manual acceptance or ask "try again?" */
-document.getElementById('okPrompt').onclick = async ()=>{
-  Sound.click();
-  if(!currentPrompt){ addTip('Draw','No prompt selected — choose New Prompt'); return; }
-  if(autoCheckToggle.checked){ await autoCheckDrawing(currentPrompt); } else {
-    addTip('Draw','Saved as a nice try! Want to auto-check next time? Toggle Auto‑Check.');
-  }
+/* synonyms map for better matching (a few common ones) */
+const SYNONYMS = {
+  "cat":["cat","kitten","kitty","feline"],
+  "dog":["dog","puppy","hound","canine"],
+  "house":["house","home","cabin"],
+  "tree":["tree","oak","pine"],
+  "car":["car","automobile","vehicle"],
+  "bicycle":["bicycle","bike","cycle"],
+  "cup":["cup","mug","glass"],
+  "cake":["cake","birthday cake"],
+  "key":["key"],
+  "star":["star"],
+  "sun":["sun"],
+  "moon":["moon"],
+  "fish":["fish"],
+  "bird":["bird"],
+  "umbrella":["umbrella"],
+  "rocket":["rocket","rocketship","spaceship"],
+  "guitar":["guitar"],
+  "piano":["piano","keyboard"],
+  "balloon":["balloon"],
+  "snowman":["snowman"],
+  "penguin":["penguin"],
+  "elephant":["elephant"],
+  // leave rest free-form
 };
 
-/* ---------- TensorFlow MobileNet model loading & auto-check ---------- */
+/* UI wiring for challenges */
+let currentChallengeIndex = Math.floor(Math.random()*CHALLENGES.length);
+const challengeWordEl = document.getElementById('challengeWord');
+const drawStatusEl = document.getElementById('drawStatus');
+function showChallenge(i){
+  currentChallengeIndex = i % CHALLENGES.length;
+  const word = CHALLENGES[currentChallengeIndex];
+  challengeWordEl.textContent = word;
+  drawStatusEl.textContent = '';
+}
+function nextChallenge(){ showChallenge((currentChallengeIndex+1)%CHALLENGES.length); }
+function randomChallenge(){ showChallenge(Math.floor(Math.random()*CHALLENGES.length)); }
+document.getElementById('newChallengeBtn').addEventListener('click', ()=>{ Sound.click(); randomChallenge(); });
+document.getElementById('challengeClose').addEventListener('click', ()=>{ Sound.click(); document.getElementById('flowDraw').style.display='none'; });
+document.getElementById('challengeLater').addEventListener('click', ()=>{ Sound.click(); document.getElementById('flowDraw').style.display='none'; addMessage("Free mode: doodle however you like!", 'bot'); toggleChatInput(false); });
+document.getElementById('challengeNo').addEventListener('click', ()=>{ Sound.click(); nextChallenge(); addMessage("Okay, here's a different one — try this!", 'bot'); });
+document.getElementById('challengeOK').addEventListener('click', ()=>{ Sound.click(); autoCheckAndScore(); });
+
+/* also OK/No/Later for small chips in other screens—kept simple */
+document.getElementById('challengeClose').onclick = ()=>document.getElementById('flowDraw').style.display='none';
+
+/* set initial challenge on load */
+showChallenge(currentChallengeIndex);
+
+/* ---------------------- TensorFlow MobileNet (auto-check) ---------------------- */
 let mobilenetModel = null;
-async function loadModel(){ try{ mobilenetModel = await mobilenet.load({version:2,alpha:1.0}); console.log('mobilenet loaded'); }catch(e){ console.warn('mobilenet load failed',e); mobilenetModel=null; } }
-loadModel();
-
-async function autoCheckDrawing(prompt){
-  if(!mobilenetModel){ addTip('Draw',"Auto-check unavailable (model still loading or blocked). Try again or uncheck Auto‑Check."); return; }
-  addTip('Draw','Checking your drawing...'); // show status
-  // Convert canvas to tensor via tf.browser.fromPixels
+async function loadMobilenet(){
   try{
-    const img = tf.browser.fromPixels(drawCanvas);
-    // MobileNet expects 224 px width; model will handle internal resizing in predict
-    const result = await mobilenetModel.classify(img,3);
-    img.dispose();
-    // Compare result labels to prompt words
-    const labels = result.map(r=>r.className.toLowerCase());
-    const promptNorm = norm(prompt);
-    const promptWords = promptNorm.split(' ');
-    let match=false, bestLabel = result[0]?.className||'';
-    // direct match checks
-    for(const lab of labels){
-      for(const w of promptWords){
-        if(lab.includes(w) || w.includes(lab.split(',')[0])) match=true;
-        // Levenshtein fuzzy
-        const lnorm = lab.replace(/[^a-z0-9 ]+/g,'').split(' ')[0];
-        if(lev(lnorm, w) <= 2) match=true;
+    mobilenetModel = await mobilenet.load({version:2,alpha:1.0});
+    console.log('mobilenet loaded');
+  }catch(e){ console.warn('mobilenet load failed',e); mobilenetModel=null; }
+}
+loadMobilenet();
+
+/* helper: get canvas image resized to 224x224 */
+function getCanvasImageTensor(){
+  // capture drawCanvas scaled into an offscreen canvas
+  const off = document.createElement('canvas');
+  off.width = 224; off.height = 224;
+  const octx = off.getContext('2d');
+  // white background for better classification
+  octx.fillStyle = '#fff'; octx.fillRect(0,0,off.width,off.height);
+  // fit drawn canvas into off canvas preserving aspect
+  const src = drawCanvas;
+  const sr = src.getBoundingClientRect();
+  octx.drawImage(src, 0, 0, off.width, off.height);
+  return off;
+}
+
+/* check: compares classifier labels to current challenge with synonyms and fuzzy includes */
+async function autoCheckAndScore(){
+  const auto = document.getElementById('autoCheckToggle').getAttribute('aria-pressed') === 'true';
+  if(!auto){ addMessage("Auto-check is off — you're in freestyle mode. Save or share your art!", 'bot'); return; }
+  if(!mobilenetModel){ addMessage("Recognition model still loading — try again in a moment.", 'bot'); return; }
+  addMessage("Checking your doodle... 🔎", 'bot');
+  const img = getCanvasImageTensor();
+  try{
+    const results = await mobilenetModel.classify(img);
+    console.log(results);
+    // decide match: use synonyms if available or check if any result includes the challenge term
+    const challenge = CHALLENGES[currentChallengeIndex];
+    const syns = SYNONYMS[challenge] || [challenge];
+    const found = results.find(r=>{
+      const lab = r.className.toLowerCase();
+      for(const s of syns){
+        if(lab.includes(s.toLowerCase())) return true;
+        // also compare by tokens, e.g., 'digital clock' vs 'clock'
+        const tokens = s.toLowerCase().split(/[\s\-_]+/);
+        if(tokens.every(tok => lab.includes(tok))) return true;
       }
-    }
-    if(match){
-      const praises = ["Wow — that looks great!","Amazing! Nice job 🎉","Nice! You nailed it!","Lovely, well done!"];
-      addTip('Draw', praises[Math.floor(Math.random()*praises.length)]);
-      // optional: highlight matching label
-      addTip('Draw', `Auto-check saw: ${bestLabel}`);
+      return false;
+    });
+    // apply threshold
+    if(found && found.probability > 0.12){
+      // success
+      addMessage(["Wow! That looks great!","Nice job — that really looks like a " + challenge + "!","Fantastic — you nailed it!"][Math.floor(Math.random()*3)], 'bot');
+      Sound.pop();
+      document.getElementById('drawStatus').textContent = `Match: ${found.className} (${(found.probability*100).toFixed(1)}%)`;
+      // offer new challenge after short delay
+      setTimeout(()=>{ nextChallenge(); }, 1200);
     } else {
-      const tries = ["Omg that's lovely — want to try again for fun?","So nice! Keen to try another version?","Close! Want a retry to see if we can make it match?"];
-      addTip('Draw', tries[Math.floor(Math.random()*tries.length)]);
-      addTip('Draw', `Hints: I detected ${labels.join(', ')}`);
+      // gentle retry
+      addMessage(["Lovely! Want to try again for a little reward?","So nice — maybe try again to make it even clearer?","Great attempt! Fancy another try or switch to free-draw?"][Math.floor(Math.random()*3)], 'bot');
+      Sound.toggle();
+      if(results && results.length) document.getElementById('drawStatus').textContent = `Top guess: ${results[0].className} (${(results[0].probability*100).toFixed(1)}%)`;
     }
-  }catch(err){
-    console.error(err);
-    addTip('Draw','Auto-check failed — please try again or disable Auto‑Check.');
+  }catch(e){
+    console.error(e);
+    addMessage("Oops — recognition failed. Try again or freestyle. (Model may not detect every doodle.)", 'bot');
   }
 }
 
-/* ---------- Chatbot: improved fuzzy intents + empathetic replies ---------- */
-const chatBox = document.getElementById('chat-box'); const userInputField = document.getElementById('user-input'); const sendBtn = document.getElementById('send-btn');
-const moodButtons = document.querySelectorAll('.mood-btn'); let speakRepliesOn=false, synth = window.speechSynthesis;
+/* Auto-check toggle */
+document.getElementById('autoCheckToggle').addEventListener('click', function(){
+  const p = this.getAttribute('aria-pressed') === 'true';
+  this.setAttribute('aria-pressed', String(!p));
+  this.textContent = !p ? "✅ Auto‑Check" : "❌ Auto‑Check";
+  Sound.click();
+});
 
-function addMessage(text, sender){ const div=document.createElement('div'); div.className='message '+sender; div.textContent=text; chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight; if(speakRepliesOn && sender==='bot') speakText(text); }
-function speakText(t){ if(!synth) return; if(synth.speaking) synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; synth.speak(u); }
-
-const INTENTS = [
-  {key:'bullying', patterns:['bully','bullied','bullying','picked on','harass','mean'], reply:["I'm really sorry you had to face bullying — you deserve safety. Want practical steps to handle it?","That sounds awful. We can roleplay what to say, or plan who to tell." ]},
-  {key:'lonely', patterns:['lonely','alone','isolated','left out','leftout'], reply:["Loneliness is heavy. Want to plan a tiny reach-out message to one person?","You're not a burden. We can pick someone small to text — I can draft it."]},
-  {key:'anxious', patterns:['nervous','anxious','scared','afraid','panic','worry'], reply:["Try breathing 4-4-6 with me — breathe in 4, hold 4, out 6. Want me to pace you?","Grounding helps: name 5 things you see, 4 you can touch, 3 you hear... ready?"]},
-  {key:'angry', patterns:['angry','mad','furious','rage'], reply:["Anger is valid. Want a 60-second vent or a cool-down exercise?","Let's make a quick plan: Pause, breathe, one small step. Which would you prefer?"]},
-  {key:'sad', patterns:['sad','down','cry','depressed','blue','unhappy'], reply:["I’m so sorry you’re feeling low. Want to tell me about it or try a tiny comfort (music, blanket)?","It's okay to feel this — do you want a quick coping idea or to just be heard?"]},
-  {key:'thanks', patterns:['thank','thanks','thankyou','ty','appreciate'], reply:["You're welcome — glad to help!","Anytime — I'm here when you need."]},
-  {key:'selfharm', patterns:['hurt myself','kill myself','suicide','die by'], reply:["I’m really sorry you’re feeling this. I can’t help with instructions. If you’re in immediate danger, please call your local emergency number now. If you’re in Malaysia (or elsewhere), reach a trusted adult or hotline. Would you like crisis resources?"] , sensitive:true}
-];
-
-function matchIntent(text){
-  const s = norm(text);
-  if(!s) return null;
-  // small safety: suicide/self-harm detection
-  for(const it of INTENTS.filter(i=>i.sensitive)){ for(const p of it.patterns) if(s.includes(p)) return it.key; }
-  let best=null, bestScore=1e9;
-  for(const intent of INTENTS){
-    for(const p of intent.patterns){
-      const d = lev(s.replace(/ /g,''), p.replace(/ /g,'')); const scaled = d / Math.max(3,p.length);
-      if(d <= 2 || scaled <= 0.33 || s.includes(p)) { if(d < bestScore){ best=intent.key; bestScore=d; } }
-    }
-  }
-  return best;
+/* ---------------------- Chat (local, friend‑style) ---------------------- */
+const chatBox = document.getElementById('chat-box');
+function addMessage(text, sender){
+  const d = document.createElement('div'); d.className = `message ${sender}`; d.textContent = text; chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight;
+  if(sender === 'bot') { /* optionally speak */ }
 }
-
-function respondTo(text){
-  const key = matchIntent(text);
-  if(!key) { addMessage("I didn't quite catch that — want to rephrase or pick a mood above? 💙", "bot"); return; }
-  const it = INTENTS.find(i=>i.key===key);
-  const r = it.reply[Math.floor(Math.random()*it.reply.length)];
-  addMessage(r, "bot");
-}
-
-sendBtn.addEventListener('click', ()=>{ const v=userInputField.value.trim(); if(!v) return; addMessage(v,"user"); userInputField.value=''; respondTo(v); });
-userInputField.addEventListener('keypress', e=>{ if(e.key==='Enter') sendBtn.click(); });
-
-moodButtons.forEach(btn=>btn.addEventListener('click', ()=>{ Sound.click(); moodButtons.forEach(b=>b.setAttribute('aria-pressed','false')); btn.setAttribute('aria-pressed','true'); const mood = btn.classList[1]; const openers = { happy:"Hey — love that you're feeling happy! What's up?", sad:"I'm sorry you're sad. Want to tell me about it?", angry:"You're allowed to be angry. Want to vent?", nervous:"Nervous now — want a grounding exercise?" }; addMessage(openers[mood]||"Tell me more, I'm listening 💙", "bot"); }));
-
-/* ---------- Flow helpers & tips ---------- */
-function addTip(area, text){ addMessage(`[${area}] ${text}`, "bot"); }
-function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block':'none'; }
-
-/* ---------- Prompt startup ---------- */
-function loadPromptIfNeeded(){ if(!currentPrompt) showNewPrompt(); else currentPromptEl.textContent = `Try drawing a ${currentPrompt}`; document.getElementById('promptPanel').style.display = 'flex'; }
-function showNewPrompt(){ currentPrompt = pickPrompt(); document.getElementById('currentPrompt').textContent = `Try drawing a ${currentPrompt}`; }
-
-/* ---------- Tiny UI binds ---------- */
-document.getElementById('newPromptBtn').addEventListener('click', ()=>{ showNewPrompt(); });
-document.getElementById('okPrompt').addEventListener('click', ()=>{ /* handled above */ });
-document.getElementById('laterPrompt').addEventListener('click', ()=>{ addTip('Draw','Freestyle mode enabled.'); toggleChatInput(false); });
-
-/* ---------- Theme open/close safety ---------- */
-function closeThemes(){ document.getElementById('themesPanel').classList.remove('open'); }
-
-/* ---------- Start attempts: resume audio only on first interaction if blocked ---------- */
-let firstInteraction=false;
-function startOnFirstInteraction(){ if(firstInteraction) return; firstInteraction=true; document.removeEventListener('pointerdown', startOnFirstInteraction); audio.play().catch(()=>{}); }
-document.addEventListener('pointerdown', startOnFirstInteraction, {once:true});
-
-/* ---------- Load mobilenet model early ---------- */
-(async ()=>{ try{ await loadModel(); }catch(e){ console.warn('model load error',e);} })();
-
-/* ---------- On load: show initial messages ---------- */
 addMessage("Hi! 👋 How was your day? 😊", "bot");
-showNewPrompt();
 
+const moodButtons = document.querySelectorAll('.mood-btn');
+const suggestions = {
+  happy:["That's wonderful—what made your day shine?","Amazing! Share one happy moment."],
+  sad:["I'm sorry you're feeling sad. Want to tell me more?","I hear you. Do you want a small comfort idea?"],
+  angry:["It's okay to be angry. Want a breathing trick?","I can listen. Tell me what happened."],
+  nervous:["Take a slow breath. Want to talk about what's making you nervous?","I got you — want a 4-4-6 breathing exercise?"]
+};
+moodButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    moodButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+    const mood = btn.classList[1];
+    addMessage(suggestions[mood][Math.floor(Math.random()*suggestions[mood].length)], 'bot');
+    // show chat flow UI optionally
+    document.getElementById('flowChat').style.display = 'flex';
+    document.getElementById('flowChatQ').textContent = "Want to tell more?";
+    document.getElementById('flowChatYes').onclick = ()=>{ Sound.click(); document.querySelector('.input-footer').style.display='block'; addMessage("I'm listening. 💬",'bot'); document.getElementById('flowChat').style.display='none'; };
+    document.getElementById('flowChatNo').onclick = ()=>{ Sound.click(); document.getElementById('flowChat').style.display='none'; addMessage("All good — I'm here when you need me. 💙",'bot'); };
+    document.getElementById('flowChatClose').onclick = ()=>{ Sound.click(); document.getElementById('flowChat').style.display='none'; };
+  });
+});
+
+document.getElementById('send-btn').addEventListener('click', ()=>{
+  const v=document.getElementById('user-input');
+  if(!v.value.trim()) return;
+  addMessage(v.value.trim(),'user');
+  const userText = v.value.trim().toLowerCase();
+  v.value='';
+  // simple local intent responses
+  if(/thank|thanks|thx/.test(userText)){ addMessage("You're welcome! 😊",'bot'); return; }
+  if(/sad|upset|cry|bad/.test(userText)){ addMessage("I'm sorry — that sounds heavy. Want a 3-step breathing exercise?","bot"); return; }
+  if(/happy|good|great|amazing/.test(userText)){ addMessage("Love to hear that! Want a small celebration idea? 🎉",'bot'); return; }
+  addMessage("Thanks for sharing — tell me a bit more or choose an activity above. 💙",'bot');
+});
+
+/* ---------------------- small helpers ---------------------- */
+function toggleChatInput(show){ document.querySelector('.input-footer').style.display = show ? 'block' : 'none'; }
+
+/* ---------------------- keyboard/touches ---------------------- */
+document.addEventListener('keydown', e=>{ if(e.key === "Escape"){ document.getElementById('themesPanel').classList.remove('open'); document.getElementById('flowDraw').style.display='none'; document.getElementById('flowGame').style.display='none'; } });
+
+/* ---------------------- initial UI tweaks ---------------------- */
+document.getElementById('flowDraw').style.display='flex';
+document.getElementById('flowChat').style.display='none';
+document.getElementById('miniPlayer').style.display='flex';
+document.getElementById('miniPlayPause').textContent = '▶️';
+document.getElementById('autoCheckToggle').setAttribute('aria-pressed','true');
+
+/* ---------------------- end of main script ---------------------- */
 </script>
 </body>
 </html>
