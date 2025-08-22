@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>AuraAI • Play • Create</title>
+<title>AuraAI • Welcome • Play • Create</title>
 <link rel="icon" href="data:,">
 <style>
   :root{
@@ -35,14 +35,13 @@
     backdrop-filter: blur(16px) saturate(120%);
     position:relative;
   }
-  /* mac-style live clock (top-right) */
   .clock{
     position:absolute; top:14px; right:18px; padding:8px 12px;
     border-radius:14px; background: var(--glass-2); border:1px solid var(--stroke);
     font-variant-numeric: tabular-nums; letter-spacing:0.5px; box-shadow: inset 0 1px 0 #fff2;
   }
 
-  /* Top nav tabs */
+  /* Tabs */
   .tabs{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center}
   .tab{
     padding:10px 14px; border-radius:16px;
@@ -61,20 +60,36 @@
   .chip{padding:6px 10px; border-radius:12px; background:var(--glass-2); border:1px solid var(--stroke); cursor:pointer}
   .chip[aria-pressed="true"]{outline:2px solid var(--accent); background:#7cc6ff1f}
 
-  /* Left side: emotion switcher always visible */
-  .dock{
-    display:flex; gap:12px; flex-wrap:wrap; align-items:center
-  }
-  .dock .chip{display:flex; align-items:center; gap:6px}
-
-  /* Panels */
   .panel{display:none}
   .panel.active{display:block}
 
-  /* Aura chat area */
-  .chat-wrap{
-    display:grid; grid-template-columns: 280px 1fr; gap:16px;
+  /* HOME */
+  .hero{
+    display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; align-items:stretch;
   }
+  @media (max-width: 980px){ .hero{grid-template-columns:1fr} }
+  .hero-card{
+    background: var(--glass-2); border:1px solid var(--stroke); border-radius:20px; padding:22px;
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
+  }
+  .hero h1{margin:0 0 8px; font-size:36px; letter-spacing:.3px}
+  .hero p{margin:0 0 16px; color:var(--muted)}
+  .cta-grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:14px}
+  @media (max-width: 820px){ .cta-grid{grid-template-columns:1fr;}}
+  .cta{
+    padding:18px; border-radius:18px; background:linear-gradient(180deg, #ffffff14, #ffffff08);
+    border:1px solid var(--stroke); cursor:pointer; user-select:none; transition:.2s;
+    box-shadow: 0 8px 24px #0006, inset 0 1px 0 #fff2; display:flex; flex-direction:column; gap:6px;
+  }
+  .cta:hover{transform:translateY(-2px)}
+  .cta .title{font-weight:800; font-size:18px}
+  .cta .desc{color:var(--muted); font-size:14px}
+  .cta.play{background:linear-gradient(180deg, #59e48f33, #59e48f1a)}
+  .cta.talk{background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26)}
+  .cta.draw{background:linear-gradient(180deg, #ffc87733, #ffc8771a)}
+
+  /* AURA CHAT */
+  .chat-wrap{display:grid; grid-template-columns: 280px 1fr; gap:16px;}
   @media (max-width: 920px){ .chat-wrap{grid-template-columns:1fr} }
   .side-card, .main-card{
     background: var(--glass-2); border:1px solid var(--stroke); border-radius:20px; padding:14px;
@@ -86,7 +101,6 @@
     padding:10px 12px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); cursor:pointer;
   }
   .bubble[aria-pressed="true"]{outline:2px solid #ffffff55}
-  /* Chat bubbles like iMessage/WhatsApp */
   .chat{
     height:480px; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:8px;
     scroll-behavior:smooth;
@@ -114,7 +128,7 @@
   .btn.good{background:linear-gradient(180deg, #59e48f33, #59e48f1a); border-color:#59e48f77}
   .btn.bad{background:linear-gradient(180deg, #ff737333, #ff73731a); border-color:#ff737377}
 
-  /* Draw */
+  /* DRAW */
   .draw-grid{display:grid; grid-template-columns: 360px 1fr; gap:16px}
   @media (max-width: 980px){ .draw-grid{grid-template-columns:1fr}}
   canvas.doodle{
@@ -127,7 +141,7 @@
   .okno{display:flex; gap:8px}
   .hint{color:var(--muted); font-size:13px}
 
-  /* Bubble Pop */
+  /* GAME */
   .game-wrap{display:grid; grid-template-columns: 320px 1fr; gap:16px}
   @media (max-width: 980px){ .game-wrap{grid-template-columns:1fr}}
   .game-canvas{
@@ -139,7 +153,7 @@
   .meter{height:10px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); overflow:hidden}
   .meter > span{display:block; height:100%; width:0%; background: linear-gradient(90deg, #59e48f, #7cc6ff)}
 
-  /* Themes */
+  /* THEMES */
   .themes-wrap{display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px}
   .swatch{
     padding:10px; border-radius:16px; border:1px solid var(--stroke); background:#ffffff12; cursor:pointer;
@@ -148,8 +162,6 @@
   .swatch .tag{position:absolute; bottom:8px; left:8px; font-size:11px; color:#fff9; background:#0006; padding:4px 6px; border-radius:8px}
   .swatch:hover{outline:2px solid #fff4}
   .group-title{margin:14px 2px 8px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:11px}
-
-  /* Tooltips (for theme names) */
   .has-tt{position:relative}
   .has-tt:hover::after{
     content: attr(data-tt);
@@ -158,7 +170,6 @@
     white-space:nowrap; box-shadow: 0 10px 20px #0007; font-size:12px;
   }
 
-  /* Small helpers */
   .muted{color:var(--muted)} .spacer{flex:1}
 </style>
 </head>
@@ -168,11 +179,11 @@
 
   <!-- Top Tabs -->
   <div class="tabs" role="tablist" aria-label="Main sections">
-    <div class="tab active" data-tab="aura" role="tab" aria-selected="true">🫧 AuraAI</div>
+    <div class="tab active" data-tab="home" role="tab" aria-selected="true">🏠 Home</div>
+    <div class="tab" data-tab="aura" role="tab">🫧 AuraAI</div>
     <div class="tab" data-tab="draw" role="tab">🎨 Draw</div>
     <div class="tab" data-tab="bubble" role="tab">🫧 Bubble Pop</div>
     <div class="spacer"></div>
-    <!-- Music -->
     <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
     <audio id="music" preload="auto">
       <source src="bgm1.mp3" type="audio/mpeg">
@@ -181,8 +192,44 @@
     </audio>
   </div>
 
+  <!-- HOME -->
+  <div class="panel active" id="panel-home" role="tabpanel" aria-labelledby="home-tab">
+    <div class="hero">
+      <div class="hero-card">
+        <h1>Welcome to AuraAI</h1>
+        <p>A calm, friendly space to <strong>talk</strong>, <strong>play</strong>, and <strong>create</strong>. Choose what you’d like to do below.</p>
+        <div class="cta-grid">
+          <div class="cta play" id="goGame">
+            <div class="title">Play a Game</div>
+            <div class="desc">Pop bubbles, level up, and feel the wins stack up.</div>
+          </div>
+          <div class="cta talk" id="goTalk">
+            <div class="title">Talk to Aura</div>
+            <div class="desc">Share how you feel. Aura listens and supports.</div>
+          </div>
+          <div class="cta draw" id="goDraw">
+            <div class="title">Draw</div>
+            <div class="desc">Sketch freely or follow a fun idea. Save your art.</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3 style="margin:0 0 8px; color:var(--muted)">Quick Tips</h3>
+        <ul style="margin:0 0 10px 18px">
+          <li>Switch feelings with the dock in the Aura tab.</li>
+          <li>Try the 4-4-6 breath: inhale 4s, hold 4s, exhale 6s.</li>
+          <li>Use Themes to change the look anytime.</li>
+        </ul>
+        <div class="bar" style="margin-top:8px">
+          <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
+          <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- AURA -->
-  <div class="panel active" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
+  <div class="panel" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
     <div class="bar">
       <div class="dock" id="emotionDock">
         <div class="chip" data-emote="happy">😊 Happy</div>
@@ -192,8 +239,8 @@
       </div>
       <div class="spacer"></div>
       <div class="chip has-tt" id="scriptedToggle" data-tt="Scripted Demo: Aura only replies when a line starts with ‘You:’">🎬 Scripted Demo</div>
-      <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
-      <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
+      <div class="chip has-tt" id="openThemes2" data-tt="Change the look">🎨 Themes</div>
+      <div class="chip has-tt" id="muteBtn2" data-tt="Mute encouragement sounds">🔇 Mute</div>
     </div>
 
     <div class="chat-wrap">
@@ -229,7 +276,7 @@
   <div class="panel" id="panel-draw" role="tabpanel">
     <div class="bar">
       <div class="chip has-tt" id="drawAsk" data-tt="Get a drawing idea">🧠 New idea</div>
-      <div class="chip has-tt" id="autoCheck" data-tt="Auto-check with AI" aria-pressed="true">✅ Auto‑Check</div>
+      <div class="chip has-tt" id="autoCheck" data-tt="Auto-check with AI" aria-pressed="true">✅ Auto-Check</div>
       <div class="chip has-tt" id="freeMode" data-tt="Free drawing">✍️ Freestyle</div>
       <div class="spacer"></div>
       <div class="chip has-tt" id="clearCanvas" data-tt="Clear the canvas">🧼 Clear</div>
@@ -252,7 +299,7 @@
       <div>
         <canvas id="doodle" class="doodle" width="800" height="600"></canvas>
         <div class="row" style="margin-top:10px">
-          <span class="hint" id="checkMsg">Auto‑Check is on.</span>
+          <span class="hint" id="checkMsg">Auto-Check is on.</span>
           <div class="spacer"></div>
           <button class="btn" id="savePNG">Save PNG</button>
         </div>
@@ -313,10 +360,11 @@ function tickClock(){
 tickClock(); setInterval(tickClock, 1000);
 
 /* =========================
-   Tab system + Music
+   Tabs + Music
 ========================= */
 const tabs = [...document.querySelectorAll('.tab')];
 const panels = {
+  home: document.getElementById('panel-home'),
   aura: document.getElementById('panel-aura'),
   draw: document.getElementById('panel-draw'),
   bubble: document.getElementById('panel-bubble'),
@@ -329,9 +377,14 @@ function showTab(name){
   const el = panels[name];
   el.style.display='block';
   requestAnimationFrame(()=>el.classList.add('active'));
-  if(name==='bubble'){prepareGameCanvas()} // ensure bubbles spawn without resize
+  if(name==='bubble'){prepareGameCanvas()}
+  if(name==='aura' && !auraGreeted){ greetAura(); }
 }
 tabs.forEach(t=>t.addEventListener('click', ()=>showTab(t.dataset.tab)));
+
+document.getElementById('goGame').addEventListener('click', ()=>showTab('bubble'));
+document.getElementById('goTalk').addEventListener('click', ()=>showTab('aura'));
+document.getElementById('goDraw').addEventListener('click', ()=>showTab('draw'));
 
 const music = document.getElementById('music');
 const musicBtn = document.getElementById('musicBtn');
@@ -346,7 +399,7 @@ musicBtn.addEventListener('click', ()=>{
 music.addEventListener('ended', ()=>{ pickTrack(); music.play(); });
 
 /* =========================
-   THEMES (Your sets + extras)
+   THEMES
 ========================= */
 const THEME_GROUPS = {
   'Grayscale': [
@@ -508,7 +561,6 @@ function renderThemes(){
     const grid = document.createElement('div'); grid.className='themes-wrap'; themesRoot.appendChild(grid);
     items.forEach(theme=>{
       const tile = document.createElement('div'); tile.className='swatch has-tt'; tile.dataset.tt = theme.name;
-      // visual
       if(theme.animated){
         tile.style.background = `linear-gradient(120deg, ${theme.grad})`;
         tile.style.backgroundSize = '300% 300%';
@@ -525,13 +577,10 @@ function renderThemes(){
 renderThemes();
 
 function applyTheme(t){
-  // set CSS vars to keep whole UI coherent
   document.documentElement.style.setProperty('--bg', t.bg || '#0e1116');
   document.documentElement.style.setProperty('--text', t.text || '#eef2f6');
-  // Accent based on bg to keep contrast
   document.documentElement.style.setProperty('--accent', '#7cc6ff');
   document.documentElement.style.setProperty('--accent-2', '#a8a6ff');
-  // background art
   const body = document.body;
   if(t.animated){
     body.style.background = `linear-gradient(120deg, ${t.grad})`;
@@ -546,12 +595,14 @@ function applyTheme(t){
 
 /* Theme panel open/close */
 const openThemes = document.getElementById('openThemes');
+const openThemes2 = document.getElementById('openThemes2');
 const backToAura = document.getElementById('backToAura');
 openThemes.addEventListener('click', ()=>{ panels.themes.style.display='block'; showTab('themes'); });
+openThemes2.addEventListener('click', ()=>{ panels.themes.style.display='block'; showTab('themes'); });
 backToAura.addEventListener('click', ()=>{ showTab('aura'); });
 
 /* =========================
-   AuraAI Chat
+   AuraAI Chat (with situation-based replies)
 ========================= */
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
@@ -560,6 +611,8 @@ const emotionDock = document.getElementById('emotionDock');
 const scriptedToggle = document.getElementById('scriptedToggle');
 
 let scriptedOnly = false;
+let auraGreeted = false;
+
 scriptedToggle.addEventListener('click', ()=>{
   scriptedOnly = !scriptedOnly;
   scriptedToggle.setAttribute('aria-pressed', scriptedOnly);
@@ -579,7 +632,7 @@ const emotionPrompts = {
   ],
   angry: [
     "That’s tough. I’m here with you.",
-    "Want a short 10‑breath reset or a game to vent?",
+    "Want a short 10-breath reset or a game to vent?",
     "I can listen as long as you like.",
   ],
   nervous: [
@@ -588,6 +641,12 @@ const emotionPrompts = {
     "Would a simple drawing or Bubble Pop help?",
   ]
 };
+
+function greetAura(){
+  auraGreeted = true;
+  auraSay("Hello! I’m Aura. 💫 How do you feel today?");
+  auraSay("You can switch feelings anytime with the buttons above.");
+}
 
 function auraSay(text){ addMsg(text,false); }
 function meSay(text){ addMsg(text,true); }
@@ -599,28 +658,111 @@ function addMsg(text, mine){
   chat.scrollTop = chat.scrollHeight;
 }
 
-function respond(msg){
-  // Scripted mode: reply only if starts with "You:"
-  if(scriptedOnly && !/^you:/i.test(msg)) return;
+/* Situation-based patterns */
+const scenarios = [
+  {
+    name: 'bullying',
+    test: /(i (was|am|got|feel) (being )?bullied|they (bullied|pick(ed)? on) me|someone (harassed|teased) me|got (picked|picked on)|they were mean to me)/i,
+    reply: () => [
+      "I’m really sorry that happened. Nobody deserves to be treated that way. 💙",
+      "If you want, we can talk through what happened, try a grounding breath (4-4-6), or switch to a calming activity like Draw or Bubble Pop.",
+      "Would you like one of these: <strong>Talk more</strong> • <strong>4-4-6 breath</strong> • <strong>Play Bubble Pop</strong> • <strong>Draw</strong>?"
+    ]
+  },
+  {
+    name: 'sad',
+    test: /\b(sad|down|blue|cry(ing)?|upset|depressed)\b/i,
+    reply: () => [
+      "Thanks for telling me. It’s okay to feel sad sometimes. I’m here with you. 💙",
+      "Want to try a gentle 4-4-6 breath together, draw something soothing, or talk a bit more about it?"
+    ]
+  },
+  {
+    name: 'anxious',
+    test: /\b(nervous|anxious|anxiety|worried|panic|scared)\b/i,
+    reply: () => [
+      "You’re safe here. Let’s try one round of 4-4-6: inhale 4, hold 4, exhale 6. We can repeat 3×. 😌",
+      "After that, we can chat more or play Bubble Pop to reset your focus."
+    ]
+  },
+  {
+    name: 'angry',
+    test: /\b(angry|mad|furious|frustrated|annoyed|rage)\b/i,
+    reply: () => [
+      "Makes sense to feel that way. Your feelings are valid.",
+      "Do you want a quick 10-breath reset, or to pop some bubbles to vent a bit?"
+    ]
+  },
+  {
+    name: 'lonely',
+    test: /\b(lonely|alone|no one cares|no one likes me)\b/i,
+    reply: () => [
+      "Feeling lonely can be heavy. You’re not alone here; I’m with you. 🤝",
+      "Would you like to talk more, draw together, or try a short game for a mood lift?"
+    ]
+  },
+  /* Gentle safety net for self-harm language */
+  {
+    name: 'self-harm',
+    test: /(hurt myself|self[-\s]?harm|suicid(e|al)|kill myself|end it)/i,
+    reply: () => [
+      "I’m really glad you told me. You deserve safety and care. 💙",
+      "If you’re in immediate danger, please contact your local emergency number now. Consider reaching out to a trusted person nearby.",
+      "I can stay with you here. Would a calming breath help, or would you like to talk about what led to these feelings?"
+    ]
+  }
+];
 
-  const clean = msg.toLowerCase();
-  // simple detection
-  if(/(happy|great|good|yay)/.test(clean)) auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
-  else if(/(sad|down|blue|cry|upset)/.test(clean)) auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
-  else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
-  else if(/(nervous|anxious|worry|scared)/.test(clean)) auraSay("Thanks for sharing. Try a 4‑4‑6 breath with me, or we can draw gently.");
-  else if(/(draw|sketch|paint)/.test(clean)){ auraSay("Opening Draw for you. ✨"); showTab('draw'); }
-  else if(/(bubble|game|play)/.test(clean)){ auraSay("Let’s play Bubble Pop! 🫧"); showTab('bubble'); }
-  else if(/(hug)/.test(clean)){ auraSay("Sending a big gentle hug 🤗 You’re cared for."); }
-  else auraSay("Got it. Tell me more, or choose an activity: Draw • Bubble Pop • Music.");
+/* Generic fallback suggestions */
+function genericFollowups(){
+  return "Tell me more, or choose an activity: <strong>Draw</strong> • <strong>Bubble Pop</strong> • <strong>Music</strong>.";
 }
 
+function respond(msg){
+  if(scriptedOnly && !/^you:/i.test(msg)) return;
+
+  // Situation-based detection first
+  const hit = scenarios.find(s => s.test.test(msg));
+  if(hit){
+    hit.reply().forEach(auraSay);
+    return;
+  }
+
+  const clean = msg.toLowerCase();
+
+  // Emotion + action routing
+  if(/(happy|great|good|yay|excited)/.test(clean)){
+    auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
+    return;
+  }
+  if(/(sad|down|blue|cry|upset)/.test(clean)){
+    auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
+    return;
+  }
+  if(/(angry|mad|frustrated|annoyed)/.test(clean)){
+    auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
+    return;
+  }
+  if(/(nervous|anxious|worry|scared)/.test(clean)){
+    auraSay("Thanks for sharing. Try a 4-4-6 breath with me, or we can draw gently.");
+    return;
+  }
+  if(/(draw|sketch|paint)/.test(clean)){ auraSay("Opening Draw for you. ✨"); showTab('draw'); return; }
+  if(/(bubble|game|play)/.test(clean)){ auraSay("Let’s play Bubble Pop! 🫧"); showTab('bubble'); return; }
+  if(/(hug)/.test(clean)){ auraSay("Sending a big gentle hug 🤗 You’re cared for."); return; }
+
+  // Default
+  auraSay("Got it. " + genericFollowups());
+}
+
+/* Input events */
 sendBtn.addEventListener('click', ()=>{
   const v = input.value.trim(); if(!v) return;
   meSay(v); respond(v); input.value='';
 });
 input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendBtn.click(); });
 
+/* Emotion dock */
 emotionDock.querySelectorAll('.chip').forEach(ch=>{
   ch.addEventListener('click', ()=>{
     emotionDock.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));
@@ -629,7 +771,8 @@ emotionDock.querySelectorAll('.chip').forEach(ch=>{
     emotionPrompts[em].forEach(auraSay);
   });
 });
-// quick bubbles
+
+/* Quick bubbles */
 document.querySelectorAll('.bubble').forEach(b=>{
   const say = b.dataset.say; const act = b.dataset.action;
   b.addEventListener('click', ()=>{
@@ -637,23 +780,17 @@ document.querySelectorAll('.bubble').forEach(b=>{
     if(act==='openDraw'){ showTab('draw'); }
     if(act==='openBubble'){ showTab('bubble'); }
     if(act==='sendHug'){ auraSay("🤗 A warm hug, just for you."); }
-    if(act==='breathing'){ auraSay("Let’s do 4‑4‑6 together. Inhale 4, hold 4, exhale 6 — three times."); }
+    if(act==='breathing'){ auraSay("Let’s do 4-4-6 together. Inhale 4, hold 4, exhale 6 — three times."); }
   });
 });
-// greet
-auraSay("Hello! I’m Aura. 💫 How do you feel today?");
-auraSay("You can switch feelings anytime with the buttons above.");
 
 /* =========================
-   DRAW + Auto‑check
+   DRAW + Auto-check
 ========================= */
 const doodle = document.getElementById('doodle');
-const ctx = doodle.getContext('2d');
+const ctx = doodle?.getContext?.('2d');
 let drawing=false, last=null;
 let stack=[], redo=[];
-function resizeCanvas(){ /* keep pixel size stable via width/height attributes already set */ }
-resizeCanvas();
-
 function strokeStart(x,y){ drawing=true; last=[x,y]; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=14; ctx.strokeStyle='#e6f0ff'; ctx.shadowBlur=0; pushState(); }
 function strokeMove(x,y){ if(!drawing) return; ctx.beginPath(); ctx.moveTo(last[0],last[1]); ctx.lineTo(x,y); ctx.stroke(); last=[x,y]; }
 function strokeEnd(){ drawing=false; last=null; if(autoCheckOn) queuedCheck(); }
@@ -663,12 +800,13 @@ function getPos(e){
   const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
   return [x * doodle.width / r.width, y * doodle.height / r.height];
 }
-doodle.addEventListener('pointerdown', e=>{doodle.setPointerCapture(e.pointerId); const [x,y]=getPos(e); strokeStart(x,y)});
-doodle.addEventListener('pointermove', e=>{const [x,y]=getPos(e); strokeMove(x,y)});
-doodle.addEventListener('pointerup', strokeEnd);
-doodle.addEventListener('pointerleave', strokeEnd);
+if(doodle){
+  doodle.addEventListener('pointerdown', e=>{doodle.setPointerCapture(e.pointerId); const [x,y]=getPos(e); strokeStart(x,y)});
+  doodle.addEventListener('pointermove', e=>{const [x,y]=getPos(e); strokeMove(x,y)});
+  doodle.addEventListener('pointerup', strokeEnd);
+  doodle.addEventListener('pointerleave', strokeEnd);
+}
 
-/* Undo/Redo */
 function pushState(){ try{ stack.push(doodle.toDataURL()); redo.length=0; }catch(e){} }
 function undo(){ if(stack.length){ const last=stack.pop(); redo.push(last); const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,doodle.width,doodle.height); ctx.drawImage(img,0,0)}; if(stack.length){img.src=stack[stack.length-1]} else {ctx.clearRect(0,0,doodle.width,doodle.height)} } }
 function redoFn(){ if(redo.length){ const src=redo.pop(); stack.push(src); const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0); img.src=src; } }
@@ -681,7 +819,7 @@ document.getElementById('savePNG').onclick=()=>{
   const a=document.createElement('a'); a.download='aura-doodle.png'; a.href=doodle.toDataURL('image/png'); a.click();
 };
 
-/* Idea chooser (no “prompt” word) */
+/* Idea chooser */
 const ideaText = document.getElementById('ideaText');
 const okIdea = document.getElementById('okIdea');
 const noIdea = document.getElementById('noIdea');
@@ -715,11 +853,11 @@ drawAsk.onclick = ()=>{ currentIdea=null; chooseIdea(); };
 
 let autoCheckOn = true;
 autoCheck.setAttribute('aria-pressed','true');
-autoCheck.onclick = ()=>{ autoCheckOn = !autoCheckOn; autoCheck.setAttribute('aria-pressed', String(autoCheckOn)); setCheckMsg(autoCheckOn? "Auto‑Check is on." : "Auto‑Check is off."); };
+autoCheck.onclick = ()=>{ autoCheckOn = !autoCheckOn; autoCheck.setAttribute('aria-pressed', String(autoCheckOn)); setCheckMsg(autoCheckOn? "Auto-Check is on." : "Auto-Check is off."); };
 const checkMsg = document.getElementById('checkMsg');
 function setCheckMsg(t){ checkMsg.textContent = t; }
 
-/* TFJS MobileNet model for checking */
+/* TFJS MobileNet for checking */
 let mobilenetModel = null;
 (async()=>{ try{ mobilenetModel = await mobilenet.load({version:2, alpha:1.0}); }catch(e){ console.warn('Model failed to load', e); } })();
 
@@ -727,12 +865,10 @@ let checkTimer=null;
 function queuedCheck(){ if(!autoCheckOn || !mobilenetModel || !currentIdea) return; clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 650); }
 async function runCheck(){
   if(!mobilenetModel || !currentIdea) return;
-  // scale canvas to image for model
-  const pred = await mobilenetModel.classify(doodle, 5); // top-5
+  const pred = await mobilenetModel.classify(doodle, 5);
   const labels = pred.map(p=>p.className.toLowerCase());
   const idea = currentIdea.toLowerCase();
 
-  // loose matching dictionary to bridge idea -> known labels
   const alias = {
     "bike":"bicycle","motorbike":"motorcycle","soccer ball":"soccer ball","basketball":"basketball",
     "baseball":"baseball","tennis racket":"racket","glasses":"sunglasses","phone":"cellular telephone, cellular phone, cellphone",
@@ -740,9 +876,9 @@ async function runCheck(){
     "cat":"cat","dog":"dog","key":"key","ring":"ring","watch":"watch","piano":"piano","guitar":"acoustic guitar",
     "drum":"drum","camera":"camera","clock":"analog clock","book":"book","umbrella":"umbrella","chair":"chair","table":"table",
     "elephant":"elephant","bear":"bear","lion":"lion","tiger":"tiger","whale":"whale","turtle":"turtle","frog":"frog","owl":"owl","fox":"fox","rabbit":"hare",
-    "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","bus":"bus","truck":"pickup, pickup truck",
+    "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","truck":"pickup, pickup truck",
     "pizza":"pizza","burger":"hamburger","fries":"french fries","banana":"banana","apple":"granny smith",
-    "strawberry":"strawberry","watermelon":"watermelon","grapes":"custard apple" // rough
+    "strawberry":"strawberry","watermelon":"watermelon","grapes":"custard apple"
   };
   const target = (alias[idea] || idea).split(',').map(s=>s.trim());
   const matched = labels.some(l => target.some(t => l.includes(t)));
@@ -775,7 +911,7 @@ function randomEncouragement(ok){
    Bubble Pop (levels)
 ========================= */
 const game = document.getElementById('game');
-const gtx = game.getContext('2d');
+const gtx = game?.getContext?.('2d');
 let bubbles=[], popped=0, goal=10, level=1, maxLevel=30, score=0, running=false, paused=false;
 const levelBadge = document.getElementById('levelBadge');
 const scoreBadge = document.getElementById('scoreBadge');
@@ -785,13 +921,12 @@ const milestones = document.getElementById('milestones');
 const encBox = document.getElementById('encBox');
 
 function prepareGameCanvas(){
-  // ensure proper pixel scaling
   const r = game.getBoundingClientRect();
   game.width = Math.floor(r.width * devicePixelRatio);
   game.height = Math.floor(r.height * devicePixelRatio);
   gtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-window.addEventListener('resize', ()=>{ prepareGameCanvas(); });
+window.addEventListener('resize', ()=>{ if(panels.bubble.classList.contains('active')) prepareGameCanvas(); });
 
 function resetLevel(){
   popped=0;
@@ -848,14 +983,12 @@ function step(){
   for(const b of bubbles){
     if(!b.alive) continue;
     b.y -= b.v;
-    // draw
     gtx.beginPath(); gtx.arc(b.x,b.y,b.r,0,Math.PI*2);
     const grd = gtx.createRadialGradient(b.x- b.r/3, b.y- b.r/3, 2, b.x, b.y, b.r);
     grd.addColorStop(0, `hsla(${b.hue},80%,80%,0.95)`);
     grd.addColorStop(1, `hsla(${b.hue},70%,50%,0.35)`);
     gtx.fillStyle = grd; gtx.fill();
   }
-  // cleanup + pass level
   bubbles = bubbles.filter(b=>b.alive && b.y + b.r > -10);
   if(bubbles.length < 8) spawnBubbles();
   if(popped >= goal){
@@ -869,20 +1002,21 @@ document.getElementById('pauseGame').onclick=()=>{ if(!running) return; paused=!
 document.getElementById('levelUp').onclick=()=>{ level=Math.min(maxLevel, level+1); resetLevel(); };
 document.getElementById('levelDown').onclick=()=>{ level=Math.max(1, level-1); resetLevel(); };
 
-/* Ensure immediate bubbles on first show */
-if(panels.bubble.classList.contains('active')){ prepareGameCanvas(); }
-
 /* =========================
    Mute (placeholder for future sfx)
 ========================= */
-let muted=false; document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
+let muted=false;
+document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
+document.getElementById('muteBtn2').onclick=()=>{ muted=!muted; document.getElementById('muteBtn2').setAttribute('aria-pressed', muted); };
 
 /* =========================
-   Theme trigger from Aura tab
+   Theme trigger from tabs
 ========================= */
 document.addEventListener('click', (e)=>{
-  if(e.target && e.target.id === 'openThemes'){ /* handled above */ }
+  if(e.target && (e.target.id === 'openThemes' || e.target.id === 'openThemes2')){ /* handled above */ }
 });
+
+/* Auto-open Home (already active). Aura greeting occurs on first open of Aura tab. */
 </script>
 </body>
 </html>
