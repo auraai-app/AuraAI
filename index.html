@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>AuraAI • Play • Create</title>
 <link rel="icon" href="data:,">
 <style>
@@ -21,7 +21,7 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
     color:var(--text);
     background: radial-gradient(1200px 1200px at 10% -10%, #31405644, transparent 60%),
                 radial-gradient(1000px 1000px at 90% -20%, #6245ff33, transparent 60%),
@@ -34,6 +34,7 @@
     border:1px solid var(--stroke); box-shadow: 0 30px 80px #0007, inset 0 1px 0 #fff1;
     backdrop-filter: blur(16px) saturate(120%);
     position:relative;
+    min-height:640px;
   }
   /* mac-style live clock (top-right) */
   .clock{
@@ -158,6 +159,20 @@
     white-space:nowrap; box-shadow: 0 10px 20px #0007; font-size:12px;
   }
 
+  /* Splash overlay (lock-screen like) */
+  .splash{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(180deg, rgba(6,8,10,0.6), rgba(6,8,10,0.7));
+    z-index:2000;
+  }
+  .splash-card{
+    width:min(720px,94vw); border-radius:20px; padding:28px; text-align:center; background:var(--glass);
+    border:1px solid var(--stroke); box-shadow:0 40px 120px #0009;
+  }
+  .splash h1{margin:4px 0 8px; font-size:36px; letter-spacing:1px}
+  .splash p{color:var(--muted); margin:8px 0 18px}
+  .splash .choices{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+
   /* Small helpers */
   .muted{color:var(--muted)} .spacer{flex:1}
 </style>
@@ -175,7 +190,7 @@
     <!-- Music -->
     <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
     <audio id="music" preload="auto">
-      <source src="bgm1.mp3" type="audio/mpeg">
+      <source src="bgm.mp3" type="audio/mpeg">
       <source src="bgm2.mp3" type="audio/mpeg">
       <source src="bgm3.mp3" type="audio/mpeg">
     </audio>
@@ -191,7 +206,6 @@
         <div class="chip" data-emote="nervous">😰 Nervous</div>
       </div>
       <div class="spacer"></div>
-      <div class="chip has-tt" id="scriptedToggle" data-tt="Scripted Demo: Aura only replies when a line starts with ‘You:’">🎬 Scripted Demo</div>
       <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
       <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
     </div>
@@ -212,13 +226,13 @@
           <div class="bubble" data-action="breathing">4-4-6 breathing</div>
         </div>
         <h3 style="margin-top:14px">Tips</h3>
-        <p class="hint">Use simple words. If you like, start messages with <strong>You:</strong> to run the scripted demo.</p>
+        <p class="hint">Use simple words. Pick a feeling anytime using the buttons above.</p>
       </div>
 
       <div class="main-card">
         <div id="chat" class="chat" aria-live="polite"></div>
         <div class="composer">
-          <input id="input" class="input" placeholder="Type here… (e.g., You: I feel nervous)"/>
+          <input id="input" class="input" placeholder="Type here… (e.g., I feel nervous)"/>
           <button id="send" class="btn primary">Send</button>
         </div>
       </div>
@@ -290,13 +304,28 @@
     <div class="bar">
       <div class="chip" id="backToAura">⬅ Back</div>
       <div class="spacer"></div>
-      <div class="hint">Hover a tile to see its name • Click to apply</div>
+      <div class="hint">Hover a tile to see its color name • Click to apply</div>
     </div>
     <div id="themesRoot"></div>
   </div>
 </div>
 
-<!-- TFJS + MobileNet (no-login, free CDNs) -->
+<!-- Splash overlay (one-time per load) -->
+<div class="splash" id="splash" role="dialog" aria-modal="true" style="display:flex">
+  <div class="splash-card glass">
+    <h1>AuraAI</h1>
+    <p>Hi — what would you like to do right now?</p>
+    <div class="choices">
+      <button class="btn primary" id="splashPlay">Play</button>
+      <button class="btn" id="splashDraw">Draw</button>
+      <button class="btn" id="splashTalk">Talk</button>
+    </div>
+    <div style="height:12px"></div>
+    <div class="hint">This shows only when the page loads or when you reload — like a friendly lock screen.</div>
+  </div>
+</div>
+
+<!-- TFJS + MobileNet (free CDNs) -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
 
@@ -329,15 +358,15 @@ function showTab(name){
   const el = panels[name];
   el.style.display='block';
   requestAnimationFrame(()=>el.classList.add('active'));
-  if(name==='bubble'){prepareGameCanvas()} // ensure bubbles spawn without resize
+  if(name==='bubble'){ prepareGameCanvas(); } // ensure bubbles spawn without needing manual resize
 }
 tabs.forEach(t=>t.addEventListener('click', ()=>showTab(t.dataset.tab)));
 
 const music = document.getElementById('music');
 const musicBtn = document.getElementById('musicBtn');
-let tracks = ["bgm1.mp3","bgm2.mp3","bgm3.mp3"];
+let tracks = ["bgm.mp3","bgm2.mp3","bgm3.mp3"];
 let currentTrack = 0;
-function pickTrack(){ currentTrack = Math.floor(Math.random()*tracks.length); music.src=tracks[currentTrack]; }
+function pickTrack(){ currentTrack = Math.floor(Math.random()*tracks.length); music.src = tracks[currentTrack]; }
 pickTrack();
 musicBtn.addEventListener('click', ()=>{
   if(music.paused){ music.play(); musicBtn.textContent='⏸️ Music'; }
@@ -346,9 +375,10 @@ musicBtn.addEventListener('click', ()=>{
 music.addEventListener('ended', ()=>{ pickTrack(); music.play(); });
 
 /* =========================
-   THEMES (Your sets + extras)
+   THEMES (Your sets)
 ========================= */
 const THEME_GROUPS = {
+  /* (kept your groups — tooltips are theme name via data-tt) */
   'Grayscale': [
     { name:'Pure White',bg:'#ffffff',grad:'#f0f0f0',text:'#000000'},
     { name:'White Smoke',bg:'#F5F5F5',grad:'#E8E8E8',text:'#3c3c3c'},
@@ -516,7 +546,7 @@ function renderThemes(){
       }else if(theme.grad){
         tile.style.background = `linear-gradient(135deg, ${theme.bg}, ${theme.grad})`;
       }else{ tile.style.background = theme.bg; }
-      tile.innerHTML = `<span class="tag">${group}</span>`;
+      tile.innerHTML = `<span class="tag">${theme.name}</span>`;
       tile.addEventListener('click', ()=>applyTheme(theme));
       grid.appendChild(tile);
     });
@@ -528,7 +558,6 @@ function applyTheme(t){
   // set CSS vars to keep whole UI coherent
   document.documentElement.style.setProperty('--bg', t.bg || '#0e1116');
   document.documentElement.style.setProperty('--text', t.text || '#eef2f6');
-  // Accent based on bg to keep contrast
   document.documentElement.style.setProperty('--accent', '#7cc6ff');
   document.documentElement.style.setProperty('--accent-2', '#a8a6ff');
   // background art
@@ -557,14 +586,6 @@ const chat = document.getElementById('chat');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const emotionDock = document.getElementById('emotionDock');
-const scriptedToggle = document.getElementById('scriptedToggle');
-
-let scriptedOnly = false;
-scriptedToggle.addEventListener('click', ()=>{
-  scriptedOnly = !scriptedOnly;
-  scriptedToggle.setAttribute('aria-pressed', scriptedOnly);
-  auraSay(scriptedOnly ? "Scripted demo is ON. Start your line with “You:” and I’ll respond." : "Scripted demo is OFF. I’ll respond to anything you say.");
-});
 
 const emotionPrompts = {
   happy: [
@@ -600,11 +621,7 @@ function addMsg(text, mine){
 }
 
 function respond(msg){
-  // Scripted mode: reply only if starts with "You:"
-  if(scriptedOnly && !/^you:/i.test(msg)) return;
-
   const clean = msg.toLowerCase();
-  // simple detection
   if(/(happy|great|good|yay)/.test(clean)) auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
   else if(/(sad|down|blue|cry|upset)/.test(clean)) auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
   else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
@@ -645,13 +662,13 @@ auraSay("Hello! I’m Aura. 💫 How do you feel today?");
 auraSay("You can switch feelings anytime with the buttons above.");
 
 /* =========================
-   DRAW + Auto‑check
+   DRAW + Auto‑check (TFJS MobileNet)
 ========================= */
 const doodle = document.getElementById('doodle');
 const ctx = doodle.getContext('2d');
 let drawing=false, last=null;
 let stack=[], redo=[];
-function resizeCanvas(){ /* keep pixel size stable via width/height attributes already set */ }
+function resizeCanvas(){ /* canvas backed by attributes width/height already */ }
 resizeCanvas();
 
 function strokeStart(x,y){ drawing=true; last=[x,y]; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=14; ctx.strokeStyle='#e6f0ff'; ctx.shadowBlur=0; pushState(); }
@@ -681,7 +698,7 @@ document.getElementById('savePNG').onclick=()=>{
   const a=document.createElement('a'); a.download='aura-doodle.png'; a.href=doodle.toDataURL('image/png'); a.click();
 };
 
-/* Idea chooser (no “prompt” word) */
+/* Idea chooser (language adjusted, no 'prompt' word) */
 const ideaText = document.getElementById('ideaText');
 const okIdea = document.getElementById('okIdea');
 const noIdea = document.getElementById('noIdea');
@@ -690,6 +707,7 @@ const freeMode = document.getElementById('freeMode');
 const autoCheck = document.getElementById('autoCheck');
 const drawAsk = document.getElementById('drawAsk');
 
+/* 100-ish ideas (expandable) */
 const IDEAS = [
   "cat","dog","fish","bird","butterfly","flower","tree","leaf","house","car","bus","train","boat","rocket","star","moon","sun","rainbow",
   "heart","smile","key","lock","cup","ice cream","pizza","burger","fries","cookie","cake","banana","apple","grapes","strawberry","watermelon",
@@ -697,13 +715,13 @@ const IDEAS = [
   "lion","tiger","bear","whale","turtle","frog","penguin","owl","fox","rabbit","horse","snail","spider","dragonfly","octopus","jellyfish","starfish",
   "mountain","river","treehouse","castle","bridge","lighthouse","tent","campfire","snowman","gift","balloon","umbrella","airplane","helicopter",
   "backpack","pencil","paintbrush","scissors","ruler","toothbrush","tooth","bicycle","motorbike","scooter","tractor","skateboard","soccer ball",
-  "basketball","baseball","tennis racket","medal","trophy"
+  "basketball","baseball","tennis racket","medal","trophy","leaf","lantern","map","compass","beach","island","cabin","sailboat","harp","violin","microphone"
 ];
 let currentIdea = null;
-function askIdea(){ ideaText.textContent = "Try drawing a [thing]? (OK / No / Later)"; }
+function askIdea(){ ideaText.textContent = "Try drawing something? (OK / No / Later)"; }
 function chooseIdea(){
   currentIdea = IDEAS[Math.floor(Math.random()*IDEAS.length)];
-  ideaText.innerHTML = `Try drawing <strong>${currentIdea}</strong>. You can say “No” for a different one or “Later” to freestyle.`;
+  ideaText.innerHTML = `Try drawing <strong>${currentIdea}</strong>. Choose OK for this one, No for a different one, or Later to freestyle.`;
 }
 askIdea();
 okIdea.onclick = ()=>{ if(!currentIdea) chooseIdea(); else ideaText.innerHTML = `You picked <strong>${currentIdea}</strong>. Go for it!`; };
@@ -720,6 +738,7 @@ const checkMsg = document.getElementById('checkMsg');
 function setCheckMsg(t){ checkMsg.textContent = t; }
 
 /* TFJS MobileNet model for checking */
+/* loads in background; if network blocked, auto-check gracefully degrades */
 let mobilenetModel = null;
 (async()=>{ try{ mobilenetModel = await mobilenet.load({version:2, alpha:1.0}); }catch(e){ console.warn('Model failed to load', e); } })();
 
@@ -727,7 +746,6 @@ let checkTimer=null;
 function queuedCheck(){ if(!autoCheckOn || !mobilenetModel || !currentIdea) return; clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 650); }
 async function runCheck(){
   if(!mobilenetModel || !currentIdea) return;
-  // scale canvas to image for model
   const pred = await mobilenetModel.classify(doodle, 5); // top-5
   const labels = pred.map(p=>p.className.toLowerCase());
   const idea = currentIdea.toLowerCase();
@@ -742,7 +760,7 @@ async function runCheck(){
     "elephant":"elephant","bear":"bear","lion":"lion","tiger":"tiger","whale":"whale","turtle":"turtle","frog":"frog","owl":"owl","fox":"fox","rabbit":"hare",
     "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","bus":"bus","truck":"pickup, pickup truck",
     "pizza":"pizza","burger":"hamburger","fries":"french fries","banana":"banana","apple":"granny smith",
-    "strawberry":"strawberry","watermelon":"watermelon","grapes":"custard apple" // rough
+    "strawberry":"strawberry","watermelon":"watermelon","grapes":"grapes"
   };
   const target = (alias[idea] || idea).split(',').map(s=>s.trim());
   const matched = labels.some(l => target.some(t => l.includes(t)));
@@ -772,7 +790,7 @@ function randomEncouragement(ok){
 }
 
 /* =========================
-   Bubble Pop (levels)
+   Bubble Pop (levels) — slowed a bit
 ========================= */
 const game = document.getElementById('game');
 const gtx = game.getContext('2d');
@@ -820,10 +838,13 @@ function spawnBubbles(){
   const count = Math.min(10+level*2, 40);
   for(let i=0;i<count;i++){
     bubbles.push({
-      x: Math.random()*game.clientWidth, y: game.clientHeight + Math.random()*200,
+      x: Math.random()*game.clientWidth,
+      y: game.clientHeight + Math.random()*200,
       r: 12 + Math.random()* (10 + level),
-      v: 1.1 + Math.random()* (0.8 + level*0.15),
-      hue: 180 + Math.random()*120, alive: true
+      // slight slow-down factor applied here (0.75) so overall feel is a bit calmer
+      v: (1.1 + Math.random()* (0.8 + level*0.15)) * 0.75,
+      hue: 180 + Math.random()*120,
+      alive: true
     });
   }
 }
@@ -878,11 +899,48 @@ if(panels.bubble.classList.contains('active')){ prepareGameCanvas(); }
 let muted=false; document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
 
 /* =========================
-   Theme trigger from Aura tab
+   Splash / start overlay logic
+   - appears on page load (or reload)
+   - pick an action and it opens that tab and hides the overlay
 ========================= */
-document.addEventListener('click', (e)=>{
-  if(e.target && e.target.id === 'openThemes'){ /* handled above */ }
+const splash = document.getElementById('splash');
+const splashPlay = document.getElementById('splashPlay');
+const splashDraw = document.getElementById('splashDraw');
+const splashTalk = document.getElementById('splashTalk');
+
+function hideSplashAndGo(tab){
+  splash.style.display='none';
+  showTab(tab);
+  // warm up resources when user chooses
+  if(tab==='bubble'){ prepareGameCanvas(); }
+  if(tab==='draw'){ /* nothing extra */ }
+  if(tab==='aura'){ /* greet */ }
+}
+splashPlay.addEventListener('click', ()=>{ hideSplashAndGo('bubble'); });
+splashDraw.addEventListener('click', ()=>{ hideSplashAndGo('draw'); });
+splashTalk.addEventListener('click', ()=>{ hideSplashAndGo('aura'); });
+
+/* =========================
+   Small accessibility / keyboard close for splash
+========================= */
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){
+    if(splash.style.display!=='none'){ splash.style.display='none'; showTab('aura'); }
+    else if(panels.themes.style.display==='block'){ panels.themes.style.display='none'; showTab('aura'); }
+  }
 });
+
+/* Show splash on load (one-time per load). If you prefer persistence to hide after first-ever visit, replace with localStorage logic. */
+window.addEventListener('load', ()=>{
+  splash.style.display='flex';
+});
+
+/* =========================
+   Finish up: small safety falls-back
+========================= */
+/* if user uses theme tiles or clicks open themes via aura: already wired above */
+
+/* end of script */
 </script>
 </body>
 </html>
