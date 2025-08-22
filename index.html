@@ -1,1291 +1,888 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AuraAI — Play • Draw • Talk</title>
-
-<!--
-  Single-file AuraAI app
-  - Splash screen that shows once per page load (session)
-  - Three main tabs: Play (Bubble Pop), Draw (100 prompts + TF auto-check), Talk (chatbot)
-  - 100+ themes organized into categories; hover tooltips show theme names
-  - Mini background music player (bgm.mp3, bgm2.mp3, bgm3.mp3 assumed in repo)
-  - Drawing auto-check uses TensorFlow.js mobilenet (CDN). It is best-effort: it checks the top labels
-    for a substring match with the chosen drawing item and gives encouraging feedback.
-  - Game is level-based (30 levels can be set; currently configured to step levels up at milestones).
-  - No external account required.
-  - Kept UI glassy, mac-like, rounded, and integrated into the app container.
-  - Accessible controls and keyboard fallbacks.
--->
-
-<!-- TensorFlow & mobilenet CDN (for drawing auto-check) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.2.1/dist/mobilenet.min.js"></script>
-
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AuraAI • Play • Create</title>
+<link rel="icon" href="data:,">
 <style>
   :root{
-    --pad:18px;
-    --radius:14px;
-    --glass-bg: rgba(255,255,255,0.18);
-    --glass-border: rgba(255,255,255,0.28);
-    --accent: #1e88e5;
-    --fg: #0b3c61;
-    --muted: #6b7a8a;
-    --success: #2fb16f;
-    --warning: #ffb74d;
-    --danger: #e53935;
-    --motion: 0.18s;
+    --bg: #0e1116;
+    --glass: rgba(255,255,255,0.12);
+    --glass-2: rgba(255,255,255,0.08);
+    --stroke: rgba(255,255,255,0.18);
+    --text: #eef2f6;
+    --muted: #b8c0cc;
+    --accent: #7cc6ff;
+    --accent-2: #a8a6ff;
+    --good: #59e48f;
+    --bad: #ff7373;
   }
-  *{ box-sizing:border-box; }
-  html,body{ height:100%; margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--fg); background: linear-gradient(135deg,#a8cdf1 0%,#f7b7b9 100%); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+    color:var(--text);
+    background: radial-gradient(1200px 1200px at 10% -10%, #31405644, transparent 60%),
+                radial-gradient(1000px 1000px at 90% -20%, #6245ff33, transparent 60%),
+                linear-gradient(180deg, #0b0f14, #0e1116);
+    backdrop-filter: blur(0.5px);
+  }
+  .shell{
+    max-width:1200px; margin:32px auto; padding:24px;
+    border-radius:28px; background: var(--glass);
+    border:1px solid var(--stroke); box-shadow: 0 30px 80px #0007, inset 0 1px 0 #fff1;
+    backdrop-filter: blur(16px) saturate(120%);
+    position:relative;
+  }
+  /* mac-style live clock (top-right) */
+  .clock{
+    position:absolute; top:14px; right:18px; padding:8px 12px;
+    border-radius:14px; background: var(--glass-2); border:1px solid var(--stroke);
+    font-variant-numeric: tabular-nums; letter-spacing:0.5px; box-shadow: inset 0 1px 0 #fff2;
+  }
 
-  /* App shell */
-  .app-shell{
-    width:min(1200px,96vw);
-    height:min(820px,96vh);
-    margin:4vh auto;
-    border-radius:18px;
-    padding:20px;
-    display:grid;
-    grid-template-rows: auto 1fr;
-    gap:16px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12));
-    border: 1px solid rgba(255,255,255,0.24);
-    box-shadow: 0 20px 60px rgba(5,20,40,0.18);
-    backdrop-filter: blur(12px);
+  /* Top nav tabs */
+  .tabs{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center}
+  .tab{
+    padding:10px 14px; border-radius:16px;
+    background:linear-gradient(180deg, #ffffff14, #ffffff08);
+    border:1px solid var(--stroke); color:var(--text);
+    cursor:pointer; user-select:none; transition:.2s transform, .2s background;
+    box-shadow: 0 6px 16px #0005, inset 0 1px 0 #fff1;
   }
+  .tab:hover{transform:translateY(-1px)}
+  .tab.active{background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26); border-color:#7cc6ff66}
 
-  /* Header */
-  .app-top{
-    display:flex; align-items:center; gap:12px;
+  .bar{
+    display:flex; align-items:center; gap:10px; margin:10px 0 18px;
+    flex-wrap:wrap;
   }
-  .logo{
-    display:flex; align-items:center; gap:10px;
-  }
-  .logo .symbol{
-    width:56px;height:56px;border-radius:12px;
-    background: linear-gradient(135deg,#fff,#a8cdf1);
-    display:flex; align-items:center; justify-content:center;
-    font-weight:900; font-size:20px; color:var(--fg);
-    border:1px solid rgba(255,255,255,0.6);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  }
-  .title{
-    font-weight:900; font-size:20px; letter-spacing:0.2px;
-  }
-  .subtitle{ font-size:13px; color:var(--muted) }
+  .chip{padding:6px 10px; border-radius:12px; background:var(--glass-2); border:1px solid var(--stroke); cursor:pointer}
+  .chip[aria-pressed="true"]{outline:2px solid var(--accent); background:#7cc6ff1f}
 
-  /* Right header controls */
-  .header-controls{
-    margin-left:auto; display:flex; align-items:center; gap:10px;
+  /* Left side: emotion switcher always visible */
+  .dock{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center
+  }
+  .dock .chip{display:flex; align-items:center; gap:6px}
+
+  /* Panels */
+  .panel{display:none}
+  .panel.active{display:block}
+
+  /* Aura chat area */
+  .chat-wrap{
+    display:grid; grid-template-columns: 280px 1fr; gap:16px;
+  }
+  @media (max-width: 920px){ .chat-wrap{grid-template-columns:1fr} }
+  .side-card, .main-card{
+    background: var(--glass-2); border:1px solid var(--stroke); border-radius:20px; padding:14px;
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
+  }
+  .side-card h3{margin:6px 0 10px; font-size:14px; color:var(--muted); font-weight:600}
+  .bubble-list{display:flex; gap:8px; flex-wrap:wrap}
+  .bubble{
+    padding:10px 12px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); cursor:pointer;
+  }
+  .bubble[aria-pressed="true"]{outline:2px solid #ffffff55}
+  /* Chat bubbles like iMessage/WhatsApp */
+  .chat{
+    height:480px; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:8px;
+    scroll-behavior:smooth;
+  }
+  .msg{
+    max-width:80%; padding:10px 14px; border-radius:18px; position:relative;
+    background:linear-gradient(180deg, #ffffff14, #ffffff0a); border:1px solid var(--stroke);
+    box-shadow: 0 8px 24px #0005, inset 0 1px 0 #fff2; animation: fadeIn .25s ease;
+  }
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+  .msg.me{margin-left:auto; background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26)}
+  .msg a{color:var(--accent)}
+  .composer{
+    display:flex; align-items:center; gap:8px; margin-top:10px
+  }
+  .input{
+    flex:1; padding:12px 14px; border-radius:14px; background:#ffffff10; color:var(--text);
+    border:1px solid var(--stroke); outline:none;
   }
   .btn{
-    border:0; background: linear-gradient(90deg,#a8cdf1 0%,#f7b7b9 100%);
-    padding:10px 12px; border-radius:12px; cursor:pointer; color:var(--fg); font-weight:800;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-    transition: transform var(--motion), filter var(--motion);
+    padding:10px 12px; border-radius:12px; background:linear-gradient(180deg, #ffffff20, #ffffff0d);
+    border:1px solid var(--stroke); color:var(--text); cursor:pointer; user-select:none;
   }
-  .btn:active{ transform:translateY(1px) }
-  .icon-btn{ width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; padding:0; font-size:18px; }
+  .btn.primary{background:linear-gradient(180deg, #7cc6ff3a, #a8a6ff2d); border-color:#7cc6ff66}
+  .btn.good{background:linear-gradient(180deg, #59e48f33, #59e48f1a); border-color:#59e48f77}
+  .btn.bad{background:linear-gradient(180deg, #ff737333, #ff73731a); border-color:#ff737377}
 
-  /* Main content grid */
-  .main{
-    display:grid; grid-template-columns: 320px 1fr; gap:16px; height:100%;
+  /* Draw */
+  .draw-grid{display:grid; grid-template-columns: 360px 1fr; gap:16px}
+  @media (max-width: 980px){ .draw-grid{grid-template-columns:1fr}}
+  canvas.doodle{
+    width:100%; aspect-ratio: 4/3; background:#111a22; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005; touch-action:none; cursor:crosshair;
   }
+  .prompt-card{padding:14px; border-radius:18px; background:var(--glass-2); border:1px solid var(--stroke)}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 
-  /* Left nav / tabs */
-  .nav{
-    display:flex; flex-direction:column; gap:12px;
+  .okno{display:flex; gap:8px}
+  .hint{color:var(--muted); font-size:13px}
+
+  /* Bubble Pop */
+  .game-wrap{display:grid; grid-template-columns: 320px 1fr; gap:16px}
+  @media (max-width: 980px){ .game-wrap{grid-template-columns:1fr}}
+  .game-canvas{
+    width:100%; aspect-ratio: 16/9; background:#0a0f14; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
   }
-  .tabs{ display:flex; flex-direction:column; gap:8px; }
-  .tab{
-    padding:12px 14px; border-radius:12px; background:var(--glass-bg);
-    border: 1px solid var(--glass-border); cursor:pointer; font-weight:800; color:var(--fg);
-    display:flex; align-items:center; gap:10px;
+  .lvl{display:flex; gap:6px; flex-wrap:wrap}
+  .badge{padding:6px 8px; border-radius:10px; background:#ffffff12; border:1px solid var(--stroke); font-size:12px}
+  .meter{height:10px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); overflow:hidden}
+  .meter > span{display:block; height:100%; width:0%; background: linear-gradient(90deg, #59e48f, #7cc6ff)}
+
+  /* Themes */
+  .themes-wrap{display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px}
+  .swatch{
+    padding:10px; border-radius:16px; border:1px solid var(--stroke); background:#ffffff12; cursor:pointer;
+    position:relative; overflow:hidden; min-height:72px;
   }
-  .tab.active{ box-shadow: 0 8px 20px rgba(0,0,0,0.08); transform:translateY(-2px); }
+  .swatch .tag{position:absolute; bottom:8px; left:8px; font-size:11px; color:#fff9; background:#0006; padding:4px 6px; border-radius:8px}
+  .swatch:hover{outline:2px solid #fff4}
+  .group-title{margin:14px 2px 8px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:11px}
 
-  .small{
-    font-size:13px; color:var(--muted); font-weight:700;
+  /* Tooltips (for theme names) */
+  .has-tt{position:relative}
+  .has-tt:hover::after{
+    content: attr(data-tt);
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:#0a0f14; color:#fff; padding:6px 8px; border-radius:10px; border:1px solid var(--stroke);
+    white-space:nowrap; box-shadow: 0 10px 20px #0007; font-size:12px;
   }
-
-  /* Right content area */
-  .content{
-    display:flex; flex-direction:column; gap:12px; height:100%;
-  }
-
-  /* Each panel */
-  .panel{
-    flex:1; border-radius:14px; padding:14px; background: var(--glass-bg); border:1px solid var(--glass-border);
-    overflow:hidden; display:flex; flex-direction:column; gap:12px;
-  }
-
-  /* Chat panel specifics */
-  .chat-top{ display:flex; align-items:center; gap:10px; }
-  .mood-buttons{ display:flex; gap:8px; margin-left:auto; }
-  .mood-btn{ padding:8px 10px; border-radius:12px; cursor:pointer; border:0; font-weight:800;}
-  .mood-btn:active{ transform:translateY(1px) }
-  .mood-btn.happy{ background:#c1e6a6 } .mood-btn.sad{ background:#a4c7f9 } .mood-btn.angry{ background:#f9d6d6 } .mood-btn.nervous{ background:#fff3c8 }
-
-  .chat-window{ flex:1; overflow:auto; padding:12px; border-radius:12px; background: rgba(232,242,252,0.45); }
-  .message{ max-width:78%; padding:10px 12px; margin-bottom:10px; border-radius:12px; font-size:16px; line-height:1.25; }
-  .message.aura{ background:linear-gradient(90deg,#ffffffcc,#eaf6ffcc); color:var(--fg); align-self:flex-start; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-  .message.user{ background:linear-gradient(90deg,#1e88e5,#517fc4); color:#fff; align-self:flex-end; }
-  .message.fadein{ animation: fadeIn .28s ease both; }
-  @keyframes fadeIn{ from{ opacity:0; transform: translateY(6px) } to{ opacity:1; transform: translateY(0) } }
-
-  .chat-footer{ display:flex; gap:8px; align-items:center; }
-  .chat-input{ flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.8); font-size:16px; outline:none; }
-
-  /* Draw panel specifics */
-  .draw-top{ display:flex; gap:10px; align-items:center; }
-  .draw-canvas{ width:100%; height:100%; border-radius:12px; background:rgba(255,255,255,0.85); border:1px solid rgba(0,0,0,0.04); }
-  .draw-tools{ display:flex; gap:8px; align-items:center; }
-
-  .mini-player{
-    display:flex; gap:10px; align-items:center; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.7);
-    border:1px solid rgba(0,0,0,0.03);
-  }
-  .progress{ width:180px; appearance:none; height:8px; border-radius:8px; background: rgba(0,0,0,0.08); }
-
-  /* Game panel specifics */
-  .game-canvas{ width:100%; height:100%; border-radius:12px; background: linear-gradient(180deg,#eef8ff,#fdf7fb); border:1px solid rgba(0,0,0,0.04); display:block; }
-  .game-top{ display:flex; align-items:center; gap:10px; }
-  .score{ padding:8px 12px; border-radius:12px; background:rgba(255,255,255,0.7); font-weight:900; }
-
-  /* Themes panel (floating drawer) */
-  .themes-drawer{
-    position:fixed; right:20px; top:110px; width:340px; max-height:68vh; overflow:auto;
-    border-radius:12px; padding:14px; background:var(--glass-bg); border:1px solid var(--glass-border); box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  }
-  .theme-group{ margin-bottom:12px; }
-  .theme-row{ display:flex; gap:8px; flex-wrap:wrap; }
-  .theme-btn{
-    width:46px; height:46px; border-radius:10px; border:0; cursor:pointer; position:relative; overflow:hidden;
-    box-shadow:0 10px 18px rgba(0,0,0,0.08);
-  }
-  .theme-btn .tooltip{
-    position:absolute; left:50%; transform:translateX(-50%); bottom:100%; margin-bottom:8px; padding:6px 8px; border-radius:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:12px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .12s;
-  }
-  .theme-btn:hover .tooltip{ opacity:1; }
-
-  /* Splash full-screen (one-time) */
-  .splash-overlay{
-    position:fixed; inset:0; background: linear-gradient(135deg, rgba(20,36,66,0.5), rgba(168,205,241,0.15));
-    display:flex; align-items:center; justify-content:center; z-index:9999;
-  }
-  .splash-card{
-    width:min(760px,92vw); border-radius:18px; padding:36px; text-align:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.75));
-    border:1px solid rgba(255,255,255,0.6); box-shadow:0 30px 80px rgba(3,20,40,0.32);
-  }
-  .splash-card h1{ margin:0; font-size:36px; letter-spacing:0.4px; }
-  .splash-actions{ margin-top:18px; display:flex; gap:14px; justify-content:center; }
-  .splash-action{ padding:12px 18px; border-radius:12px; font-weight:900; background:linear-gradient(90deg,#a8cdf1,#f7b7b9); border:0; cursor:pointer; }
 
   /* Small helpers */
-  .muted{ color:var(--muted); font-weight:700 }
-  .flex{ display:flex; align-items:center; gap:8px }
-  .clock{ font-weight:900; color:var(--muted) }
-
-  /* Responsive */
-  @media (max-width:980px){
-    .main{ grid-template-columns: 1fr; grid-auto-rows: 1fr; }
-    .themes-drawer{ right:8px; top:70px; width:92vw; max-height:40vh; }
-  }
+  .muted{color:var(--muted)} .spacer{flex:1}
 </style>
 </head>
 <body>
+<div class="shell" id="app">
+  <div class="clock" id="clock">--:--:--</div>
 
-<!-- Splash shown once per page load (session) -->
-<div id="splash" class="splash-overlay" aria-hidden="false" role="dialog" aria-label="Welcome to AuraAI">
-  <div class="splash-card">
-    <h1>AuraAI</h1>
-    <p class="muted" style="margin-top:8px">Do you want to play with me, draw with me or talk to me?</p>
-    <div class="splash-actions">
-      <button class="splash-action" data-target="chat">Talk</button>
-      <button class="splash-action" data-target="game">Play</button>
-      <button class="splash-action" data-target="draw">Draw</button>
-      <button class="splash-action" id="splash-close">Skip</button>
-    </div>
-    <div style="margin-top:12px" class="muted">This intro reappears only when you reload the page.</div>
+  <!-- Top Tabs -->
+  <div class="tabs" role="tablist" aria-label="Main sections">
+    <div class="tab active" data-tab="aura" role="tab" aria-selected="true">🫧 AuraAI</div>
+    <div class="tab" data-tab="draw" role="tab">🎨 Draw</div>
+    <div class="tab" data-tab="bubble" role="tab">🫧 Bubble Pop</div>
+    <div class="spacer"></div>
+    <!-- Music -->
+    <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
+    <audio id="music" preload="auto">
+      <source src="bgm1.mp3" type="audio/mpeg">
+      <source src="bgm2.mp3" type="audio/mpeg">
+      <source src="bgm3.mp3" type="audio/mpeg">
+    </audio>
   </div>
-</div>
 
-<!-- Main app -->
-<div id="app" class="app-shell" aria-hidden="true">
-  <div class="app-top">
-    <div class="logo">
-      <div class="symbol">A</div>
+  <!-- AURA -->
+  <div class="panel active" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
+    <div class="bar">
+      <div class="dock" id="emotionDock">
+        <div class="chip" data-emote="happy">😊 Happy</div>
+        <div class="chip" data-emote="sad">😢 Sad</div>
+        <div class="chip" data-emote="angry">😠 Angry</div>
+        <div class="chip" data-emote="nervous">😰 Nervous</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="chip has-tt" id="scriptedToggle" data-tt="Scripted Demo: Aura only replies when a line starts with ‘You:’">🎬 Scripted Demo</div>
+      <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
+      <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
+    </div>
+
+    <div class="chat-wrap">
+      <div class="side-card">
+        <h3>Quick switches</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-say="How was your day?">How was your day?</div>
+          <div class="bubble" data-say="Want a quick breathing idea?">Breathing idea</div>
+          <div class="bubble" data-say="Pick an activity together?">Pick an activity</div>
+        </div>
+        <h3 style="margin-top:14px">Activities</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-action="openDraw">Open Draw</div>
+          <div class="bubble" data-action="openBubble">Play Bubble Pop</div>
+          <div class="bubble" data-action="sendHug">Virtual hug 🤗</div>
+          <div class="bubble" data-action="breathing">4-4-6 breathing</div>
+        </div>
+        <h3 style="margin-top:14px">Tips</h3>
+        <p class="hint">Use simple words. If you like, start messages with <strong>You:</strong> to run the scripted demo.</p>
+      </div>
+
+      <div class="main-card">
+        <div id="chat" class="chat" aria-live="polite"></div>
+        <div class="composer">
+          <input id="input" class="input" placeholder="Type here… (e.g., You: I feel nervous)"/>
+          <button id="send" class="btn primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAW -->
+  <div class="panel" id="panel-draw" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="drawAsk" data-tt="Get a drawing idea">🧠 New idea</div>
+      <div class="chip has-tt" id="autoCheck" data-tt="Auto-check with AI" aria-pressed="true">✅ Auto‑Check</div>
+      <div class="chip has-tt" id="freeMode" data-tt="Free drawing">✍️ Freestyle</div>
+      <div class="spacer"></div>
+      <div class="chip has-tt" id="clearCanvas" data-tt="Clear the canvas">🧼 Clear</div>
+      <div class="chip has-tt" id="undoDraw" data-tt="Undo last stroke">↩️ Undo</div>
+      <div class="chip has-tt" id="redoDraw" data-tt="Redo">↪️ Redo</div>
+    </div>
+    <div class="draw-grid">
+      <div class="prompt-card">
+        <div class="row" style="margin-bottom:6px">
+          <div class="hint" id="ideaText">Want to try drawing something? (OK / No / Later)</div>
+        </div>
+        <div class="row okno">
+          <button class="btn good" id="okIdea">OK</button>
+          <button class="btn bad" id="noIdea">No</button>
+          <button class="btn" id="laterIdea">Later</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="hint">After you draw, Aura can check if it looks right and cheer you on. 💙</div>
+      </div>
       <div>
-        <div class="title">AuraAI</div>
-        <div class="subtitle">Support • Practice • Calm</div>
+        <canvas id="doodle" class="doodle" width="800" height="600"></canvas>
+        <div class="row" style="margin-top:10px">
+          <span class="hint" id="checkMsg">Auto‑Check is on.</span>
+          <div class="spacer"></div>
+          <button class="btn" id="savePNG">Save PNG</button>
+        </div>
       </div>
-    </div>
-
-    <div class="header-controls">
-      <div class="clock" id="clock">--:--:--</div>
-      <button class="btn icon-btn" id="themes-toggle" title="Open themes">🎨</button>
-      <button class="btn icon-btn" id="music-toggle" title="Mini player">🎶</button>
-      <button class="btn icon-btn" id="mute-all" title="Mute sounds">🔇</button>
     </div>
   </div>
 
-  <div class="main">
-    <!-- Left nav -->
-    <div class="nav">
-      <div class="tabs" role="tablist" aria-label="Main sections">
-        <div class="tab active" data-section="chat" role="tab" tabindex="0" aria-selected="true">💬 Chat — Aura</div>
-        <div class="tab" data-section="game" role="tab" tabindex="0" aria-selected="false">🫧 Bubble Pop — Play</div>
-        <div class="tab" data-section="draw" role="tab" tabindex="0" aria-selected="false">🎨 Draw — Doodle</div>
-      </div>
-
-      <div style="margin-top:10px" class="small">Quick actions</div>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px">
-        <button class="tab" id="open-themes-left">Themes</button>
-        <button class="tab" id="open-music-left">Music</button>
-        <button class="tab" id="reset-app">Reset session</button>
-      </div>
-
-      <div style="margin-top:auto; font-size:13px" class="muted">AuraAI — made for calm, practice & expression.</div>
+  <!-- BUBBLE POP -->
+  <div class="panel" id="panel-bubble" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="startGame" data-tt="Start / Restart">▶️ Start</div>
+      <div class="chip has-tt" id="pauseGame" data-tt="Pause / Resume">⏸️ Pause</div>
+      <div class="chip has-tt" id="levelDown" data-tt="Previous level">⬅️</div>
+      <div class="chip has-tt" id="levelUp" data-tt="Next level">➡️</div>
+      <div class="spacer"></div>
+      <div class="badge" id="levelBadge">Level 1 / 30</div>
+      <div class="badge" id="scoreBadge">Score 0</div>
     </div>
-
-    <!-- Right panels -->
-    <div class="content">
-      <!-- Chat Panel -->
-      <section id="panel-chat" class="panel" aria-hidden="false" role="region">
-        <div class="chat-top">
-          <div>
-            <div style="font-weight:900">How do you feel?</div>
-            <div class="muted">Switch feelings anytime — Aura tailors responses</div>
-          </div>
-          <div class="mood-buttons">
-            <button class="mood-btn happy" data-mood="happy" title="Happy">😊</button>
-            <button class="mood-btn sad" data-mood="sad" title="Sad">😢</button>
-            <button class="mood-btn angry" data-mood="angry" title="Angry">😠</button>
-            <button class="mood-btn nervous" data-mood="nervous" title="Nervous">😰</button>
-          </div>
-        </div>
-
-        <div id="chatWindow" class="chat-window" role="log" aria-live="polite">
-          <!-- messages appended here -->
-        </div>
-
-        <div class="chat-footer">
-          <input id="chatInput" class="chat-input" placeholder='Type a message. Start a message with "You:" if you want Aura to respond.' aria-label="Chat input" />
-          <button id="sendChat" class="btn">Send</button>
-          <button id="demoMode" class="btn">Demo</button>
-        </div>
-      </section>
-
-      <!-- Game Panel -->
-      <section id="panel-game" class="panel" aria-hidden="true" style="display:none">
-        <div class="game-top">
-          <div class="title" style="font-size:16px">Bubble Pop — Levels</div>
-          <div class="score" id="levelInfo">Level 1 • Score <span id="gameScore">0</span></div>
-          <div style="margin-left:auto; display:flex; gap:8px">
-            <button class="btn" id="resetLevel">Reset</button>
-            <button class="btn" id="toggleMusicGame">🎵</button>
-          </div>
-        </div>
-        <canvas id="gameCanvas" class="game-canvas" aria-label="Bubble pop canvas"></canvas>
-        <div style="display:flex; gap:8px; margin-top:8px; align-items:center">
-          <div class="muted">Progress:</div>
-          <progress id="levelProgress" value="0" max="100" style="width:280px"></progress>
-          <div id="milestoneText" class="muted" style="margin-left:auto">Milestone: 25</div>
-        </div>
-      </section>
-
-      <!-- Draw Panel -->
-      <section id="panel-draw" class="panel" aria-hidden="true" style="display:none">
-        <div class="draw-top">
-          <div style="flex:1">
-            <div style="font-weight:900">Draw & Validate</div>
-            <div class="muted">Try the suggested item or freestyle. Use Auto‑Check to get friendly feedback.</div>
-          </div>
-          <div class="draw-tools">
-            <button id="newPrompt" class="btn">🔄 New idea</button>
-            <button id="rotateCanvas" class="btn">🔁 Rotate</button>
-            <button id="autoCheck" class="btn">✅ Auto‑Check</button>
-            <button id="clearCanvas" class="btn">Clear</button>
-            <label style="display:flex; align-items:center; gap:8px; margin-left:8px">
-              <input type="checkbox" id="autoSuggest" checked /> <span class="muted">Auto-suggest</span>
-            </label>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:12px; flex:1; min-height:320px;">
-          <canvas id="drawCanvas" class="draw-canvas" width="800" height="540" aria-label="Drawing canvas"></canvas>
-
-          <aside style="width:320px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:900">Current idea</div>
-            <div id="currentIdea" class="muted" style="padding:12px; background:rgba(255,255,255,0.6); border-radius:12px;"></div>
-            <div style="font-weight:900; margin-top:8px">Controls</div>
-            <div style="display:flex; gap:8px; align-items:center">
-              <label class="muted">Brush</label>
-              <input id="brushSize" type="range" min="2" max="48" value="12" />
-            </div>
-            <div style="display:flex; gap:8px; align-items:center">
-              <label class="muted">Color</label>
-              <input id="brushColor" type="color" value="#1e88e5" />
-            </div>
-            <div style="display:flex; gap:8px; align-items:center">
-              <label class="muted">Eraser</label>
-              <input id="eraserToggle" type="checkbox" />
-            </div>
-            <div style="margin-top:auto">
-              <div style="font-weight:900">Auto‑Check result</div>
-              <div id="checkResult" class="muted" style="padding:10px; border-radius:10px; background:rgba(255,255,255,0.6)"></div>
-            </div>
-          </aside>
-        </div>
-      </section>
+    <div class="game-wrap">
+      <div class="side-card">
+        <h3>Goals</h3>
+        <p class="hint" id="goalText">Pop 10 bubbles to pass.</p>
+        <div class="meter" style="margin-top:8px"><span id="goalMeter"></span></div>
+        <h3 style="margin-top:14px">Milestones</h3>
+        <div class="lvl" id="milestones"></div>
+        <h3 style="margin-top:14px">Encouragement</h3>
+        <div id="encBox" class="hint">You’ve got this! 🎯</div>
+      </div>
+      <canvas id="game" class="game-canvas" width="1280" height="720"></canvas>
     </div>
+  </div>
+
+  <!-- THEMES -->
+  <div class="panel" id="panel-themes" role="tabpanel" style="display:none">
+    <div class="bar">
+      <div class="chip" id="backToAura">⬅ Back</div>
+      <div class="spacer"></div>
+      <div class="hint">Hover a tile to see its name • Click to apply</div>
+    </div>
+    <div id="themesRoot"></div>
   </div>
 </div>
 
-<!-- Themes drawer (floating) -->
-<div id="themesDrawer" class="themes-drawer" role="complementary" aria-hidden="true" style="display:none">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-    <div style="font-weight:900">Themes</div>
-    <button id="closeThemes" class="btn">Close</button>
-  </div>
-  <div id="themesContainer"></div>
-</div>
-
-<!-- Mini Player -->
-<div id="miniPlayer" style="position:fixed; right:22px; bottom:22px; display:none; z-index:1200;">
-  <div class="mini-player">
-    <button id="miniPlayPause" class="btn">▶️</button>
-    <div style="display:flex; flex-direction:column; gap:6px;">
-      <div id="miniTitle" style="font-weight:900">Aura Music</div>
-      <input id="miniSeek" type="range" class="progress" min="0" max="100" value="0" />
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div id="miniCur" class="muted">0:00</div>
-        <div class="muted">/</div>
-        <div id="miniDur" class="muted">0:00</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Audio sources (expected in same repo) -->
-<audio id="bgm" src="bgm.mp3" crossorigin="anonymous" preload="metadata"></audio>
-<audio id="bgm2" src="bgm2.mp3" crossorigin="anonymous" preload="metadata"></audio>
-<audio id="bgm3" src="bgm3.mp3" crossorigin="anonymous" preload="metadata"></audio>
+<!-- TFJS + MobileNet (no-login, free CDNs) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
 
 <script>
-/* ---------------------------
-   App initialization & helpers
-   --------------------------- */
-(function(){
-  // Basic DOM refs
-  const splash = document.getElementById('splash');
-  const app = document.getElementById('app');
-  const tabs = document.querySelectorAll('.tab');
-  const panels = {
-    chat: document.getElementById('panel-chat'),
-    game: document.getElementById('panel-game'),
-    draw: document.getElementById('panel-draw')
-  };
-  const splashActions = document.querySelectorAll('.splash-action');
+/* =========================
+   Live Clock (HH:MM:SS)
+========================= */
+const clockEl = document.getElementById('clock');
+function pad(n){return String(n).padStart(2,'0')}
+function tickClock(){
+  const d = new Date();
+  clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+tickClock(); setInterval(tickClock, 1000);
 
-  // Show splash once per session: show if not already shown this load
-  // The user asked to show on load/reload and only once until a reload — we'll show on each load unless they press skip.
-  function hideSplashAndEnter(section){
-    splash.style.display = 'none';
-    app.style.display = 'block';
-    app.setAttribute('aria-hidden','false');
-    if(section) activateTab(section);
-  }
-  splashActions.forEach(btn=>{
-    btn.addEventListener('click', ()=> {
-      const target = btn.dataset.target;
-      hideSplashAndEnter(target);
-    });
-  });
-  document.getElementById('splash-close').addEventListener('click', ()=> hideSplashAndEnter('chat'));
+/* =========================
+   Tab system + Music
+========================= */
+const tabs = [...document.querySelectorAll('.tab')];
+const panels = {
+  aura: document.getElementById('panel-aura'),
+  draw: document.getElementById('panel-draw'),
+  bubble: document.getElementById('panel-bubble'),
+  themes: document.getElementById('panel-themes'),
+};
+function showTab(name){
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  Object.values(panels).forEach(p=>p.classList.remove('active'));
+  Object.values(panels).forEach(p=>p.style.display='none');
+  const el = panels[name];
+  el.style.display='block';
+  requestAnimationFrame(()=>el.classList.add('active'));
+  if(name==='bubble'){prepareGameCanvas()} // ensure bubbles spawn without resize
+}
+tabs.forEach(t=>t.addEventListener('click', ()=>showTab(t.dataset.tab)));
 
-  // If user reloads, splash appears again (per your instruction)
-  // so we always show by default. However, if they previously manually closed splash in same session we respect that.
-  // We start with splash visible; app hidden. If you want to skip splash automatically, set below to hide.
-  // For now: keep splash visible on first load.
+const music = document.getElementById('music');
+const musicBtn = document.getElementById('musicBtn');
+let tracks = ["bgm1.mp3","bgm2.mp3","bgm3.mp3"];
+let currentTrack = 0;
+function pickTrack(){ currentTrack = Math.floor(Math.random()*tracks.length); music.src=tracks[currentTrack]; }
+pickTrack();
+musicBtn.addEventListener('click', ()=>{
+  if(music.paused){ music.play(); musicBtn.textContent='⏸️ Music'; }
+  else{ music.pause(); musicBtn.textContent='⏯️ Music'; }
+});
+music.addEventListener('ended', ()=>{ pickTrack(); music.play(); });
 
-  // Tab switching
-  function activateTab(section){
-    tabs.forEach(t=> {
-      const s = t.getAttribute('data-section');
-      if(s === section){
-        t.classList.add('active'); t.setAttribute('aria-selected','true');
-      } else {
-        t.classList.remove('active'); t.setAttribute('aria-selected','false');
-      }
-    });
-    Object.keys(panels).forEach(k=>{
-      if(k === section){
-        panels[k].style.display = 'flex'; panels[k].setAttribute('aria-hidden','false');
-      } else {
-        panels[k].style.display = 'none'; panels[k].setAttribute('aria-hidden','true');
-      }
-    });
-    // Tiny UX: if switching to game, ensure canvas resized & game starts
-    if(section === 'game') {
-      initGame && initGame();
-    } else if(section === 'draw'){
-      sizeDrawCanvas && sizeDrawCanvas();
-    }
-  }
-  tabs.forEach(t=> t.addEventListener('click', ()=> activateTab(t.getAttribute('data-section')) ));
-  // keyboard nav
-  tabs.forEach(t=> t.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { activateTab(t.dataset.section); } }));
-
-  // header buttons
-  document.getElementById('themes-toggle').addEventListener('click', ()=> toggleThemes(true));
-  document.getElementById('open-themes-left').addEventListener('click', ()=> toggleThemes(true));
-  document.getElementById('closeThemes').addEventListener('click', ()=> toggleThemes(false));
-  document.getElementById('music-toggle').addEventListener('click', ()=> toggleMiniPlayer());
-  document.getElementById('open-music-left').addEventListener('click', ()=> toggleMiniPlayer());
-  document.getElementById('reset-app').addEventListener('click', ()=> location.reload());
-
-  // clock
-  const clockEl = document.getElementById('clock');
-  function updateClock(){
-    const d = new Date();
-    const h = d.getHours().toString().padStart(2,'0');
-    const m = d.getMinutes().toString().padStart(2,'0');
-    const s = d.getSeconds().toString().padStart(2,'0');
-    clockEl.textContent = `${h}:${m}:${s}`;
-  }
-  updateClock(); setInterval(updateClock,1000);
-
-  // mute toggle
-  const muteBtn = document.getElementById('mute-all');
-  let globalMuted = false;
-  muteBtn.addEventListener('click', ()=>{
-    globalMuted = !globalMuted;
-    muteBtn.textContent = globalMuted ? '🔈' : '🔇';
-    setAudioMuted(globalMuted);
-  });
-  function setAudioMuted(v){
-    [bgm,bgm2,bgm3].forEach(a=>{ if(a) a.muted = v; });
-  }
-
-  // mini player visibility
-  const miniPlayer = document.getElementById('miniPlayer');
-  function toggleMiniPlayer(){
-    if(miniPlayer.style.display === 'none' || miniPlayer.style.display === '') {
-      miniPlayer.style.display = 'block';
-    } else miniPlayer.style.display = 'none';
-  }
-
-  // initial tab
-  // We'll start on Chat once splash is gone
-  // (We will keep splash visible until user interacts with it; if they want to skip splash use skip button)
-  // For safety, if page is loaded and they don't interact, default to showing app after 5s.
-  setTimeout(()=> {
-    if(splash.style.display !== 'none') {
-      // keep showing to honor requirement; do nothing
-    }
-  },5000);
-
-  // expose for other blocks
-  window.activateTab = activateTab;
-  window.hideSplashAndEnter = hideSplashAndEnter;
-})();
-
-/* ---------------------------
-   THEMES (user supplied large lists)
-   organized and rendered into drawer with tooltips showing name.
-   --------------------------- */
-const THEMES = {
+/* =========================
+   THEMES (Your sets + extras)
+========================= */
+const THEME_GROUPS = {
   'Grayscale': [
-    { name: 'Pure White', bg:'#ffffff' },{ name:'White Smoke', bg:'#F5F5F5' },{ name:'Light Gray', bg:'#d3d3d3' },
-    { name:'Silver Mist', bg:'#b0b0b0' },{ name:'Steel Gray', bg:'#708090' },{ name:'Slate', bg:'#405d72' },
-    { name:'Gunmetal', bg:'#2c3539' },{ name:'Charcoal', bg:'#36454f' },{ name:'Dark Slate', bg:'#2f4f4f' },
-    { name:'Jet Black', bg:'#000000' },{ name:'Off White', bg:'#fafafa' },{ name:'Dim Gray', bg:'#696969' },
-    { name:'Dark Gray', bg:'#a9a9a9' },{ name:'Light Slate', bg:'#778899' },{ name:'Snow', bg:'#FFFAFA' },
-    { name:'Ivory', bg:'#FFFFF0' },{ name:'Gainsboro', bg:'#DCDCDC' },{ name:'Alice Blue', bg:'#F0F8FF' },
-    { name:'Ghost White', bg:'#F8F8FF' },{ name:'Dark White', bg:'#F1F1F1' },{ name:'Midnight Blue', bg:'#191970' },
-    { name:'Dark Blue', bg:'#00008b' },{ name:'Steel Blue', bg:'#4682b4' },{ name:'Dark Steel Blue', bg:'#483d8b' },
-    { name:'Light Steel Blue', bg:'#b0c4de' }
+    { name:'Pure White',bg:'#ffffff',grad:'#f0f0f0',text:'#000000'},
+    { name:'White Smoke',bg:'#F5F5F5',grad:'#E8E8E8',text:'#3c3c3c'},
+    { name:'Light Gray',bg:'#d3d3d3',grad:'#c0c0c0',text:'#3c3c3c'},
+    { name:'Silver Mist',bg:'#b0b0b0',grad:'#a0a0a0',text:'#ffffff'},
+    { name:'Steel Gray',bg:'#708090',grad:'#6c7a89',text:'#ffffff'},
+    { name:'Slate',bg:'#405d72',grad:'#3c586b',text:'#ffffff'},
+    { name:'Gunmetal',bg:'#2c3539',grad:'#364044',text:'#ffffff'},
+    { name:'Charcoal',bg:'#36454f',grad:'#2c3539',text:'#ffffff'},
+    { name:'Dark Slate',bg:'#2f4f4f',grad:'#243c3c',text:'#ffffff'},
+    { name:'Jet Black',bg:'#000000',grad:'#1a1a1a',text:'#ffffff'},
+    { name:'White',bg:'#ffffff',text:'#000000'},
+    { name:'Gray',bg:'#808080',text:'#ffffff'},
+    { name:'Black',bg:'#000000',text:'#ffffff'},
+    { name:'Off White',bg:'#fafafa',text:'#3c3c3c'},
+    { name:'Dim Gray',bg:'#696969',text:'#ffffff'},
+    { name:'Dark Gray',bg:'#a9a9a9',text:'#ffffff'},
+    { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+    { name:'Light Slate Gray',bg:'#778899',text:'#ffffff'},
+    { name:'Dark Slate Gray',bg:'#2f4f4f',text:'#ffffff'},
+    { name:'Snow',bg:'#FFFAFA',text:'#3c3c3c'},
+    { name:'Ivory',bg:'#FFFFF0',text:'#3c3c3c'},
+    { name:'Gainsboro',bg:'#DCDCDC',text:'#3c3c3c'},
+    { name:'Alice Blue',bg:'#F0F8FF',text:'#3c3c3c'},
+    { name:'Ghost White',bg:'#F8F8FF',text:'#3c3c3c'},
+    { name:'Dark White',bg:'#F1F1F1',text:'#3c3c3c'},
+    { name:'Midnight Blue',bg:'#191970',text:'#ffffff'},
+    { name:'Dark Blue',bg:'#00008b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Dark Steel Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Light Steel Blue',bg:'#b0c4de',text:'#3c3c3c'}
   ],
   'Gradient': [
-    { name:'Aurora', grad:['#a8cdf1','#f7b7b9'] },{ name:'Sunset', grad:['#fdbb2d','#22c1c3'] },{ name:'Forest', grad:['#43ac62','#6a9d77'] },
-    { name:'Ocean', grad:['#005bea','#00c6fb'] },{ name:'Lavender', grad:['#c495d4','#b669c6'] },{ name:'Night Sky', grad:['#1c1c1c','#3f3f3f'] },
-    { name:'Candy', grad:['#ff7e5f','#feb47b'] },{ name:'Mint', grad:['#9de0ad','#45a247'] },{ name:'Fire', grad:['#ff416c','#ff4b2b'] },
-    { name:'Emerald', grad:['#56ab2f','#a8e063'] },{ name:'Grape', grad:['#662d8c','#ed1e79'] },{ name:'Sky', grad:['#a8c0ff','#3f2b96'] },
-    { name:'Plum', grad:['#61045f','#ae2869'] },{ name:'Rose', grad:['#fecfef','#ff9a9e'] },{ name:'Aqua', grad:['#74ebd5','#acb6e5'] },
-    { name:'Teal', grad:['#008b8b','#00ced1'] },{ name:'Coral', grad:['#ff6b6b','#ffc87c'] },{ name:'Violet', grad:['#8c52ff','#5ce1e6'] },
-    { name:'Sunburst', grad:['#ff9900','#ffb366'] },{ name:'Cobalt', grad:['#0047ab','#1e90ff'] },{ name:'Denim', grad:['#1565c0','#2196f3'] },
-    { name:'Sky Blue', grad:['#87ceeb','#b0e0e6'] },{ name:'Tangerine', grad:['#f28500','#ff7518'] },{ name:'Jade', grad:['#00a86b','#00a880'] },
-    { name:'Turquoise', grad:['#40e0d0','#48d1cc'] },{ name:'Indigo', grad:['#4b0082','#5c4179'] },{ name:'Lilac', grad:['#b66dff','#c5a0d3'] },
-    { name:'Forest Green', grad:['#013220','#015e34'] },{ name:'Navy', grad:['#000080','#0000a0'] },{ name:'Lagoon', grad:['#0061ff','#60efbc'] }
+    { name:'Aurora',bg:'#a8cdf1',grad:'#f7b7b9',text:'#0b3c61'},
+    { name:'Sunset',bg:'#fdbb2d',grad:'#22c1c3',text:'#3c3c3c'},
+    { name:'Forest',bg:'#43ac62',grad:'#6a9d77',text:'#f0f0f0'},
+    { name:'Ocean',bg:'#005bea',grad:'#00c6fb',text:'#ffffff'},
+    { name:'Lavender',bg:'#c495d4',grad:'#b669c6',text:'#ffffff'},
+    { name:'Night Sky',bg:'#1c1c1c',grad:'#3f3f3f',text:'#ffffff'},
+    { name:'Candy',bg:'#ff7e5f',grad:'#feb47b',text:'#ffffff'},
+    { name:'Mint',bg:'#9de0ad',grad:'#45a247',text:'#ffffff'},
+    { name:'Fire',bg:'#ff416c',grad:'#ff4b2b',text:'#ffffff'},
+    { name:'Emerald',bg:'#56ab2f',grad:'#a8e063',text:'#ffffff'},
+    { name:'Grape',bg:'#662d8c',grad:'#ed1e79',text:'#ffffff'},
+    { name:'Sky',bg:'#a8c0ff',grad:'#3f2b96',text:'#ffffff'},
+    { name:'Plum',bg:'#61045f',grad:'#ae2869',text:'#ffffff'},
+    { name:'Rose',bg:'#fecfef',grad:'#ff9a9e',text:'#3c3c3c'},
+    { name:'Aqua',bg:'#74ebd5',grad:'#acb6e5',text:'#3c3c3c'},
+    { name:'Teal',bg:'#008b8b',grad:'#00ced1',text:'#ffffff'},
+    { name:'Coral',bg:'#ff6b6b',grad:'#ffc87c',text:'#ffffff'},
+    { name:'Violet',bg:'#8c52ff',grad:'#5ce1e6',text:'#ffffff'},
+    { name:'Sunburst',bg:'#ff9900',grad:'#ffb366',text:'#ffffff'},
+    { name:'Cobalt',bg:'#0047ab',grad:'#1e90ff',text:'#ffffff'},
+    { name:'Denim',bg:'#1565c0',grad:'#2196f3',text:'#ffffff'},
+    { name:'Sky Blue',bg:'#87ceeb',grad:'#b0e0e6',text:'#3c3c3c'},
+    { name:'Tangerine',bg:'#f28500',grad:'#ff7518',text:'#ffffff'},
+    { name:'Jade',bg:'#00a86b',grad:'#00a880',text:'#ffffff'},
+    { name:'Turquoise',bg:'#40e0d0',grad:'#48d1cc',text:'#3c3c3c'},
+    { name:'Indigo',bg:'#4b0082',grad:'#5c4179',text:'#ffffff'},
+    { name:'Lilac',bg:'#b66dff',grad:'#c5a0d3',text:'#ffffff'},
+    { name:'Forest Green',bg:'#013220',grad:'#015e34',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',grad:'#0000a0',text:'#ffffff'},
+    { name:'Grapefruit',bg:'#ff6a6a',grad:'#ff66c4',text:'#ffffff'},
+    { name:'Lagoon',bg:'#0061ff',grad:'#60efbc',text:'#ffffff'},
+    { name:'Peaches',bg:'#ffb347',grad:'#ffcc33',text:'#ffffff'},
+    { name:'Neon',bg:'#39ff14',grad:'#00ffc8',text:'#3c3c3c'},
+    { name:'Cosmic',bg:'#232c3f',grad:'#48587c',text:'#ffffff'},
+    { name:'Electric',bg:'#8e2de2',grad:'#4a00e0',text:'#ffffff'},
+    { name:'Ocean 2',bg:'#06637e',grad:'#46a3b2',text:'#ffffff'}
   ],
   'Pastel': [
-    { name:'Pastel Dreams', bg:'#ffb3ba' },{ name:'Lemonade', bg:'#fffacd' },{ name:'Strawberry', bg:'#f1a89c' },
-    { name:'Aqua Mint', bg:'#b2fef8' },{ name:'Powder Blue', bg:'#b1d4e0' },{ name:'Wisteria', bg:'#c9b1e5' },
-    { name:'Dusty Rose', bg:'#e0c9c7' },{ name:'Lime', bg:'#c6ffdd' },{ name:'Sand', bg:'#f1d2b1' },
-    { name:'Mystic', bg:'#d4c7f0' },{ name:'Cotton Candy', bg:'#ffb6c1' },{ name:'Bubblegum', bg:'#ff85a1' },
-    { name:'Cloudy Sky', bg:'#d3e8f1' },{ name:'Soft Peach', bg:'#ffdab9' },{ name:'Seafoam', bg:'#b5e3d7' },
-    { name:'Lilac Petals', bg:'#c8a2c8' }
+    { name:'Pastel Dreams',bg:'#ffb3ba',grad:'#ffdfba',text:'#3c3c3c'},
+    { name:'Lemonade',bg:'#fffacd',grad:'#b3e0ff',text:'#3c3c3c'},
+    { name:'Strawberry',bg:'#f1a89c',grad:'#f3c4c0',text:'#3c3c3c'},
+    { name:'Aqua Mint',bg:'#b2fef8',grad:'#b5ffeb',text:'#3c3c3c'},
+    { name:'Powder Blue',bg:'#b1d4e0',grad:'#b3d3e3',text:'#3c3c3c'},
+    { name:'Wisteria',bg:'#c9b1e5',grad:'#c1b4e5',text:'#3c3c3c'},
+    { name:'Dusty Rose',bg:'#e0c9c7',grad:'#e3d2cf',text:'#3c3c3c'},
+    { name:'Lime',bg:'#c6ffdd',grad:'#fbd786',text:'#3c3c3c'},
+    { name:'Sand',bg:'#f1d2b1',grad:'#e2bc91',text:'#4a3220'},
+    { name:'Mystic',bg:'#d4c7f0',grad:'#a894cc',text:'#3c3c3c'},
+    { name:'Cotton Candy',bg:'#ffb6c1',grad:'#ffa07a',text:'#3c3c3c'},
+    { name:'Bubblegum',bg:'#ff85a1',grad:'#ffc0cb',text:'#ffffff'},
+    { name:'Cloudy Sky',bg:'#d3e8f1',grad:'#e0f1f9',text:'#3c3c3c'},
+    { name:'Soft Peach',bg:'#ffdab9',grad:'#ffc4b1',text:'#3c3c3c'},
+    { name:'Seafoam',bg:'#b5e3d7',grad:'#aed9cb',text:'#3c3c3c'},
+    { name:'Lilac Petals',bg:'#c8a2c8',grad:'#d4b7d4',text:'#3c3c3c'}
   ],
   'Metallic': [
-    { name:'Gold', grad:['#b8924b','#d7c797'] },{ name:'Silver', grad:['#c0c0c0','#d9d9d9'] },{ name:'Bronze', grad:['#cd7f32','#8b4513'] },
-    { name:'Copper', grad:['#b87333','#b56149'] },{ name:'Platinum', grad:['#e5e4e2','#c0c0c0'] },{ name:'Ruby', grad:['#e0115f','#c00742'] },
-    { name:'Sapphire', grad:['#0f52ba','#0073e6'] },{ name:'Emerald Gem', grad:['#046307','#05900a'] },{ name:'Amethyst', grad:['#9966cc','#b399e5'] },
-    { name:'Steel', grad:['#4682b4','#6a8db6'] },{ name:'Chrome', grad:['#8d929b','#a2a7af'] },{ name:'Rose Gold', grad:['#b76e79','#c18f8f'] }
+    { name:'Gold',bg:'#b8924b',grad:'#d7c797',text:'#4a3220'},
+    { name:'Silver',bg:'#c0c0c0',grad:'#d9d9d9',text:'#3c3c3c'},
+    { name:'Bronze',bg:'#cd7f32',grad:'#8b4513',text:'#ffffff'},
+    { name:'Copper',bg:'#b87333',grad:'#b56149',text:'#ffffff'},
+    { name:'Platinum',bg:'#e5e4e2',grad:'#c0c0c0',text:'#3c3c3c'},
+    { name:'Ruby',bg:'#e0115f',grad:'#c00742',text:'#ffffff'},
+    { name:'Sapphire',bg:'#0f52ba',grad:'#0073e6',text:'#ffffff'},
+    { name:'Emerald Gem',bg:'#046307',grad:'#05900a',text:'#ffffff'},
+    { name:'Amethyst',bg:'#9966cc',grad:'#b399e5',text:'#ffffff'},
+    { name:'Steel',bg:'#4682b4',grad:'#6a8db6',text:'#ffffff'},
+    { name:'Chrome',bg:'#8d929b',grad:'#a2a7af',text:'#3c3c3c'},
+    { name:'Rose Gold',bg:'#b76e79',grad:'#c18f8f',text:'#ffffff'}
   ],
   'Animated': [
-    { name:'Shifting Rainbow', anim:['#ff6b6b','#ffc87c','#d5a3ff','#8aff8a'] },
-    { name:'Ocean Waves', anim:['#005bea','#00c6fb','#61d7f6'] },
-    { name:'Forest Glow', anim:['#43ac62','#6a9d77','#8bb87d'] },
-    { name:'Cosmic Dust', anim:['#1c1c1c','#3f3f3f','#5b5b5b'] },
-    { name:'Liquid Fire', anim:['#ff416c','#ff4b2b','#ff8c00'] },
-    { name:'Cyber Blue', anim:['#00ffc8','#006aff','#8a2be2'] },
-    { name:'Synthwave', anim:['#8e2de2','#4a00e0','#ff007f'] },
-    { name:'Volcano', anim:['#d21f3c','#ff4500','#ffd700'] }
+    { name:'Shifting Rainbow', animated:true, grad:'#ff6b6b, #ffc87c, #d5a3ff, #8aff8a', text:'#ffffff' },
+    { name:'Ocean Waves', animated:true, grad:'#005bea, #00c6fb, #61d7f6, #005bea', text:'#ffffff' },
+    { name:'Forest Glow', animated:true, grad:'#43ac62, #6a9d77, #8bb87d, #43ac62', text:'#ffffff' },
+    { name:'Cosmic Dust', animated:true, grad:'#1c1c1c, #3f3f3f, #5b5b5b, #1c1c1c', text:'#ffffff' },
+    { name:'Liquid Fire', animated:true, grad:'#ff416c, #ff4b2b, #ff8c00, #ff416c', text:'#ffffff' },
+    { name:'Cyber Blue', animated:true, grad:'#00ffc8, #006aff, #8a2be2, #00ffc8', text:'#ffffff' },
+    { name:'Synthwave', animated:true, grad:'#8e2de2, #4a00e0, #ff007f, #8e2de2', text:'#ffffff' },
+    { name:'Volcano', animated:true, grad:'#d21f3c, #ff4500, #ffd700, #d21f3c', text:'#ffffff' }
   ],
   'Poster': [
-    { name:'Crimson', bg:'#8d0426' },{ name:'Slate', bg:'#405d72' },{ name:'Carbon', bg:'#232526' },
-    { name:'Ruby', bg:'#d62828' },{ name:'Mahogany', bg:'#4c1e19' },{ name:'Olive', bg:'#556b2f' },
-    { name:'Charcoal', bg:'#36454f' },{ name:'Lemon', bg:'#fff733' },{ name:'Azure', bg:'#007fff' },
-    { name:'Maroon', bg:'#800000' },{ name:'Jade', bg:'#00a86b' },{ name:'Navy Blue', bg:'#000080' },
-    { name:'Slate Gray', bg:'#708090' },{ name:'Chocolate', bg:'#7b3f00' },{ name:'Dark Green', bg:'#006400' },
-    { name:'Midnight', bg:'#0a0a23' },{ name:'Teal Green', bg:'#008080' },{ name:'Eggplant', bg:'#614051' },
-    { name:'Burnt Orange', bg:'#cc5500' },{ name:'Mustard', bg:'#ffdb58' },{ name:'Terracotta', bg:'#e2725b' },
-    { name:'Rust', bg:'#b7410e' },{ name:'Dark Cyan', bg:'#008b8b' },{ name:'Dark Magenta', bg:'#8b008b' },
-    { name:'Sienna', bg:'#a0522d' },{ name:'Olive Drab', bg:'#6b8e23' },{ name:'Pine Green', bg:'#01796f' },
-    { name:'Oxblood', bg:'#4a0000' },{ name:'Graphite', bg:'#2f4f4f' },{ name:'Falu Red', bg:'#801818' }
+    { name:'Crimson',bg:'#8d0426',text:'#ffffff'},
+    { name:'Slate',bg:'#405d72',text:'#ffffff'},
+    { name:'Carbon',bg:'#232526',text:'#ffffff'},
+    { name:'Ruby',bg:'#d62828',text:'#ffffff'},
+    { name:'Mahogany',bg:'#4c1e19',text:'#ffffff'},
+    { name:'Olive',bg:'#556b2f',text:'#ffffff'},
+    { name:'Charcoal',bg:'#36454f',text:'#ffffff'},
+    { name:'Lemon',bg:'#fff733',text:'#3c3c3c'},
+    { name:'Azure',bg:'#007fff',text:'#ffffff'},
+    { name:'Maroon',bg:'#800000',text:'#ffffff'},
+    { name:'Jade',bg:'#00a86b',text:'#ffffff'},
+    { name:'Navy Blue',bg:'#000080',text:'#ffffff'},
+    { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+    { name:'Chocolate',bg:'#7b3f00',text:'#ffffff'},
+    { name:'Dark Green',bg:'#006400',text:'#ffffff'},
+    { name:'Midnight',bg:'#0a0a23',text:'#ffffff'},
+    { name:'Teal Green',bg:'#008080',text:'#ffffff'},
+    { name:'Eggplant',bg:'#614051',text:'#ffffff'},
+    { name:'Burnt Orange',bg:'#cc5500',text:'#ffffff'},
+    { name:'Mustard',bg:'#ffdb58',text:'#3c3c3c'},
+    { name:'Terracotta',bg:'#e2725b',text:'#ffffff'},
+    { name:'Rust',bg:'#b7410e',text:'#ffffff'},
+    { name:'Dark Cyan',bg:'#008b8b',text:'#ffffff'},
+    { name:'Dark Magenta',bg:'#8b008b',text:'#ffffff'},
+    { name:'Sienna',bg:'#a0522d',text:'#ffffff'},
+    { name:'Olive Drab',bg:'#6b8e23',text:'#ffffff'},
+    { name:'Pine Green',bg:'#01796f',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',text:'#ffffff'},
+    { name:'Dark Slate Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Slate Grey',bg:'#708090',text:'#ffffff'},
+    { name:'Deep Sea',bg:'#003153',text:'#ffffff'},
+    { name:'Oxblood',bg:'#4a0000',text:'#ffffff'},
+    { name:'Graphite',bg:'#2f4f4f',text:'#ffffff'},
+    { name:'Falu Red',bg:'#801818',text:'#ffffff'}
+  ]
+};
+// render themes
+const themesRoot = document.getElementById('themesRoot');
+function renderThemes(){
+  themesRoot.innerHTML='';
+  for(const [group, items] of Object.entries(THEME_GROUPS)){
+    const title = document.createElement('div'); title.className='group-title'; title.textContent=group; themesRoot.appendChild(title);
+    const grid = document.createElement('div'); grid.className='themes-wrap'; themesRoot.appendChild(grid);
+    items.forEach(theme=>{
+      const tile = document.createElement('div'); tile.className='swatch has-tt'; tile.dataset.tt = theme.name;
+      // visual
+      if(theme.animated){
+        tile.style.background = `linear-gradient(120deg, ${theme.grad})`;
+        tile.style.backgroundSize = '300% 300%';
+        tile.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:5000,iterations:Infinity});
+      }else if(theme.grad){
+        tile.style.background = `linear-gradient(135deg, ${theme.bg}, ${theme.grad})`;
+      }else{ tile.style.background = theme.bg; }
+      tile.innerHTML = `<span class="tag">${group}</span>`;
+      tile.addEventListener('click', ()=>applyTheme(theme));
+      grid.appendChild(tile);
+    });
+  }
+}
+renderThemes();
+
+function applyTheme(t){
+  // set CSS vars to keep whole UI coherent
+  document.documentElement.style.setProperty('--bg', t.bg || '#0e1116');
+  document.documentElement.style.setProperty('--text', t.text || '#eef2f6');
+  // Accent based on bg to keep contrast
+  document.documentElement.style.setProperty('--accent', '#7cc6ff');
+  document.documentElement.style.setProperty('--accent-2', '#a8a6ff');
+  // background art
+  const body = document.body;
+  if(t.animated){
+    body.style.background = `linear-gradient(120deg, ${t.grad})`;
+    body.style.backgroundSize = '300% 300%';
+    body.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
+  }else if(t.grad){
+    body.style.background = `linear-gradient(180deg, ${t.bg}, ${t.grad})`;
+  }else{
+    body.style.background = t.bg;
+  }
+}
+
+/* Theme panel open/close */
+const openThemes = document.getElementById('openThemes');
+const backToAura = document.getElementById('backToAura');
+openThemes.addEventListener('click', ()=>{ panels.themes.style.display='block'; showTab('themes'); });
+backToAura.addEventListener('click', ()=>{ showTab('aura'); });
+
+/* =========================
+   AuraAI Chat
+========================= */
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+const emotionDock = document.getElementById('emotionDock');
+const scriptedToggle = document.getElementById('scriptedToggle');
+
+let scriptedOnly = false;
+scriptedToggle.addEventListener('click', ()=>{
+  scriptedOnly = !scriptedOnly;
+  scriptedToggle.setAttribute('aria-pressed', scriptedOnly);
+  auraSay(scriptedOnly ? "Scripted demo is ON. Start your line with “You:” and I’ll respond." : "Scripted demo is OFF. I’ll respond to anything you say.");
+});
+
+const emotionPrompts = {
+  happy: [
+    "Hi! 👋 How was your day? 😊",
+    "Love hearing the good stuff. Want to celebrate a small win?",
+    "Pick an activity: Draw, Bubble Pop, or music?",
+  ],
+  sad: [
+    "I hear you. 💙 Want a small comfort idea?",
+    "We can draw, breathe together, or pop bubbles—your pick.",
+    "You’re not alone here. Would you like a gentle activity?",
+  ],
+  angry: [
+    "That’s tough. I’m here with you.",
+    "Want a short 10‑breath reset or a game to vent?",
+    "I can listen as long as you like.",
+  ],
+  nervous: [
+    "It’s okay to be nervous. You’re safe here.",
+    "Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×.",
+    "Would a simple drawing or Bubble Pop help?",
   ]
 };
 
-// Render themes drawer
-(function renderThemes(){
-  const container = document.getElementById('themesContainer');
-  container.innerHTML = '';
-  Object.entries(THEMES).forEach(([groupName, items])=>{
-    const g = document.createElement('div'); g.className = 'theme-group';
-    const title = document.createElement('div'); title.textContent = groupName; title.style.fontWeight='900';
-    g.appendChild(title);
-    const row = document.createElement('div'); row.className = 'theme-row';
-    items.forEach(item=>{
-      const b = document.createElement('button'); b.className = 'theme-btn';
-      // display either solid color, gradient or animated
-      if(item.bg){
-        b.style.background = item.bg;
-      } else if(item.grad){
-        const gcss = Array.isArray(item.grad) ? `linear-gradient(135deg, ${item.grad.join(',')})` : item.grad;
-        b.style.background = gcss;
-      } else if(item.anim){
-        const gcss = `linear-gradient(135deg, ${item.anim.join(',')})`;
-        b.style.background = gcss;
-      }
-      // tooltip showing the theme name
-      const tip = document.createElement('div'); tip.className='tooltip'; tip.textContent = item.name;
-      b.appendChild(tip);
-      // click applies background to body (simple)
-      b.addEventListener('click', ()=>{
-        // choose style based on item props; keep glass tokens
-        if(item.bg){
-          document.body.style.background = item.bg;
-        } else if(item.grad){
-          document.body.style.background = `linear-gradient(135deg, ${item.grad.join(',')})`;
-        } else if(item.anim){
-          document.body.style.background = `linear-gradient(135deg, ${item.anim.join(',')})`;
-        }
-        // small sound feedback (WebAudio beep) if not muted
-        quickBeep();
-      });
-      row.appendChild(b);
-    });
-    g.appendChild(row);
-    container.appendChild(g);
-  });
-})();
-
-// themes drawer toggle
-function toggleThemes(open){
-  const el = document.getElementById('themesDrawer');
-  if(open === undefined) open = el.style.display === 'none';
-  el.style.display = open ? 'block' : 'none';
+function auraSay(text){ addMsg(text,false); }
+function meSay(text){ addMsg(text,true); }
+function addMsg(text, mine){
+  const div = document.createElement('div');
+  div.className = 'msg' + (mine?' me':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-/* ---------------------------
-   Tiny sound engine (beeps)
-   --------------------------- */
-const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
-let soundMuted = false;
-function quickBeep(freq=560,dur=0.06,type='sine'){
-  if(soundMuted || !audioCtx) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type; o.frequency.value = freq;
-  g.gain.value = 0.04;
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime + dur);
-}
-document.getElementById('mute-all').addEventListener('click', ()=> { soundMuted = !soundMuted; });
+function respond(msg){
+  // Scripted mode: reply only if starts with "You:"
+  if(scriptedOnly && !/^you:/i.test(msg)) return;
 
-/* ---------------------------
-   MINI MUSIC PLAYER
-   - uses bgm, bgm2, bgm3 elements
-   --------------------------- */
-const bgm = document.getElementById('bgm');
-const bgm2 = document.getElementById('bgm2');
-const bgm3 = document.getElementById('bgm3');
-const tracks = [bgm, bgm2, bgm3].filter(Boolean);
-let currentTrackIndex = 0;
-let autoplayAllowed = true;
-
-// mini player controls
-const miniPlay = document.getElementById('miniPlayPause');
-const miniSeek = document.getElementById('miniSeek');
-const miniCur = document.getElementById('miniCur');
-const miniDur = document.getElementById('miniDur');
-const miniTitle = document.getElementById('miniTitle');
-
-function setTrackIndex(i){
-  currentTrackIndex = i % tracks.length;
-  tracks.forEach((t, idx)=> t.pause());
-  const t = tracks[currentTrackIndex];
-  miniTitle.textContent = 'Track ' + (currentTrackIndex+1);
-  // attach events
-  t.onloadedmetadata = ()=> miniDur.textContent = fmt(t.duration);
-  t.ontimeupdate = ()=> {
-    if(t.duration) {
-      miniSeek.value = ((t.currentTime / t.duration) * 100) || 0;
-      miniCur.textContent = fmt(t.currentTime);
-      miniDur.textContent = fmt(t.duration);
-    }
-  };
-  t.onended = ()=> {
-    setTrackIndex(currentTrackIndex+1);
-    playCurrent();
-  };
-}
-function playCurrent(){ const t = tracks[currentTrackIndex]; t.play().catch(()=>{}); miniPlay.textContent = '⏸'; }
-function pauseCurrent(){ const t = tracks[currentTrackIndex]; t.pause(); miniPlay.textContent = '▶️'; }
-function fmt(t){ if(isNaN(t)) return '0:00'; const m = Math.floor(t/60); const s = Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
-
-if(tracks.length){
-  setTrackIndex(0);
-  miniPlay.addEventListener('click', ()=>{
-    const t = tracks[currentTrackIndex];
-    if(t.paused) { playCurrent(); quickBeep(720,0.05); } else { pauseCurrent(); quickBeep(360,0.05); }
-  });
-  miniSeek.addEventListener('input', ()=> {
-    const t = tracks[currentTrackIndex];
-    if(t.duration) t.currentTime = (miniSeek.value/100) * t.duration;
-  });
-  // show mini player by default
-  document.getElementById('miniPlayer').style.display = 'block';
+  const clean = msg.toLowerCase();
+  // simple detection
+  if(/(happy|great|good|yay)/.test(clean)) auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
+  else if(/(sad|down|blue|cry|upset)/.test(clean)) auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
+  else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
+  else if(/(nervous|anxious|worry|scared)/.test(clean)) auraSay("Thanks for sharing. Try a 4‑4‑6 breath with me, or we can draw gently.");
+  else if(/(draw|sketch|paint)/.test(clean)){ auraSay("Opening Draw for you. ✨"); showTab('draw'); }
+  else if(/(bubble|game|play)/.test(clean)){ auraSay("Let’s play Bubble Pop! 🫧"); showTab('bubble'); }
+  else if(/(hug)/.test(clean)){ auraSay("Sending a big gentle hug 🤗 You’re cared for."); }
+  else auraSay("Got it. Tell me more, or choose an activity: Draw • Bubble Pop • Music.");
 }
 
-/* ---------------------------
-   CHATBOT (local rule-based + fuzzy)
-   - responds to messages starting with "You:" if user wants
-   - always visible 4 moods for quick switching
-   - improvement: keyword-based specialized responses + fallback empathetic responses
-   --------------------------- */
-(function chatModule(){
-  const chatWindow = document.getElementById('chatWindow');
-  const chatInput = document.getElementById('chatInput');
-  const sendBtn = document.getElementById('sendChat');
-  const moodBtns = document.querySelectorAll('.mood-btn');
-  let currentMood = null;
-  let demoMode = false;
+sendBtn.addEventListener('click', ()=>{
+  const v = input.value.trim(); if(!v) return;
+  meSay(v); respond(v); input.value='';
+});
+input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendBtn.click(); });
 
-  // helper to append a message
-  function appendMessage(text, who='aura'){
-    const div = document.createElement('div');
-    div.className = 'message ' + (who === 'user' ? 'user' : 'aura') + ' fadein';
-    div.textContent = text;
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }
-
-  // initial greeting
-  appendMessage("Hi! 👋 I'm Aura. How are you feeling today?");
-
-  // mood quick replies
-  moodBtns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const m = btn.dataset.mood;
-      currentMood = m;
-      quickBeep(640,0.04);
-      const mapping = {
-        happy: ["That's wonderful! What made your day bright?", "Love that — want to share a happy detail?"],
-        sad: ["I'm sorry you're feeling sad. I'm here. Want a small comfort idea?", "It's okay to feel low. Want a breathing trick?"],
-        angry: ["Anger is valid. Want to vent safely or try a 60‑second cool down?", "Would you like a short break exercise?"],
-        nervous: ["Take my hand — metaphorically. Want to do a grounding exercise?", "You're safe here. Want to describe what's worrying you?" ]
-      };
-      appendMessage(mapping[m][Math.floor(Math.random()*mapping[m].length)]);
-    });
+emotionDock.querySelectorAll('.chip').forEach(ch=>{
+  ch.addEventListener('click', ()=>{
+    emotionDock.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));
+    ch.setAttribute('aria-pressed','true');
+    const em = ch.dataset.emote;
+    emotionPrompts[em].forEach(auraSay);
   });
-
-  // basic NLP helpers
-  function norm(s){ return (s||'').toLowerCase(); }
-  function containsAny(s, arr){ return arr.some(a => s.includes(a)); }
-
-  const topics = {
-    breathing: ['breathe','breathing','breath','inhale','exhale','4','4-4-6','4-4-6'],
-    music: ['music','song','listen','play'],
-    draw: ['draw','doodle','sketch','painting'],
-    game: ['game','play','bubble','pop','bubbles'],
-    help: ['help','support','advice','need']
-  };
-
-  // send handler
-  function handleSend(){
-    const raw = chatInput.value.trim();
-    if(!raw) return;
-    appendMessage(raw, 'user');
-    chatInput.value = '';
-
-    // If message starts with "You:" or "you:" we treat it as direct to Aura for a reply
-    const startsYou = /^you[:\s]/i.test(raw);
-    const content = startsYou ? raw.replace(/^you[:\s]*/i,'') : raw;
-
-    // if demoMode is on, respond differently (demo toggled via Demo btn)
-    if(!startsYou && !demoMode){
-      // fallback: don't respond (user wanted passive)
-      appendMessage("If you want me to respond, start your message with \"You:\" — otherwise I'm here quietly.");
-      return;
-    }
-
-    // Now generate response (rule-based)
-    generateResponse(content);
-  }
-
-  function generateResponse(text){
-    const s = norm(text);
-
-    // greetings
-    if(containsAny(s, ['hi','hello','hey','yo'])){
-      appendMessage("Hey! 👋 Nice to hear from you. Want to draw, play or talk more?");
-      return;
-    }
-
-    // thanks
-    if(containsAny(s, ['thank','thanks','thx','appreciate'])){
-      appendMessage("You're welcome. I'm here whenever you need me. 💙");
-      return;
-    }
-
-    // breathing
-    if(containsAny(s, topics.breathing)){
-      appendMessage("Let's try 4-4-6 together: inhale 4s, hold 4s, exhale 6s — three times. Want me to guide you?");
-      return;
-    }
-
-    // music
-    if(containsAny(s, topics.music)){
-      appendMessage("Music can help. Open the mini player and press play — would you like a playlist suggestion?");
-      return;
-    }
-
-    // draw
-    if(containsAny(s, topics.draw)){
-      appendMessage("Great — head to the Draw tab. I can suggest an idea or you can freestyle. Ask me for a suggestion!");
-      return;
-    }
-
-    // game
-    if(containsAny(s, topics.game)){
-      appendMessage("Bubble Pop is a relaxing game. It has levels and calming visuals. Want to start Level 1?");
-      return;
-    }
-
-    // help / support
-    if(containsAny(s, topics.help)){
-      appendMessage("I'm here for you. Tell me a little bit, or select an activity — drawing, breathing, or a small game.");
-      return;
-    }
-
-    // mood-specific followups
-    if(currentMood){
-      if(currentMood === 'sad'){
-        appendMessage("I hear you. Want a tiny comfort idea (music, a warm drink, or a small distraction)?");
-        return;
-      }
-      if(currentMood === 'nervous'){
-        appendMessage("Try grounding: name 5 things you see, 4 you feel, 3 you hear. Want me to guide?");
-        return;
-      }
-      if(currentMood === 'angry'){
-        appendMessage("Maybe a quick physical release — stomp in place or squeeze a pillow. Want a breathing break after?");
-        return;
-      }
-      if(currentMood === 'happy'){
-        appendMessage("That's lovely! Want to celebrate with a quick doodle or song?");
-        return;
-      }
-    }
-
-    // fallback supportive reply
-    appendMessage("Thanks for sharing. I'm listening — tell me more, or choose Draw • Play • Music.");
-  }
-
-  sendBtn.addEventListener('click', handleSend);
-  chatInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') handleSend(); });
-
-  // Demo toggle to have Aura proactively reply even without "You:"
-  document.getElementById('demoMode').addEventListener('click', ()=>{
-    demoMode = !demoMode;
-    document.getElementById('demoMode').textContent = demoMode ? 'Demo ON' : 'Demo';
-    quickBeep(760,0.04);
+});
+// quick bubbles
+document.querySelectorAll('.bubble').forEach(b=>{
+  const say = b.dataset.say; const act = b.dataset.action;
+  b.addEventListener('click', ()=>{
+    if(say){ meSay(say); respond(say); }
+    if(act==='openDraw'){ showTab('draw'); }
+    if(act==='openBubble'){ showTab('bubble'); }
+    if(act==='sendHug'){ auraSay("🤗 A warm hug, just for you."); }
+    if(act==='breathing'){ auraSay("Let’s do 4‑4‑6 together. Inhale 4, hold 4, exhale 6 — three times."); }
   });
+});
+// greet
+auraSay("Hello! I’m Aura. 💫 How do you feel today?");
+auraSay("You can switch feelings anytime with the buttons above.");
 
-  // initial: set a calm starter conversation (but not spam)
-  setTimeout(()=> {
-    appendMessage("You're not alone. If you want to tell me more, start your message with \"You:\" or toggle Demo to have me respond to anything.");
-  },900);
+/* =========================
+   DRAW + Auto‑check
+========================= */
+const doodle = document.getElementById('doodle');
+const ctx = doodle.getContext('2d');
+let drawing=false, last=null;
+let stack=[], redo=[];
+function resizeCanvas(){ /* keep pixel size stable via width/height attributes already set */ }
+resizeCanvas();
 
-})();
+function strokeStart(x,y){ drawing=true; last=[x,y]; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=14; ctx.strokeStyle='#e6f0ff'; ctx.shadowBlur=0; pushState(); }
+function strokeMove(x,y){ if(!drawing) return; ctx.beginPath(); ctx.moveTo(last[0],last[1]); ctx.lineTo(x,y); ctx.stroke(); last=[x,y]; }
+function strokeEnd(){ drawing=false; last=null; if(autoCheckOn) queuedCheck(); }
+function getPos(e){
+  const r = doodle.getBoundingClientRect();
+  const x = (e.touches?e.touches[0].clientX:e.clientX) - r.left;
+  const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
+  return [x * doodle.width / r.width, y * doodle.height / r.height];
+}
+doodle.addEventListener('pointerdown', e=>{doodle.setPointerCapture(e.pointerId); const [x,y]=getPos(e); strokeStart(x,y)});
+doodle.addEventListener('pointermove', e=>{const [x,y]=getPos(e); strokeMove(x,y)});
+doodle.addEventListener('pointerup', strokeEnd);
+doodle.addEventListener('pointerleave', strokeEnd);
 
-/* ---------------------------
-   BUBBLE POP GAME (level-based)
-   - Uses a canvas and spawns bubbles slowly.
-   - Fix resize bug by recalculating sizes on display and when the game panel becomes visible.
-   --------------------------- */
-let gameState = {
-  initialized:false,
-  canvas:null,
-  ctx:null,
-  bubbles:[],
-  score:0,
-  level:1,
-  spawnTimer:0,
-  lastTime:0,
-  running:true,
-  levelThresholds: [25,50,100,150,220,300,380,470,570,680,800,930,1070] // progressive
+/* Undo/Redo */
+function pushState(){ try{ stack.push(doodle.toDataURL()); redo.length=0; }catch(e){} }
+function undo(){ if(stack.length){ const last=stack.pop(); redo.push(last); const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,doodle.width,doodle.height); ctx.drawImage(img,0,0)}; if(stack.length){img.src=stack[stack.length-1]} else {ctx.clearRect(0,0,doodle.width,doodle.height)} } }
+function redoFn(){ if(redo.length){ const src=redo.pop(); stack.push(src); const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0); img.src=src; } }
+document.getElementById('undoDraw').onclick=undo;
+document.getElementById('redoDraw').onclick=redoFn;
+
+document.getElementById('clearCanvas').onclick=()=>{ ctx.clearRect(0,0,doodle.width,doodle.height); if(autoCheckOn) setCheckMsg("Canvas cleared. Ready when you are."); };
+
+document.getElementById('savePNG').onclick=()=>{
+  const a=document.createElement('a'); a.download='aura-doodle.png'; a.href=doodle.toDataURL('image/png'); a.click();
 };
 
-function initGame(){
-  if(gameState.initialized) return;
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  gameState.canvas = canvas; gameState.ctx = ctx;
-  gameState.initialized = true;
-  gameState.bubbles = [];
-  gameState.score = 0; gameState.level = 1; gameState.spawnTimer = 0; gameState.lastTime = performance.now(); gameState.running = true;
-  resizeGameCanvas();
-  window.addEventListener('resize', resizeGameCanvas);
-  requestAnimationFrame(gameLoop);
-  document.getElementById('resetLevel').addEventListener('click', ()=>{
-    gameState.bubbles = []; gameState.score = 0; gameState.level = 1; updateGameUI();
-    quickBeep(740,0.05);
-  });
-}
+/* Idea chooser (no “prompt” word) */
+const ideaText = document.getElementById('ideaText');
+const okIdea = document.getElementById('okIdea');
+const noIdea = document.getElementById('noIdea');
+const laterIdea = document.getElementById('laterIdea');
+const freeMode = document.getElementById('freeMode');
+const autoCheck = document.getElementById('autoCheck');
+const drawAsk = document.getElementById('drawAsk');
 
-function resizeGameCanvas(){
-  const canvas = gameState.canvas;
-  if(!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * devicePixelRatio;
-  canvas.height = rect.height * devicePixelRatio;
-  gameState.ctx.setTransform(1,0,0,1,0,0);
-  gameState.ctx.scale(devicePixelRatio, devicePixelRatio);
-}
-function spawnBubble(){
-  const c = gameState.canvas;
-  const r = 18 + Math.random()*28;
-  const x = r + Math.random()*(c.clientWidth - r*2);
-  const y = c.clientHeight + r + 10;
-  // slightly slower vertical velocity than before (user requested slower)
-  const vy = (0.35 + Math.random()*0.6) * (1 + (gameState.level-1)*0.03);
-  const hue = Math.floor(180 + Math.random()*160);
-  gameState.bubbles.push({x,y,r,vy,alpha:1,hue,popped:false});
-}
-
-function updateBubble(b, dt){
-  if(!b.popped){
-    b.y -= b.vy * dt * 0.05; // slowed factor
-    if(b.y < -b.r){ b.popped = true; b.alpha = 0; }
-  } else {
-    b.alpha -= 0.04;
-  }
-}
-function drawBubble(b){
-  const ctx = gameState.ctx;
-  ctx.save();
-  ctx.globalAlpha = Math.max(0,b.alpha);
-  ctx.shadowColor = `rgba(255,255,255,0.9)`;
-  ctx.shadowBlur = 12;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = `rgba(0,0,0,0.12)`;
-  const cx = b.x, cy = b.y, r = b.r;
-  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.2, cx, cy, r);
-  grad.addColorStop(0, `hsla(${b.hue}, 95%, 96%, .95)`);
-  grad.addColorStop(1, `hsla(${b.hue}, 70%, 65%, .65)`);
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx-r*0.38, cy-r*0.38, r*0.22, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fill();
-  ctx.restore();
-}
-
-function gameLoop(t){
-  if(!gameState.initialized) return;
-  const dt = t - gameState.lastTime; gameState.lastTime = t;
-  if(gameState.running){
-    const ctx = gameState.ctx;
-    ctx.clearRect(0,0,gameState.canvas.clientWidth,gameState.canvas.clientHeight);
-
-    // soft background
-    const gradient = ctx.createLinearGradient(0,0,gameState.canvas.clientWidth,gameState.canvas.clientHeight);
-    gradient.addColorStop(0,'rgba(255,255,255,0.28)');
-    gradient.addColorStop(1,'rgba(255,255,255,0.16)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0,0,gameState.canvas.clientWidth,gameState.canvas.clientHeight);
-
-    // spawn logic (slower spawn)
-    gameState.spawnTimer += dt;
-    if(gameState.spawnTimer > (700 - Math.min(400, gameState.level*10))){ spawnBubble(); gameState.spawnTimer = 0; }
-
-    // update & draw
-    gameState.bubbles = gameState.bubbles.filter(b => b.alpha > 0);
-    for(const b of gameState.bubbles){ updateBubble(b, dt); drawBubble(b); }
-
-    // occasionally show encouragement based on score
-    if(gameState.score && gameState.score % 25 === 0 && gameState.score !== 0){
-      showGameEncouragement(gameState.score);
-    }
-  }
-  requestAnimationFrame(gameLoop);
-}
-
-function showGameEncouragement(score){
-  const phrases = [
-    "Nice pace — keep going!",
-    "You're doing great — breathe and pop!",
-    "Lovely focus — keep popping gently.",
-    "Amazing — you're making progress."
-  ];
-  // show milestone popup briefly
-  const text = phrases[Math.floor(Math.random()*phrases.length)];
-  const el = document.createElement('div');
-  el.style.position='absolute'; el.style.left='50%'; el.style.top='18%'; el.style.transform='translateX(-50%)';
-  el.style.padding='10px 16px'; el.style.borderRadius='12px'; el.style.background='rgba(255,255,255,0.94)';
-  el.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'; el.style.fontWeight='900';
-  el.textContent = `${text} • ${score} points`;
-  document.body.appendChild(el);
-  setTimeout(()=> el.remove(),1400);
-}
-
-// handle clicks to pop bubbles
-(function bindGameClick(){
-  const canvas = document.getElementById('gameCanvas');
-  canvas.addEventListener('click', (e)=>{
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    for(const b of gameState.bubbles){
-      const dx = x - b.x, dy = y - b.y;
-      if(!b.popped && dx*dx + dy*dy <= b.r*b.r){
-        b.popped = true; b.vy = 0; gameState.score += 1; document.getElementById('gameScore').textContent = gameState.score;
-        quickBeep(900,0.06); break;
-      }
-    }
-    updateGameUI();
-  });
-
-  function updateGameUI(){
-    document.getElementById('gameScore').textContent = gameState.score;
-    // calculate progress to next milestone
-    const thresholds = gameState.levelThresholds;
-    let next = thresholds.find(v => v > gameState.score) || (thresholds[thresholds.length-1] + 200);
-    let prev = thresholds.slice().reverse().find(v => v <= gameState.score) || 0;
-    const span = next - prev;
-    const prog = Math.min(100, Math.floor((gameState.score - prev)/span*100));
-    document.getElementById('levelProgress').value = prog;
-    document.getElementById('levelInfo').textContent = `Level ${gameState.level} • Score ${gameState.score}`;
-    document.getElementById('milestoneText').textContent = 'Milestone: ' + next;
-    // level up if surpass threshold
-    if(gameState.score >= next){
-      gameState.level += 1;
-      gameState.bubbles = []; // small reset
-      addLevelUpMessage(gameState.level);
-    }
-  }
-  window.updateGameUI = updateGameUI;
-})();
-
-/* ---------------------------
-   DRAW PAD
-   - 100 drawing items
-   - rotate feature
-   - auto-check via mobilenet (tfjs) against top labels
-   --------------------------- */
-
-const DRAW_PROMPTS = (function buildPrompts(){
-  // 100 sample prompts (mix of common everyday objects and simple shapes)
-  const list = [
-    "cat","dog","house","tree","sun","moon","star","car","boat","bird",
-    "cup","cake","flower","apple","banana","key","hat","shoe","fish","book",
-    "phone","chair","clock","cloud","mountain","heart","truck","train","bicycle","kite",
-    "leaf","butterfly","rabbit","penguin","ball","pencil","glasses","rocket","castle","island",
-    "guitar","umbrella","lamp","window","door","bridge","island","teapot","socks","apple pie",
-    "lighthouse","anchor","campfire","crown","robot","dice","cactus","shell","camera","map",
-    "teddy bear","planet","volcano","kite","crown","skateboard","ice cream","mushroom","scarf","backpack",
-    "telescope","lantern","wine glass","strawberry","cherry","owl","snake","whale","dolphin","swan",
-    "piano","violin","drum","basket","bottle","comb","mirror","globe","zipper","keyhole",
-    "cookie","broom","paintbrush","sailboat","tractor","fence","umbrella stand","stop sign","traffic light","rubber duck",
-    "magnet","compass","battery","paper airplane","bow","feather","lantern fish","hot air balloon","iceberg","log"
-  ];
-  // deduplicate and ensure 100 by repeating with small variants if necessary
-  while(list.length < 100) list.push("scribble");
-  return list.slice(0,100);
-})();
-
+const IDEAS = [
+  "cat","dog","fish","bird","butterfly","flower","tree","leaf","house","car","bus","train","boat","rocket","star","moon","sun","rainbow",
+  "heart","smile","key","lock","cup","ice cream","pizza","burger","fries","cookie","cake","banana","apple","grapes","strawberry","watermelon",
+  "ball","kite","guitar","piano","drum","book","clock","glasses","shoe","hat","crown","ring","watch","camera","phone","robot","dinosaur","elephant",
+  "lion","tiger","bear","whale","turtle","frog","penguin","owl","fox","rabbit","horse","snail","spider","dragonfly","octopus","jellyfish","starfish",
+  "mountain","river","treehouse","castle","bridge","lighthouse","tent","campfire","snowman","gift","balloon","umbrella","airplane","helicopter",
+  "backpack","pencil","paintbrush","scissors","ruler","toothbrush","tooth","bicycle","motorbike","scooter","tractor","skateboard","soccer ball",
+  "basketball","baseball","tennis racket","medal","trophy"
+];
 let currentIdea = null;
-let modelLoaded = false;
-let mobilenetModel = null;
-const drawCanvas = document.getElementById('drawCanvas');
-const dctx = drawCanvas.getContext('2d');
-let drawRotation = 0;
-let isDrawing = false, lastX=0,lastY=0,brushColor='#1e88e5',brushSize=12,erasing=false;
-
-/* Canvas sizing */
-function sizeDrawCanvas(){
-  const rect = drawCanvas.getBoundingClientRect();
-  const w = Math.floor(rect.width);
-  const h = Math.floor(rect.height);
-  // set actual pixel size -> maintain high DPI
-  drawCanvas.width = w * devicePixelRatio;
-  drawCanvas.height = h * devicePixelRatio;
-  dctx.setTransform(1,0,0,1,0,0);
-  dctx.scale(devicePixelRatio, devicePixelRatio);
-  // if nothing drawn, fill white hover area
-  dctx.fillStyle = 'rgba(255,255,255,0.0)';
-  dctx.fillRect(0,0,w,h);
+function askIdea(){ ideaText.textContent = "Try drawing a [thing]? (OK / No / Later)"; }
+function chooseIdea(){
+  currentIdea = IDEAS[Math.floor(Math.random()*IDEAS.length)];
+  ideaText.innerHTML = `Try drawing <strong>${currentIdea}</strong>. You can say “No” for a different one or “Later” to freestyle.`;
 }
-sizeDrawCanvas();
-new ResizeObserver(sizeDrawCanvas).observe(drawCanvas);
+askIdea();
+okIdea.onclick = ()=>{ if(!currentIdea) chooseIdea(); else ideaText.innerHTML = `You picked <strong>${currentIdea}</strong>. Go for it!`; };
+noIdea.onclick = ()=>{ chooseIdea(); };
+laterIdea.onclick = ()=>{ currentIdea = null; ideaText.textContent = "Freestyle is on. Draw anything you like."; };
+freeMode.onclick = ()=>{ currentIdea=null; ideaText.textContent="Freestyle is on. Draw anything you like."; };
 
-/* drawing events */
-drawCanvas.addEventListener('pointerdown', (e)=>{
-  const rect = drawCanvas.getBoundingClientRect();
-  isDrawing = true;
-  lastX = (e.clientX - rect.left);
-  lastY = (e.clientY - rect.top);
-});
-drawCanvas.addEventListener('pointermove', (e)=>{
-  if(!isDrawing) return;
-  const rect = drawCanvas.getBoundingClientRect();
+drawAsk.onclick = ()=>{ currentIdea=null; chooseIdea(); };
+
+let autoCheckOn = true;
+autoCheck.setAttribute('aria-pressed','true');
+autoCheck.onclick = ()=>{ autoCheckOn = !autoCheckOn; autoCheck.setAttribute('aria-pressed', String(autoCheckOn)); setCheckMsg(autoCheckOn? "Auto‑Check is on." : "Auto‑Check is off."); };
+const checkMsg = document.getElementById('checkMsg');
+function setCheckMsg(t){ checkMsg.textContent = t; }
+
+/* TFJS MobileNet model for checking */
+let mobilenetModel = null;
+(async()=>{ try{ mobilenetModel = await mobilenet.load({version:2, alpha:1.0}); }catch(e){ console.warn('Model failed to load', e); } })();
+
+let checkTimer=null;
+function queuedCheck(){ if(!autoCheckOn || !mobilenetModel || !currentIdea) return; clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 650); }
+async function runCheck(){
+  if(!mobilenetModel || !currentIdea) return;
+  // scale canvas to image for model
+  const pred = await mobilenetModel.classify(doodle, 5); // top-5
+  const labels = pred.map(p=>p.className.toLowerCase());
+  const idea = currentIdea.toLowerCase();
+
+  // loose matching dictionary to bridge idea -> known labels
+  const alias = {
+    "bike":"bicycle","motorbike":"motorcycle","soccer ball":"soccer ball","basketball":"basketball",
+    "baseball":"baseball","tennis racket":"racket","glasses":"sunglasses","phone":"cellular telephone, cellular phone, cellphone",
+    "car":"car","bus":"bus","train":"train","boat":"boat","airplane":"airliner","helicopter":"helicopter",
+    "cat":"cat","dog":"dog","key":"key","ring":"ring","watch":"watch","piano":"piano","guitar":"acoustic guitar",
+    "drum":"drum","camera":"camera","clock":"analog clock","book":"book","umbrella":"umbrella","chair":"chair","table":"table",
+    "elephant":"elephant","bear":"bear","lion":"lion","tiger":"tiger","whale":"whale","turtle":"turtle","frog":"frog","owl":"owl","fox":"fox","rabbit":"hare",
+    "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","bus":"bus","truck":"pickup, pickup truck",
+    "pizza":"pizza","burger":"hamburger","fries":"french fries","banana":"banana","apple":"granny smith",
+    "strawberry":"strawberry","watermelon":"watermelon","grapes":"custard apple" // rough
+  };
+  const target = (alias[idea] || idea).split(',').map(s=>s.trim());
+  const matched = labels.some(l => target.some(t => l.includes(t)));
+  if(matched){
+    setCheckMsg(randomEncouragement(true));
+  }else{
+    setCheckMsg(randomEncouragement(false) + " Want to try again for fun?");
+  }
+}
+function randomEncouragement(ok){
+  const good = [
+    "Wow! That looks great! 🌟",
+    "Nice job—nailed it! ✅",
+    "Love the shapes you used. 💙",
+    "Beautiful lines! Keep going!",
+    "That’s it! You did it!"
+  ];
+  const tryAgain = [
+    "So close—want to try once more?",
+    "I like your style! Maybe tweak a tiny bit?",
+    "Fun attempt! Wanna try again?",
+    "Great effort! Another go?",
+    "You’re learning fast—one more try?"
+  ];
+  return ok ? good[Math.floor(Math.random()*good.length)]
+            : tryAgain[Math.floor(Math.random()*tryAgain.length)];
+}
+
+/* =========================
+   Bubble Pop (levels)
+========================= */
+const game = document.getElementById('game');
+const gtx = game.getContext('2d');
+let bubbles=[], popped=0, goal=10, level=1, maxLevel=30, score=0, running=false, paused=false;
+const levelBadge = document.getElementById('levelBadge');
+const scoreBadge = document.getElementById('scoreBadge');
+const goalText = document.getElementById('goalText');
+const goalMeter = document.getElementById('goalMeter');
+const milestones = document.getElementById('milestones');
+const encBox = document.getElementById('encBox');
+
+function prepareGameCanvas(){
+  // ensure proper pixel scaling
+  const r = game.getBoundingClientRect();
+  game.width = Math.floor(r.width * devicePixelRatio);
+  game.height = Math.floor(r.height * devicePixelRatio);
+  gtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener('resize', ()=>{ prepareGameCanvas(); });
+
+function resetLevel(){
+  popped=0;
+  goal = 8 + level*2;
+  levelBadge.textContent = `Level ${level} / ${maxLevel}`;
+  goalText.textContent = `Pop ${goal} bubbles to pass.`;
+  goalMeter.style.width = '0%';
+  bubbles = [];
+  spawnBubbles();
+  encBox.textContent = level===1 ? "You’ve got this! 🎯" : randomGameEnc();
+  renderMilestones();
+}
+function randomGameEnc(){
+  const arr = ["Nice pop!","Great focus!","Clean hit!","Cruising!","You’re on fire!","Sweet aim!"];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function renderMilestones(){
+  milestones.innerHTML='';
+  const marks=[25,50,100,150,200,300,400,500,600,700,800,900,1000];
+  marks.forEach(m=>{
+    const d=document.createElement('div'); d.className='badge'; d.textContent = m;
+    if(score>=m) d.style.background='linear-gradient(180deg,#59e48f55,#59e48f22)'; milestones.appendChild(d);
+  });
+}
+function spawnBubbles(){
+  const count = Math.min(10+level*2, 40);
+  for(let i=0;i<count;i++){
+    bubbles.push({
+      x: Math.random()*game.clientWidth, y: game.clientHeight + Math.random()*200,
+      r: 12 + Math.random()* (10 + level),
+      v: 1.1 + Math.random()* (0.8 + level*0.15),
+      hue: 180 + Math.random()*120, alive: true
+    });
+  }
+}
+game.addEventListener('pointerdown', e=>{
+  if(!running || paused) return;
+  const rect = game.getBoundingClientRect();
   const x = (e.clientX - rect.left);
   const y = (e.clientY - rect.top);
-  dctx.lineWidth = brushSize;
-  dctx.lineCap = 'round';
-  dctx.lineJoin = 'round';
-  if(document.getElementById('eraserToggle').checked){
-    dctx.globalCompositeOperation = 'destination-out';
-    dctx.strokeStyle = 'rgba(0,0,0,1)';
-  } else {
-    dctx.globalCompositeOperation = 'source-over';
-    dctx.strokeStyle = document.getElementById('brushColor').value;
-  }
-  dctx.beginPath(); dctx.moveTo(lastX,lastY); dctx.lineTo(x,y); dctx.stroke();
-  lastX = x; lastY = y;
-});
-window.addEventListener('pointerup', ()=>{ isDrawing=false; dctx.globalCompositeOperation='source-over'; });
-
-/* controls */
-document.getElementById('brushSize').addEventListener('input', (e)=> { brushSize = +e.target.value; });
-document.getElementById('brushColor').addEventListener('input', (e)=> { brushColor = e.target.value; });
-document.getElementById('clearCanvas').addEventListener('click', ()=> {
-  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-  document.getElementById('checkResult').textContent = '';
-});
-document.getElementById('newPrompt').addEventListener('click', ()=> {
-  chooseNewIdea();
-  if(document.getElementById('autoSuggest').checked) {
-    // gentle nudge
-    quickBeep(760,0.03);
-  }
-});
-document.getElementById('rotateCanvas').addEventListener('click', ()=>{
-  drawRotation = (drawRotation + 90) % 360;
-  rotateCanvas(drawRotation);
-});
-document.getElementById('autoCheck').addEventListener('click', ()=> {
-  runAutoCheck();
-});
-
-function rotateCanvas(deg){
-  // create an offscreen copy and rotate visually for export/check
-  const w = drawCanvas.width / devicePixelRatio;
-  const h = drawCanvas.height / devicePixelRatio;
-  const tmp = document.createElement('canvas');
-  tmp.width = drawCanvas.width; tmp.height = drawCanvas.height;
-  const tctx = tmp.getContext('2d');
-  tctx.setTransform(1,0,0,1,0,0);
-  tctx.scale(devicePixelRatio, devicePixelRatio);
-  tctx.drawImage(drawCanvas, 0,0, w, h);
-  // adjust canvas size if rotating 90/270 (swap dims)
-  if(deg % 180 !== 0){
-    drawCanvas.style.width = h + 'px';
-    drawCanvas.style.height = w + 'px';
-  } else {
-    drawCanvas.style.width = w + 'px';
-    drawCanvas.style.height = h + 'px';
-  }
-  // draw rotated back
-  dctx.save();
-  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-  dctx.translate((drawCanvas.width/devicePixelRatio)/2, (drawCanvas.height/devicePixelRatio)/2);
-  dctx.rotate(deg*Math.PI/180);
-  dctx.translate(-(drawCanvas.width/devicePixelRatio)/2, -(drawCanvas.height/devicePixelRatio)/2);
-  dctx.drawImage(tmp, 0,0, drawCanvas.width/devicePixelRatio, drawCanvas.height/devicePixelRatio);
-  dctx.restore();
-}
-
-/* choose random prompt (as a carousel idea) */
-function chooseNewIdea(){
-  const idx = Math.floor(Math.random() * DRAW_PROMPTS.length);
-  currentIdea = DRAW_PROMPTS[idx];
-  document.getElementById('currentIdea').textContent = `Try drawing: ${currentIdea}`;
-  document.getElementById('checkResult').textContent = '';
-}
-chooseNewIdea();
-
-/* Mobilenet loading for auto-check */
-async function initMobilenet(){
-  try{
-    mobilenetModel = await mobilenet.load({version:2, alpha:1.0});
-    modelLoaded = true;
-    console.log('mobilenet loaded');
-  }catch(e){
-    console.warn('mobilenet failed to load', e);
-    modelLoaded = false;
-  }
-}
-initMobilenet();
-
-/* run auto-check: capture canvas image and classify */
-async function runAutoCheck(){
-  if(!currentIdea){
-    document.getElementById('checkResult').textContent = 'No idea set.';
-    return;
-  }
-  document.getElementById('checkResult').textContent = 'Checking...';
-  quickBeep(820,0.05);
-  // convert canvas to image element
-  const canvasEl = drawCanvas;
-  // create a resized image for model (mobilenet prefers photographic input).
-  const img = new Image();
-  img.src = canvasEl.toDataURL('image/png');
-  img.onload = async ()=>{
-    if(!modelLoaded || !mobilenetModel){
-      document.getElementById('checkResult').textContent = 'Auto-check not available (model not loaded).';
-      return;
-    }
-    try{
-      const results = await mobilenetModel.classify(img);
-      // inspect top labels for a substring match with currentIdea
-      const target = currentIdea.toLowerCase();
-      const matched = results.some(r => r.className.toLowerCase().includes(target));
-      console.log('classify',results);
-      if(matched){
-        document.getElementById('checkResult').textContent = `Nice! The model sees "${currentIdea}" — great job! 🎉`;
-        quickBeep(1100,0.08);
-      } else {
-        // gentle encouragement with suggestions
-        document.getElementById('checkResult').textContent = `That was fun — I didn't strongly see "${currentIdea}". Want to try again or keep drawing?`;
-        quickBeep(420,0.05);
-      }
-    }catch(err){
-      document.getElementById('checkResult').textContent = 'Auto-check failed — try again later.';
-      console.error(err);
-    }
-  };
-}
-
-/* rotate canvas helper (attach to button) done earlier */
-
-/* ---------------------------
-   Fix: if Draw panel is switched to, resize canvas properly
-   --------------------------- */
-(function watchPanelSwitches(){
-  const observer = new MutationObserver((list)=>{
-    list.forEach(m=>{
-      if(m.type === 'attributes' && m.attributeName === 'style'){
-        // if draw panel became visible, resize
-        const drawPanel = document.getElementById('panel-draw');
-        if(drawPanel.style.display !== 'none'){
-          setTimeout(sizeDrawCanvas, 80);
-        }
-      }
-    });
-  });
-  const panels = document.querySelectorAll('.panel');
-  panels.forEach(p => observer.observe(p, { attributes:true, attributeFilter:['style'] }));
-})();
-
-/* ---------------------------
-   Fix for splash behaviour: show splash until user dismisses
-   - Already implemented at top.
-   --------------------------- */
-
-/* ---------------------------
-   Small polish: ensure game canvas works on first display
-   - If user navigates to game tab, initGame is called by activateTab wrapper above.
-   - But make sure we start if app already visible.
-   --------------------------- */
-window.addEventListener('load', ()=> {
-  // hide app until splash closed (we show splash initially)
-  document.getElementById('app').style.display = 'block';
-  // If you want to automatically hide splash after a short delay, you could uncomment:
-  // setTimeout(()=>{ document.getElementById('splash').style.display='none' }, 8000);
-});
-
-/* ---------------------------
-   Small utilities and bindings
-   --------------------------- */
-document.getElementById('themes-toggle').addEventListener('keydown', (e)=> { if(e.key==='Enter') toggleThemes(true); });
-document.getElementById('miniPlayer').addEventListener('click', ()=> toggleMiniPlayer());
-
-/* expose runAutoCheck for debugging */
-window.runAutoCheck = runAutoCheck;
-
-/* ---------------------------
-   Final safety: ensure game initializes when user chooses Play from splash
-   --------------------------- */
-document.querySelectorAll('.splash-action').forEach(btn=>{
-  btn.addEventListener('click', (e)=>{
-    const target = btn.dataset.target;
-    if(target === 'game'){
-      // wait for app to show then activate game
-      setTimeout(()=> { activateTab('game'); initGame(); }, 800);
-    } else if(target === 'draw'){
-      setTimeout(()=> activateTab('draw'), 600);
-    } else {
-      setTimeout(()=> activateTab('chat'), 600);
-    }
-  });
-});
-
-/* ensure game initialized if user navigates to game directly (tab click handler triggers) */
-document.querySelectorAll('.tab[data-section="game"]').forEach(el=>{
-  el.addEventListener('click', ()=> { setTimeout(()=> initGame(), 120); });
-});
-
-/* quick beep wrapper for UI */
-function quickBeep(freq=600,dur=0.05){ if(!soundMuted && audioCtx){ const o = audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.value = freq; g.gain.value = 0.045; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);} }
-
-/* ensure initial splash focus for keyboard users */
-document.addEventListener('keydown', (e)=>{
-  if(e.key === 'Escape'){
-    const s = document.getElementById('splash');
-    if(s && s.style.display !== 'none') { s.style.display='none'; document.getElementById('app').style.display='block'; }
-    else {
-      // close themes if open
-      document.getElementById('themesDrawer').style.display = 'none';
+  for(const b of bubbles){
+    const dx=b.x - x, dy=b.y - y;
+    if(b.alive && Math.hypot(dx,dy) <= b.r){
+      b.alive=false; popped++; score+=5; scoreBadge.textContent=`Score ${score}`;
+      const p = Math.min(100, Math.floor((popped/goal)*100)); goalMeter.style.width = p+'%';
+      encBox.textContent = randomGameEnc();
+      break;
     }
   }
 });
+function step(){
+  if(!running || paused) return;
+  gtx.clearRect(0,0,game.clientWidth,game.clientHeight);
+  for(const b of bubbles){
+    if(!b.alive) continue;
+    b.y -= b.v;
+    // draw
+    gtx.beginPath(); gtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    const grd = gtx.createRadialGradient(b.x- b.r/3, b.y- b.r/3, 2, b.x, b.y, b.r);
+    grd.addColorStop(0, `hsla(${b.hue},80%,80%,0.95)`);
+    grd.addColorStop(1, `hsla(${b.hue},70%,50%,0.35)`);
+    gtx.fillStyle = grd; gtx.fill();
+  }
+  // cleanup + pass level
+  bubbles = bubbles.filter(b=>b.alive && b.y + b.r > -10);
+  if(bubbles.length < 8) spawnBubbles();
+  if(popped >= goal){
+    level = Math.min(maxLevel, level+1);
+    resetLevel();
+  }
+  requestAnimationFrame(step);
+}
+document.getElementById('startGame').onclick=()=>{ running=true; paused=false; prepareGameCanvas(); resetLevel(); step(); };
+document.getElementById('pauseGame').onclick=()=>{ if(!running) return; paused=!paused; if(!paused) step(); };
+document.getElementById('levelUp').onclick=()=>{ level=Math.min(maxLevel, level+1); resetLevel(); };
+document.getElementById('levelDown').onclick=()=>{ level=Math.max(1, level-1); resetLevel(); };
 
+/* Ensure immediate bubbles on first show */
+if(panels.bubble.classList.contains('active')){ prepareGameCanvas(); }
+
+/* =========================
+   Mute (placeholder for future sfx)
+========================= */
+let muted=false; document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
+
+/* =========================
+   Theme trigger from Aura tab
+========================= */
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'openThemes'){ /* handled above */ }
+});
 </script>
-
 </body>
 </html>
