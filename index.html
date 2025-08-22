@@ -36,49 +36,58 @@
     position:relative;
     min-height:640px;
   }
-  .clock{padding:8px 12px;border-radius:14px;background:var(--glass-2);border:1px solid var(--stroke);font-variant-numeric:tabular-nums;letter-spacing:.5px;box-shadow:inset 0 1px 0 #fff2;margin:0 auto}
+  /* mac-style live clock (top-right) */
+  .clock{
+    position:absolute; top:14px; right:18px; padding:8px 12px;
+    border-radius:14px; background: var(--glass-2); border:1px solid var(--stroke);
+    font-variant-numeric: tabular-nums; letter-spacing:0.5px; box-shadow: inset 0 1px 0 #fff2;
+  }
+
+  /* Top nav tabs */
   .tabs{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center}
   .tab{
     padding:10px 14px; border-radius:16px;
     background:linear-gradient(180deg, #ffffff14, #ffffff08);
-    border:1px solid var(--stroke); cursor:pointer; transition: .15s ease transform, .15s ease filter;
-    box-shadow: 0 8px 16px #0005, inset 0 1px 0 #fff1;
+    border:1px solid var(--stroke); color:var(--text);
+    cursor:pointer; user-select:none; transition:.2s transform, .2s background;
+    box-shadow: 0 6px 16px #0005, inset 0 1px 0 #fff1;
   }
   .tab:hover{transform:translateY(-1px)}
   .tab.active{background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26); border-color:#7cc6ff66}
+
   .bar{
     display:flex; align-items:center; gap:10px; margin:10px 0 18px;
     flex-wrap:wrap;
   }
   .chip{padding:6px 10px; border-radius:12px; background:var(--glass-2); border:1px solid var(--stroke); cursor:pointer}
   .chip[aria-pressed="true"]{outline:2px solid var(--accent); background:#7cc6ff1f}
+
+  /* Left side: emotion switcher always visible */
   .dock{
     display:flex; gap:12px; flex-wrap:wrap; align-items:center
   }
-  .dock .chip{display:flex; align-items:center; gap:8px}
-  .dock .chip .dot{width:10px; height:10px; border-radius:50%; background:var(--accent-2)}
-  .btn{
-    padding:10px 14px; border-radius:16px; border:1px solid var(--stroke);
-    background:linear-gradient(180deg, #ffffff14, #ffffff08); cursor:pointer;
-    box-shadow: 0 8px 16px #0005, inset 0 1px 0 #fff1; transition:.2s ease transform, .2s ease filter;
-  }
-  .btn:hover{transform:translateY(-1px)}
+  .dock .chip{display:flex; align-items:center; gap:6px}
+
+  /* Panels */
   .panel{display:none}
   .panel.active{display:block}
-  .row{display:flex; gap:18px; flex-wrap:wrap}
-  .left{flex:1 1 380px}
-  .right{flex:1 1 380px}
-  .card{
-    border-radius:18px; padding:14px; background:linear-gradient(180deg, #ffffff14, #ffffff08);
-    border:1px solid var(--stroke); box-shadow: 0 8px 24px #0005, inset 0 1px 0 #fff1;
+
+  /* Aura chat area */
+  .chat-wrap{
+    display:grid; grid-template-columns: 280px 1fr; gap:16px;
   }
-  .input{
-    width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--stroke);
-    background:rgba(255,255,255,0.06); color:var(--text);
+  @media (max-width: 920px){ .chat-wrap{grid-template-columns:1fr} }
+  .side-card, .main-card{
+    background: var(--glass-2); border:1px solid var(--stroke); border-radius:20px; padding:14px;
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
   }
-  .quick{display:flex; gap:8px; flex-wrap:wrap}
-  .bubble{padding:8px 12px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.06); cursor:pointer}
+  .side-card h3{margin:6px 0 10px; font-size:14px; color:var(--muted); font-weight:600}
+  .bubble-list{display:flex; gap:8px; flex-wrap:wrap}
+  .bubble{
+    padding:10px 12px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); cursor:pointer;
+  }
   .bubble[aria-pressed="true"]{outline:2px solid #ffffff55}
+  /* Chat bubbles like iMessage/WhatsApp */
   .chat{
     height:480px; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:8px;
     scroll-behavior:smooth;
@@ -91,29 +100,66 @@
   @keyframes fadeIn{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
   .msg.me{margin-left:auto; background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26)}
   .msg a{color:var(--accent)}
-  .drawwrap{display:grid; grid-template-columns:1fr 280px; gap:12px}
-  .tools{display:flex; gap:8px; flex-wrap:wrap}
-  .tool{padding:6px 10px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.06); cursor:pointer}
-  .tool[aria-pressed="true"]{outline:2px solid var(--accent)}
-  canvas{border-radius:14px; border:1px solid var(--stroke); background:#111722}
-  .gamewrap{display:grid; grid-template-columns:1fr 280px; gap:12px}
-  .stat{padding:10px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.06)}
-  .meter{height:8px; background:#ffffff1a; border-radius:999px; overflow:hidden; border:1px solid var(--stroke)}
-  .meter .fill{display:block; height:100%; width:0%; background: linear-gradient(90deg, #59e48f, #7cc6ff)}
+  .composer{
+    display:flex; align-items:center; gap:8px; margin-top:10px
+  }
+  .input{
+    flex:1; padding:12px 14px; border-radius:14px; background:#ffffff10; color:var(--text);
+    border:1px solid var(--stroke); outline:none;
+  }
+  .btn{
+    padding:10px 12px; border-radius:12px; background:linear-gradient(180deg, #ffffff20, #ffffff0d);
+    border:1px solid var(--stroke); color:var(--text); cursor:pointer; user-select:none;
+  }
+  .btn.primary{background:linear-gradient(180deg, #7cc6ff3a, #a8a6ff2d); border-color:#7cc6ff66}
+  .btn.good{background:linear-gradient(180deg, #59e48f33, #59e48f1a); border-color:#59e48f77}
+  .btn.bad{background:linear-gradient(180deg, #ff737333, #ff73731a); border-color:#ff737377}
+
+  /* Draw */
+  .draw-grid{display:grid; grid-template-columns: 360px 1fr; gap:16px}
+  @media (max-width: 980px){ .draw-grid{grid-template-columns:1fr}}
+  canvas.doodle{
+    width:100%; aspect-ratio: 4/3; background:#111a22; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005; touch-action:none; cursor:crosshair;
+  }
+  .prompt-card{padding:14px; border-radius:18px; background:var(--glass-2); border:1px solid var(--stroke)}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  .okno{display:flex; gap:8px}
+  .hint{color:var(--muted); font-size:13px}
+
+  /* Bubble Pop */
+  .game-wrap{display:grid; grid-template-columns: 320px 1fr; gap:16px}
+  @media (max-width: 980px){ .game-wrap{grid-template-columns:1fr}}
+  .game-canvas{
+    width:100%; aspect-ratio: 16/9; background:#0a0f14; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
+  }
+  .lvl{display:flex; gap:6px; flex-wrap:wrap}
+  .badge{padding:6px 8px; border-radius:10px; background:#ffffff12; border:1px solid var(--stroke); font-size:12px}
+  .meter{height:10px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); overflow:hidden}
+  .meter > span{display:block; height:100%; width:0%; background: linear-gradient(90deg, #59e48f, #7cc6ff)}
+
+  /* Themes */
   .themes-wrap{display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px}
   .swatch{
     padding:10px; border-radius:16px; border:1px solid var(--stroke); background:#ffffff12; cursor:pointer;
     position:relative; overflow:hidden; min-height:72px;
   }
-  .swatch .tag{position:absolute; bottom:8px; left:8px; font-size:12px; color:#fff9; background:#0006; padding:4px 6px; border-radius:8px}
+  .swatch .tag{position:absolute; bottom:8px; left:8px; font-size:11px; color:#fff9; background:#0006; padding:4px 6px; border-radius:8px}
   .swatch:hover{outline:2px solid #fff4}
-  .group-title{margin:14px 2px 8px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.08em; font-size:11px}
+  .group-title{margin:14px 2px 8px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:11px}
+
+  /* Tooltips (for theme names) */
   .has-tt{position:relative}
   .has-tt:hover::after{
     content: attr(data-tt);
-    position:absolute; top:-26px; left:0; white-space:nowrap; padding:4px 6px; border-radius:8px;
-    background:#000a; border:1px solid var(--stroke); color:#fff; font-size:12px
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:#0a0f14; color:#fff; padding:6px 8px; border-radius:10px; border:1px solid var(--stroke);
+    white-space:nowrap; box-shadow: 0 10px 20px #0007; font-size:12px;
   }
+
+  /* Splash overlay (lock-screen like) */
   .splash{
     position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
     background: linear-gradient(180deg, rgba(6,8,10,0.6), rgba(6,8,10,0.7));
@@ -126,145 +172,193 @@
   .splash h1{margin:4px 0 8px; font-size:36px; letter-spacing:1px}
   .splash p{color:var(--muted); margin:8px 0 18px}
   .splash .choices{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+
+  /* Small helpers */
   .muted{color:var(--muted)} .spacer{flex:1}
-  @keyframes scrollCredits{0%{transform:translateY(100%)}100%{transform:translateY(-100%)}}
 </style>
 </head>
 <body>
-  <div class="shell" id="app">
-    <div class="tabs" role="tablist" aria-label="Main sections">
-      <div class="tab active" data-tab="aura" role="tab" aria-selected="true">🫧 AuraAI</div>
-      <div class="tab" data-tab="draw" role="tab">🎨 Draw</div>
-      <div class="tab" data-tab="bubble" role="tab">🫧 Bubble Pop</div>
-      <div class="clock" id="clock">--:--:--</div>
+<div class="shell" id="app">
+  <div class="clock" id="clock">--:--:--</div>
+
+  <!-- Top Tabs -->
+  <div class="tabs" role="tablist" aria-label="Main sections">
+    <div class="tab active" data-tab="aura" role="tab" aria-selected="true">🫧 AuraAI</div>
+    <div class="tab" data-tab="draw" role="tab">🎨 Draw</div>
+    <div class="tab" data-tab="bubble" role="tab">🫧 Bubble Pop</div>
+    <div class="spacer"></div>
+    <!-- Music -->
+    <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
+    <audio id="music" preload="auto">
+      <source src="bgm.mp3" type="audio/mpeg">
+      <source src="bgm2.mp3" type="audio/mpeg">
+      <source src="bgm3.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- AURA -->
+  <div class="panel active" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
+    <div class="bar">
+      <div class="dock" id="emotionDock">
+        <div class="chip" data-emote="happy">😊 Happy</div>
+        <div class="chip" data-emote="sad">😢 Sad</div>
+        <div class="chip" data-emote="angry">😠 Angry</div>
+        <div class="chip" data-emote="nervous">😰 Nervous</div>
+      </div>
       <div class="spacer"></div>
-      <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
-      <audio id="music" preload="auto">
-        <source src="bgm.mp3" type="audio/mpeg">
-        <source src="bgm2.mp3" type="audio/mpeg">
-        <source src="bgm3.mp3" type="audio/mpeg">
-      </audio>
+      <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
+      <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
     </div>
 
-    <div class="panel active" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
-      <div class="bar">
-        <div class="dock" id="emotionDock">
-          <div class="chip" data-emote="happy">😊 Happy</div>
-          <div class="chip" data-emote="sad">😢 Sad</div>
-          <div class="chip" data-emote="angry">😠 Angry</div>
-          <div class="chip" data-emote="nervous">😰 Nervous</div>
+    <div class="chat-wrap">
+      <div class="side-card">
+        <h3>Quick switches</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-say="How was your day?">How was your day?</div>
+          <div class="bubble" data-say="Want a quick breathing idea?">Breathing idea</div>
+          <div class="bubble" data-say="Pick an activity together?">Pick an activity</div>
         </div>
-        <div class="spacer"></div>
-        <div class="chip has-tt" id="openThemes" data-tt="Themes">🎨 Themes</div>
+        <h3 style="margin-top:14px">Activities</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-action="openDraw">Open Draw</div>
+          <div class="bubble" data-action="openBubble">Play Bubble Pop</div>
+          <div class="bubble" data-action="sendHug">Virtual hug 🤗</div>
+          <div class="bubble" data-action="breathing">4-4-6 breathing</div>
+        </div>
+        <h3 style="margin-top:14px">Tips</h3>
+        <p class="hint">Use simple words. Pick a feeling anytime using the buttons above.</p>
       </div>
 
-      <div class="row">
-        <div class="left">
-          <div class="card">
-            <div class="chat" id="chat"></div>
-            <div class="bar">
-              <input id="input" class="input" placeholder="Type here… (hint: try celebration)"/>
-              <button id="sendBtn" class="btn">Send</button>
-            </div>
-            <div class="quick">
-              <div class="bubble" data-say="Let’s draw something!" data-action="openDraw">🎨 Draw</div>
-              <div class="bubble" data-say="I want to play a game!" data-action="openBubble">🫧 Bubble Pop</div>
-              <div class="bubble" data-say="Can we listen to music?">🎵 Music</div>
-              <div class="bubble" data-say="Tell me something fun!">✨ Surprise</div>
-            </div>
-          </div>
-        </div>
-        <div class="right">
-          <div class="card">
-            <div class="bar"><div>Now Playing</div><div class="spacer"></div><div id="nowBar" class="muted">—</div></div>
-            <div class="meter"><span id="meterFill" class="fill"></span></div>
-            <div class="bar" style="margin-top:12px">
-              <button class="btn" id="prev">⏮️</button>
-              <button class="btn" id="pp">⏯️</button>
-              <button class="btn" id="next">⏭️</button>
-            </div>
-          </div>
-          <div class="card" id="themesPanel" style="display:none">
-            <div class="group-title">Theme Sets</div>
-            <div id="themesRoot" class="themes-wrap"></div>
-            <div class="bar" style="margin-top:12px">
-              <div class="spacer"></div>
-              <button class="btn" id="backToAura">Done</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel" id="panel-draw" role="tabpanel" aria-labelledby="draw-tab">
-      <div class="drawwrap">
-        <div class="card">
-          <canvas id="draw" width="900" height="520"></canvas>
-        </div>
-        <div class="card">
-          <div class="tools">
-            <div class="tool" data-tool="pen" aria-pressed="true">✏️ Pen</div>
-            <div class="tool" data-tool="eraser">🧽 Eraser</div>
-            <div class="tool" data-tool="spray">🖌️ Spray</div>
-            <div class="tool" data-tool="fill">🪣 Fill</div>
-            <div class="tool" data-tool="line">📏 Line</div>
-          </div>
-          <div class="bar" style="margin-top:10px">
-            <input type="color" id="color" value="#7cc6ff" class="input" style="width:120px; padding:6px 8px"/>
-            <input type="range" id="size" min="1" max="48" value="6" style="width:140px"/>
-            <div class="spacer"></div>
-            <button class="btn" id="undo">↩️ Undo</button>
-            <button class="btn" id="redo">↪️ Redo</button>
-            <button class="btn" id="clear">🗑️ Clear</button>
-            <button class="btn" id="save">💾 Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel" id="panel-bubble" role="tabpanel" aria-labelledby="bubble-tab">
-      <div class="gamewrap">
-        <div class="card">
-          <canvas id="game" width="900" height="520"></canvas>
-        </div>
-        <div class="card">
-          <div class="stat">Score: <span id="score">0</span></div>
-          <div class="stat">Level: <span id="level">1</span></div>
-          <div class="stat">Time: <span id="time">60</span>s</div>
-          <div class="bar" style="margin-top:12px">
-            <button class="btn" id="start">▶️ Start</button>
-            <button class="btn" id="stop">⏹️ Stop</button>
-          </div>
+      <div class="main-card">
+        <div id="chat" class="chat" aria-live="polite"></div>
+        <div class="composer">
+          <input id="input" class="input" placeholder="Type here… (e.g., I feel nervous)"/>
+          <button id="send" class="btn primary">Send</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="splash" id="splash" style="display:none">
-    <div class="splash-card">
-      <h1>AuraAI</h1>
-      <p>Pick a quick start</p>
-      <div class="choices">
-        <button class="btn" data-go="aura">Chat</button>
-        <button class="btn" data-go="draw">Draw</button>
-        <button class="btn" data-go="bubble">Bubble Pop</button>
+  <!-- DRAW -->
+  <div class="panel" id="panel-draw" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="drawAsk" data-tt="Get a drawing idea">🧠 New idea</div>
+      <div class="chip has-tt" id="autoCheck" data-tt="Auto-check with AI" aria-pressed="true">✅ Auto‑Check</div>
+      <div class="chip has-tt" id="freeMode" data-tt="Free drawing">✍️ Freestyle</div>
+      <div class="spacer"></div>
+      <div class="chip has-tt" id="clearCanvas" data-tt="Clear the canvas">🧼 Clear</div>
+      <div class="chip has-tt" id="undoDraw" data-tt="Undo last stroke">↩️ Undo</div>
+      <div class="chip has-tt" id="redoDraw" data-tt="Redo">↪️ Redo</div>
+    </div>
+    <div class="draw-grid">
+      <div class="prompt-card">
+        <div class="row" style="margin-bottom:6px">
+          <div class="hint" id="ideaText">Want to try drawing something? (OK / No / Later)</div>
+        </div>
+        <div class="row okno">
+          <button class="btn good" id="okIdea">OK</button>
+          <button class="btn bad" id="noIdea">No</button>
+          <button class="btn" id="laterIdea">Later</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="hint">After you draw, Aura can check if it looks right and cheer you on. 💙</div>
+      </div>
+      <div>
+        <canvas id="doodle" class="doodle" width="800" height="600"></canvas>
+        <div class="row" style="margin-top:10px">
+          <span class="hint" id="checkMsg">Auto‑Check is on.</span>
+          <div class="spacer"></div>
+          <button class="btn" id="savePNG">Save PNG</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- BUBBLE POP -->
+  <div class="panel" id="panel-bubble" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="startGame" data-tt="Start / Restart">▶️ Start</div>
+      <div class="chip has-tt" id="pauseGame" data-tt="Pause / Resume">⏸️ Pause</div>
+      <div class="chip has-tt" id="levelDown" data-tt="Previous level">⬅️</div>
+      <div class="chip has-tt" id="levelUp" data-tt="Next level">➡️</div>
+      <div class="spacer"></div>
+      <div class="badge" id="levelBadge">Level 1 / 30</div>
+      <div class="badge" id="scoreBadge">Score 0</div>
+    </div>
+    <div class="game-wrap">
+      <div class="side-card">
+        <h3>Goals</h3>
+        <p class="hint" id="goalText">Pop 10 bubbles to pass.</p>
+        <div class="meter" style="margin-top:8px"><span id="goalMeter"></span></div>
+        <h3 style="margin-top:14px">Milestones</h3>
+        <div class="lvl" id="milestones"></div>
+        <h3 style="margin-top:14px">Encouragement</h3>
+        <div id="encBox" class="hint">You’ve got this! 🎯</div>
+      </div>
+      <canvas id="game" class="game-canvas" width="1280" height="720"></canvas>
+    </div>
+  </div>
+
+  <!-- THEMES -->
+  <div class="panel" id="panel-themes" role="tabpanel" style="display:none">
+    <div class="bar">
+      <div class="chip" id="backToAura">⬅ Back</div>
+      <div class="spacer"></div>
+      <div class="hint">Hover a tile to see its color name • Click to apply</div>
+    </div>
+    <div id="themesRoot"></div>
+  </div>
+</div>
+
+<!-- Splash overlay (one-time per load) -->
+<div class="splash" id="splash" role="dialog" aria-modal="true" style="display:flex">
+  <div class="splash-card glass">
+    <h1>AuraAI</h1>
+    <p>Hi — what would you like to do right now?</p>
+    <div class="choices">
+      <button class="btn primary" id="splashPlay">Play</button>
+      <button class="btn" id="splashDraw">Draw</button>
+      <button class="btn" id="splashTalk">Talk</button>
+    </div>
+    <div style="height:12px"></div>
+    <div class="hint">This shows only when the page loads or when you reload — like a friendly lock screen.</div>
+  </div>
+</div>
+
+<!-- TFJS + MobileNet (free CDNs) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
 
 <script>
-const app = document.getElementById('app');
-const tabs = document.querySelectorAll('.tab');
+/* =========================
+   Live Clock (HH:MM:SS)
+========================= */
+const clockEl = document.getElementById('clock');
+function pad(n){return String(n).padStart(2,'0')}
+function tickClock(){
+  const d = new Date();
+  clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+tickClock(); setInterval(tickClock, 1000);
+
+/* =========================
+   Tab system + Music
+========================= */
+const tabs = [...document.querySelectorAll('.tab')];
 const panels = {
   aura: document.getElementById('panel-aura'),
   draw: document.getElementById('panel-draw'),
-  bubble: document.getElementById('panel-bubble')
+  bubble: document.getElementById('panel-bubble'),
+  themes: document.getElementById('panel-themes'),
 };
 function showTab(name){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  panels[name].classList.add('active');
-  document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  Object.values(panels).forEach(p=>p.classList.remove('active'));
+  Object.values(panels).forEach(p=>p.style.display='none');
+  const el = panels[name];
+  el.style.display='block';
+  requestAnimationFrame(()=>el.classList.add('active'));
+  if(name==='bubble'){ prepareGameCanvas(); } // ensure bubbles spawn without needing manual resize
 }
 tabs.forEach(t=>t.addEventListener('click', ()=>showTab(t.dataset.tab)));
 
@@ -280,7 +374,11 @@ musicBtn.addEventListener('click', ()=>{
 });
 music.addEventListener('ended', ()=>{ pickTrack(); music.play(); });
 
+/* =========================
+   THEMES (Your sets)
+========================= */
 const THEME_GROUPS = {
+  /* (kept your groups — tooltips are theme name via data-tt) */
   'Grayscale': [
     { name:'Pure White',bg:'#ffffff',grad:'#f0f0f0',text:'#000000'},
     { name:'White Smoke',bg:'#F5F5F5',grad:'#E8E8E8',text:'#3c3c3c'},
@@ -306,25 +404,80 @@ const THEME_GROUPS = {
     { name:'Gainsboro',bg:'#DCDCDC',text:'#3c3c3c'},
     { name:'Alice Blue',bg:'#F0F8FF',text:'#3c3c3c'},
     { name:'Ghost White',bg:'#F8F8FF',text:'#3c3c3c'},
-    { name:'Platinum',bg:'#E5E4E2',text:'#3c3c3c'},
-    { name:'Ash Gray',bg:'#B2BEB5',text:'#3c3c3c'},
-    { name:'Nickel',bg:'#727472',text:'#ffffff'},
-    { name:'Onyx',bg:'#353839',text:'#ffffff'}
+    { name:'Dark White',bg:'#F1F1F1',text:'#3c3c3c'},
+    { name:'Midnight Blue',bg:'#191970',text:'#ffffff'},
+    { name:'Dark Blue',bg:'#00008b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Dark Steel Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Light Steel Blue',bg:'#b0c4de',text:'#3c3c3c'}
+  ],
+  'Gradient': [
+    { name:'Aurora',bg:'#a8cdf1',grad:'#f7b7b9',text:'#0b3c61'},
+    { name:'Sunset',bg:'#fdbb2d',grad:'#22c1c3',text:'#3c3c3c'},
+    { name:'Forest',bg:'#43ac62',grad:'#6a9d77',text:'#f0f0f0'},
+    { name:'Ocean',bg:'#005bea',grad:'#00c6fb',text:'#ffffff'},
+    { name:'Lavender',bg:'#c495d4',grad:'#b669c6',text:'#ffffff'},
+    { name:'Night Sky',bg:'#1c1c1c',grad:'#3f3f3f',text:'#ffffff'},
+    { name:'Candy',bg:'#ff7e5f',grad:'#feb47b',text:'#ffffff'},
+    { name:'Mint',bg:'#9de0ad',grad:'#45a247',text:'#ffffff'},
+    { name:'Fire',bg:'#ff416c',grad:'#ff4b2b',text:'#ffffff'},
+    { name:'Emerald',bg:'#56ab2f',grad:'#a8e063',text:'#ffffff'},
+    { name:'Grape',bg:'#662d8c',grad:'#ed1e79',text:'#ffffff'},
+    { name:'Sky',bg:'#a8c0ff',grad:'#3f2b96',text:'#ffffff'},
+    { name:'Plum',bg:'#61045f',grad:'#ae2869',text:'#ffffff'},
+    { name:'Rose',bg:'#fecfef',grad:'#ff9a9e',text:'#3c3c3c'},
+    { name:'Aqua',bg:'#74ebd5',grad:'#acb6e5',text:'#3c3c3c'},
+    { name:'Teal',bg:'#008b8b',grad:'#00ced1',text:'#ffffff'},
+    { name:'Coral',bg:'#ff6b6b',grad:'#ffc87c',text:'#ffffff'},
+    { name:'Violet',bg:'#8c52ff',grad:'#5ce1e6',text:'#ffffff'},
+    { name:'Sunburst',bg:'#ff9900',grad:'#ffb366',text:'#ffffff'},
+    { name:'Cobalt',bg:'#0047ab',grad:'#1e90ff',text:'#ffffff'},
+    { name:'Denim',bg:'#1565c0',grad:'#2196f3',text:'#ffffff'},
+    { name:'Sky Blue',bg:'#87ceeb',grad:'#b0e0e6',text:'#3c3c3c'},
+    { name:'Tangerine',bg:'#f28500',grad:'#ff7518',text:'#ffffff'},
+    { name:'Jade',bg:'#00a86b',grad:'#00a880',text:'#ffffff'},
+    { name:'Turquoise',bg:'#40e0d0',grad:'#48d1cc',text:'#3c3c3c'},
+    { name:'Indigo',bg:'#4b0082',grad:'#5c4179',text:'#ffffff'},
+    { name:'Lilac',bg:'#b66dff',grad:'#c5a0d3',text:'#ffffff'},
+    { name:'Forest Green',bg:'#013220',grad:'#015e34',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',grad:'#0000a0',text:'#ffffff'},
+    { name:'Grapefruit',bg:'#ff6a6a',grad:'#ff66c4',text:'#ffffff'},
+    { name:'Lagoon',bg:'#0061ff',grad:'#60efbc',text:'#ffffff'},
+    { name:'Peaches',bg:'#ffb347',grad:'#ffcc33',text:'#ffffff'},
+    { name:'Neon',bg:'#39ff14',grad:'#00ffc8',text:'#3c3c3c'},
+    { name:'Cosmic',bg:'#232c3f',grad:'#48587c',text:'#ffffff'},
+    { name:'Electric',bg:'#8e2de2',grad:'#4a00e0',text:'#ffffff'},
+    { name:'Ocean 2',bg:'#06637e',grad:'#46a3b2',text:'#ffffff'}
   ],
   'Pastel': [
-    { name:'Blush',bg:'#f8d7da',grad:'#f3cbd0',text:'#3c3c3c'},
-    { name:'Sky',bg:'#cfe8ff',grad:'#b9dbff',text:'#3c3c3c'},
-    { name:'Mint',bg:'#d1f7e2',grad:'#b6f0d0',text:'#3c3c3c'},
-    { name:'Lavender',bg:'#e6e6fa',grad:'#d8d8f3',text:'#3c3c3c'},
-    { name:'Peach',bg:'#ffe5d9',grad:'#ffd2c1',text:'#3c3c3c'},
-    { name:'Butter',bg:'#fff4b8',grad:'#ffe98e',text:'#3c3c3c'},
-    { name:'Seafoam',bg:'#dffaf0',grad:'#c5f3e4',text:'#3c3c3c'}
+    { name:'Pastel Dreams',bg:'#ffb3ba',grad:'#ffdfba',text:'#3c3c3c'},
+    { name:'Lemonade',bg:'#fffacd',grad:'#b3e0ff',text:'#3c3c3c'},
+    { name:'Strawberry',bg:'#f1a89c',grad:'#f3c4c0',text:'#3c3c3c'},
+    { name:'Aqua Mint',bg:'#b2fef8',grad:'#b5ffeb',text:'#3c3c3c'},
+    { name:'Powder Blue',bg:'#b1d4e0',grad:'#b3d3e3',text:'#3c3c3c'},
+    { name:'Wisteria',bg:'#c9b1e5',grad:'#c1b4e5',text:'#3c3c3c'},
+    { name:'Dusty Rose',bg:'#e0c9c7',grad:'#e3d2cf',text:'#3c3c3c'},
+    { name:'Lime',bg:'#c6ffdd',grad:'#fbd786',text:'#3c3c3c'},
+    { name:'Sand',bg:'#f1d2b1',grad:'#e2bc91',text:'#4a3220'},
+    { name:'Mystic',bg:'#d4c7f0',grad:'#a894cc',text:'#3c3c3c'},
+    { name:'Cotton Candy',bg:'#ffb6c1',grad:'#ffa07a',text:'#3c3c3c'},
+    { name:'Bubblegum',bg:'#ff85a1',grad:'#ffc0cb',text:'#ffffff'},
+    { name:'Cloudy Sky',bg:'#d3e8f1',grad:'#e0f1f9',text:'#3c3c3c'},
+    { name:'Soft Peach',bg:'#ffdab9',grad:'#ffc4b1',text:'#3c3c3c'},
+    { name:'Seafoam',bg:'#b5e3d7',grad:'#aed9cb',text:'#3c3c3c'},
+    { name:'Lilac Petals',bg:'#c8a2c8',grad:'#d4b7d4',text:'#3c3c3c'}
   ],
   'Metallic': [
-    { name:'Gold',bg:'#d4af37',grad:'#f3cc52',text:'#3c3c3c'},
-    { name:'Silver',bg:'#c0c0c0',grad:'#d6d6d6',text:'#3c3c3c'},
-    { name:'Copper',bg:'#b87333',grad:'#c98a4a',text:'#ffffff'},
-    { name:'Bronze',bg:'#cd7f32',grad:'#d89a55',text:'#ffffff'},
+    { name:'Gold',bg:'#b8924b',grad:'#d7c797',text:'#4a3220'},
+    { name:'Silver',bg:'#c0c0c0',grad:'#d9d9d9',text:'#3c3c3c'},
+    { name:'Bronze',bg:'#cd7f32',grad:'#8b4513',text:'#ffffff'},
+    { name:'Copper',bg:'#b87333',grad:'#b56149',text:'#ffffff'},
+    { name:'Platinum',bg:'#e5e4e2',grad:'#c0c0c0',text:'#3c3c3c'},
+    { name:'Ruby',bg:'#e0115f',grad:'#c00742',text:'#ffffff'},
+    { name:'Sapphire',bg:'#0f52ba',grad:'#0073e6',text:'#ffffff'},
+    { name:'Emerald Gem',bg:'#046307',grad:'#05900a',text:'#ffffff'},
+    { name:'Amethyst',bg:'#9966cc',grad:'#b399e5',text:'#ffffff'},
+    { name:'Steel',bg:'#4682b4',grad:'#6a8db6',text:'#ffffff'},
     { name:'Chrome',bg:'#8d929b',grad:'#a2a7af',text:'#3c3c3c'},
     { name:'Rose Gold',bg:'#b76e79',grad:'#c18f8f',text:'#ffffff'}
   ],
@@ -357,9 +510,26 @@ const THEME_GROUPS = {
     { name:'Midnight',bg:'#0a0a23',text:'#ffffff'},
     { name:'Teal Green',bg:'#008080',text:'#ffffff'},
     { name:'Eggplant',bg:'#614051',text:'#ffffff'},
-    { name:'Burnt Orange',bg:'#cc5500',text:'#ffffff'}
+    { name:'Burnt Orange',bg:'#cc5500',text:'#ffffff'},
+    { name:'Mustard',bg:'#ffdb58',text:'#3c3c3c'},
+    { name:'Terracotta',bg:'#e2725b',text:'#ffffff'},
+    { name:'Rust',bg:'#b7410e',text:'#ffffff'},
+    { name:'Dark Cyan',bg:'#008b8b',text:'#ffffff'},
+    { name:'Dark Magenta',bg:'#8b008b',text:'#ffffff'},
+    { name:'Sienna',bg:'#a0522d',text:'#ffffff'},
+    { name:'Olive Drab',bg:'#6b8e23',text:'#ffffff'},
+    { name:'Pine Green',bg:'#01796f',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',text:'#ffffff'},
+    { name:'Dark Slate Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Slate Grey',bg:'#708090',text:'#ffffff'},
+    { name:'Deep Sea',bg:'#003153',text:'#ffffff'},
+    { name:'Oxblood',bg:'#4a0000',text:'#ffffff'},
+    { name:'Graphite',bg:'#2f4f4f',text:'#ffffff'},
+    { name:'Falu Red',bg:'#801818',text:'#ffffff'}
   ]
 };
+// render themes
 const themesRoot = document.getElementById('themesRoot');
 function renderThemes(){
   themesRoot.innerHTML='';
@@ -368,93 +538,106 @@ function renderThemes(){
     const grid = document.createElement('div'); grid.className='themes-wrap'; themesRoot.appendChild(grid);
     items.forEach(theme=>{
       const tile = document.createElement('div'); tile.className='swatch has-tt'; tile.dataset.tt = theme.name;
+      // visual
       if(theme.animated){
         tile.style.background = `linear-gradient(120deg, ${theme.grad})`;
         tile.style.backgroundSize = '300% 300%';
-        tile.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
+        tile.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:5000,iterations:Infinity});
       }else if(theme.grad){
-        tile.style.background = `linear-gradient(120deg, ${theme.bg}, ${theme.grad})`;
-      }else{
-        tile.style.background = theme.bg;
-      }
-      const tag = document.createElement('div'); tag.className='tag'; tag.textContent = theme.name; tile.appendChild(tag);
+        tile.style.background = `linear-gradient(135deg, ${theme.bg}, ${theme.grad})`;
+      }else{ tile.style.background = theme.bg; }
+      tile.innerHTML = `<span class="tag">${theme.name}</span>`;
       tile.addEventListener('click', ()=>applyTheme(theme));
       grid.appendChild(tile);
     });
   }
 }
+renderThemes();
+
 function applyTheme(t){
+  // set CSS vars to keep whole UI coherent
   document.documentElement.style.setProperty('--bg', t.bg || '#0e1116');
   document.documentElement.style.setProperty('--text', t.text || '#eef2f6');
   document.documentElement.style.setProperty('--accent', '#7cc6ff');
   document.documentElement.style.setProperty('--accent-2', '#a8a6ff');
+  // background art
   const body = document.body;
   if(t.animated){
-    const grad = `linear-gradient(120deg, ${t.grad})`;
-    body.style.background = grad;
+    body.style.background = `linear-gradient(120deg, ${t.grad})`;
     body.style.backgroundSize = '300% 300%';
     body.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
-    const targets = document.querySelectorAll('.shell, .tab.active, .btn');
-    targets.forEach(el=>{
-      el.style.background = grad;
-      el.style.backgroundSize = '300% 300%';
-      el.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
-    });
-  } else if(t.grad){
+  }else if(t.grad){
     body.style.background = `linear-gradient(180deg, ${t.bg}, ${t.grad})`;
   }else{
     body.style.background = t.bg;
   }
 }
+
+/* Theme panel open/close */
 const openThemes = document.getElementById('openThemes');
 const backToAura = document.getElementById('backToAura');
-openThemes.addEventListener('click',()=>{ document.getElementById('themesPanel').style.display='block'; });
-backToAura.addEventListener('click',()=>{ document.getElementById('themesPanel').style.display='none'; });
-renderThemes();
+openThemes.addEventListener('click', ()=>{ panels.themes.style.display='block'; showTab('themes'); });
+backToAura.addEventListener('click', ()=>{ showTab('aura'); });
 
+/* =========================
+   AuraAI Chat
+========================= */
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
-function auraSay(txt){ const el = document.createElement('div'); el.className='msg'; el.innerHTML = txt; chat.appendChild(el); chat.scrollTop = chat.scrollHeight; }
-function meSay(txt){ const el = document.createElement('div'); el.className='msg me'; el.textContent = txt; chat.appendChild(el); chat.scrollTop = chat.scrollHeight; }
+const sendBtn = document.getElementById('send');
+const emotionDock = document.getElementById('emotionDock');
+
+const emotionPrompts = {
+  happy: [
+    "Hi! 👋 How was your day? 😊",
+    "Love hearing the good stuff. Want to celebrate a small win?",
+    "Pick an activity: Draw, Bubble Pop, or music?",
+  ],
+  sad: [
+    "I hear you. 💙 Want a small comfort idea?",
+    "We can draw, breathe together, or pop bubbles—your pick.",
+    "You’re not alone here. Would you like a gentle activity?",
+  ],
+  angry: [
+    "That’s tough. I’m here with you.",
+    "Want a short 10‑breath reset or a game to vent?",
+    "I can listen as long as you like.",
+  ],
+  nervous: [
+    "It’s okay to be nervous. You’re safe here.",
+    "Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×.",
+    "Would a simple drawing or Bubble Pop help?",
+  ]
+};
+
+function auraSay(text){ addMsg(text,false); }
+function meSay(text){ addMsg(text,true); }
+function addMsg(text, mine){
+  const div = document.createElement('div');
+  div.className = 'msg' + (mine?' me':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 
 function respond(msg){
   const clean = msg.toLowerCase();
-  if(clean.includes("celebration")){ startCelebration(); return; }
   if(/(happy|great|good|yay)/.test(clean)) auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
   else if(/(sad|down|blue|cry|upset)/.test(clean)) auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
-  else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("I hear you. Let’s channel that in a healthy way. Want to pop bubbles to vent or try a calming breath?");
+  else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
   else if(/(nervous|anxious|worry|scared)/.test(clean)) auraSay("Thanks for sharing. Try a 4‑4‑6 breath with me, or we can draw gently.");
   else if(/(draw|sketch|paint)/.test(clean)){ auraSay("Opening Draw for you. ✨"); showTab('draw'); }
   else if(/(bubble|game|play)/.test(clean)){ auraSay("Let’s play Bubble Pop! 🫧"); showTab('bubble'); }
   else if(/(hug)/.test(clean)){ auraSay("Sending a big gentle hug 🤗 You’re cared for."); }
   else auraSay("Got it. Tell me more, or choose an activity: Draw • Bubble Pop • Music.");
 }
+
 sendBtn.addEventListener('click', ()=>{
   const v = input.value.trim(); if(!v) return;
   meSay(v); respond(v); input.value='';
 });
 input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendBtn.click(); });
 
-const emotionDock = document.getElementById('emotionDock');
-const emotionPrompts = {
-  happy:[
-    "Your energy is infectious! Want to try the game or a quick doodle?",
-    "We could create a fun sticker sheet in Draw!"
-  ],
-  sad:[
-    "It’s okay to feel this way. I’m here with you.",
-    "Small steps help. A calm color theme might feel nice."
-  ],
-  angry:[
-    "Strong feelings are valid. Let’s move them safely.",
-    "Popping bubbles is surprisingly satisfying."
-  ],
-  nervous:[
-    "You’re not alone. Deep breaths together.",
-    "We can sketch something soothing."
-  ]
-};
 emotionDock.querySelectorAll('.chip').forEach(ch=>{
   ch.addEventListener('click', ()=>{
     emotionDock.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));
@@ -463,100 +646,301 @@ emotionDock.querySelectorAll('.chip').forEach(ch=>{
     emotionPrompts[em].forEach(auraSay);
   });
 });
+// quick bubbles
 document.querySelectorAll('.bubble').forEach(b=>{
   const say = b.dataset.say; const act = b.dataset.action;
   b.addEventListener('click', ()=>{
     if(say){ meSay(say); respond(say); }
     if(act==='openDraw'){ showTab('draw'); }
     if(act==='openBubble'){ showTab('bubble'); }
+    if(act==='sendHug'){ auraSay("🤗 A warm hug, just for you."); }
+    if(act==='breathing'){ auraSay("Let’s do 4‑4‑6 together. Inhale 4, hold 4, exhale 6 — three times."); }
   });
 });
+// greet
+auraSay("Hello! I’m Aura. 💫 How do you feel today?");
+auraSay("You can switch feelings anytime with the buttons above.");
 
-const nowBar = document.getElementById('nowBar');
-const meter = document.getElementById('meterFill');
-let prog=0; setInterval(()=>{ prog = (prog+2)%100; meter.style.width = prog+'%'; }, 150);
+/* =========================
+   DRAW + Auto‑check (TFJS MobileNet)
+========================= */
+const doodle = document.getElementById('doodle');
+const ctx = doodle.getContext('2d');
+let drawing=false, last=null;
+let stack=[], redo=[];
+function resizeCanvas(){ /* canvas backed by attributes width/height already */ }
+resizeCanvas();
 
-const draw = document.getElementById('draw');
-const dctx = draw.getContext('2d');
-let drawing=false, tool='pen', color=document.getElementById('color').value, size=+document.getElementById('size').value;
-let hist=[], redoS=[];
-function snap(){ hist.push(draw.toDataURL()); if(hist.length>50) hist.shift(); redoS.length=0; }
-function point(e){ const r=draw.getBoundingClientRect(); return {x:(e.clientX||e.touches?.[0].clientX)-r.left, y:(e.clientY||e.touches?.[0].clientY)-r.top}; }
-function lineTo(p){ dctx.lineTo(p.x,p.y); dctx.stroke(); }
-draw.addEventListener('mousedown', e=>{ drawing=true; dctx.beginPath(); const p=point(e); dctx.moveTo(p.x,p.y); dctx.lineWidth=size; dctx.strokeStyle=color; dctx.lineCap='round'; snap(); });
-draw.addEventListener('mousemove', e=>{ if(!drawing) return; if(tool==='pen'){ lineTo(point(e)); }});
-window.addEventListener('mouseup', ()=>drawing=false);
-document.getElementById('color').addEventListener('input', e=>{ color=e.target.value; });
-document.getElementById('size').addEventListener('input', e=>{ size=+e.target.value; });
-document.querySelectorAll('.tool').forEach(t=>{
-  t.addEventListener('click', ()=>{
-    document.querySelectorAll('.tool').forEach(x=>x.setAttribute('aria-pressed','false'));
-    t.setAttribute('aria-pressed','true');
-    tool = t.dataset.tool;
-  });
-});
-document.getElementById('undo').addEventListener('click', ()=>{
-  if(!hist.length) return; const last = hist.pop(); redoS.push(draw.toDataURL());
-  const img = new Image(); img.onload=()=>{ dctx.clearRect(0,0,draw.width,draw.height); dctx.drawImage(img,0,0); }; img.src = hist[hist.length-1]||last;
-});
-document.getElementById('redo').addEventListener('click', ()=>{
-  if(!redoS.length) return; const img = new Image(); const url = redoS.pop(); hist.push(url); img.onload=()=>{ dctx.clearRect(0,0,draw.width,draw.height); dctx.drawImage(img,0,0); }; img.src=url;
-});
-document.getElementById('clear').addEventListener('click', ()=>{ dctx.clearRect(0,0,draw.width,draw.height); snap(); });
-document.getElementById('save').addEventListener('click', ()=>{
-  const a = document.createElement('a'); a.download='aura-drawing.png'; a.href=draw.toDataURL('image/png'); a.click();
-});
+function strokeStart(x,y){ drawing=true; last=[x,y]; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=14; ctx.strokeStyle='#e6f0ff'; ctx.shadowBlur=0; pushState(); }
+function strokeMove(x,y){ if(!drawing) return; ctx.beginPath(); ctx.moveTo(last[0],last[1]); ctx.lineTo(x,y); ctx.stroke(); last=[x,y]; }
+function strokeEnd(){ drawing=false; last=null; if(autoCheckOn) queuedCheck(); }
+function getPos(e){
+  const r = doodle.getBoundingClientRect();
+  const x = (e.touches?e.touches[0].clientX:e.clientX) - r.left;
+  const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
+  return [x * doodle.width / r.width, y * doodle.height / r.height];
+}
+doodle.addEventListener('pointerdown', e=>{doodle.setPointerCapture(e.pointerId); const [x,y]=getPos(e); strokeStart(x,y)});
+doodle.addEventListener('pointermove', e=>{const [x,y]=getPos(e); strokeMove(x,y)});
+doodle.addEventListener('pointerup', strokeEnd);
+doodle.addEventListener('pointerleave', strokeEnd);
 
-const game = document.getElementById('game'); const g = game.getContext('2d');
-let bubbles=[], score=0, level=1, secs=60, timer=null, spawning=false;
-function newBubble(){ return {x:Math.random()*game.width, y:game.height+40, r: 14+Math.random()*22, v:1+Math.random()*level*0.5, h: Math.random()*360 }; }
-function spawn(){ if(!spawning) return; bubbles.push(newBubble()); setTimeout(spawn, 600 - Math.min(500, level*40)); }
-function drawGame(){
-  g.clearRect(0,0,game.width,game.height);
-  for(const b of bubbles){
-    g.beginPath(); const grad = g.createRadialGradient(b.x-b.r*0.3,b.y-b.r*0.3, b.r*0.2, b.x,b.y,b.r);
-    grad.addColorStop(0, `hsla(${b.h},90%,70%,0.9)`); grad.addColorStop(1, `hsla(${b.h},90%,50%,0.35)`);
-    g.fillStyle=grad; g.arc(b.x,b.y,b.r,0,Math.PI*2); g.fill();
-    b.y -= b.v;
+/* Undo/Redo */
+function pushState(){ try{ stack.push(doodle.toDataURL()); redo.length=0; }catch(e){} }
+function undo(){ if(stack.length){ const last=stack.pop(); redo.push(last); const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,doodle.width,doodle.height); ctx.drawImage(img,0,0)}; if(stack.length){img.src=stack[stack.length-1]} else {ctx.clearRect(0,0,doodle.width,doodle.height)} } }
+function redoFn(){ if(redo.length){ const src=redo.pop(); stack.push(src); const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0); img.src=src; } }
+document.getElementById('undoDraw').onclick=undo;
+document.getElementById('redoDraw').onclick=redoFn;
+
+document.getElementById('clearCanvas').onclick=()=>{ ctx.clearRect(0,0,doodle.width,doodle.height); if(autoCheckOn) setCheckMsg("Canvas cleared. Ready when you are."); };
+
+document.getElementById('savePNG').onclick=()=>{
+  const a=document.createElement('a'); a.download='aura-doodle.png'; a.href=doodle.toDataURL('image/png'); a.click();
+};
+
+/* Idea chooser (language adjusted, no 'prompt' word) */
+const ideaText = document.getElementById('ideaText');
+const okIdea = document.getElementById('okIdea');
+const noIdea = document.getElementById('noIdea');
+const laterIdea = document.getElementById('laterIdea');
+const freeMode = document.getElementById('freeMode');
+const autoCheck = document.getElementById('autoCheck');
+const drawAsk = document.getElementById('drawAsk');
+
+/* 100-ish ideas (expandable) */
+const IDEAS = [
+  "cat","dog","fish","bird","butterfly","flower","tree","leaf","house","car","bus","train","boat","rocket","star","moon","sun","rainbow",
+  "heart","smile","key","lock","cup","ice cream","pizza","burger","fries","cookie","cake","banana","apple","grapes","strawberry","watermelon",
+  "ball","kite","guitar","piano","drum","book","clock","glasses","shoe","hat","crown","ring","watch","camera","phone","robot","dinosaur","elephant",
+  "lion","tiger","bear","whale","turtle","frog","penguin","owl","fox","rabbit","horse","snail","spider","dragonfly","octopus","jellyfish","starfish",
+  "mountain","river","treehouse","castle","bridge","lighthouse","tent","campfire","snowman","gift","balloon","umbrella","airplane","helicopter",
+  "backpack","pencil","paintbrush","scissors","ruler","toothbrush","tooth","bicycle","motorbike","scooter","tractor","skateboard","soccer ball",
+  "basketball","baseball","tennis racket","medal","trophy","leaf","lantern","map","compass","beach","island","cabin","sailboat","harp","violin","microphone"
+];
+let currentIdea = null;
+function askIdea(){ ideaText.textContent = "Try drawing something? (OK / No / Later)"; }
+function chooseIdea(){
+  currentIdea = IDEAS[Math.floor(Math.random()*IDEAS.length)];
+  ideaText.innerHTML = `Try drawing <strong>${currentIdea}</strong>. Choose OK for this one, No for a different one, or Later to freestyle.`;
+}
+askIdea();
+okIdea.onclick = ()=>{ if(!currentIdea) chooseIdea(); else ideaText.innerHTML = `You picked <strong>${currentIdea}</strong>. Go for it!`; };
+noIdea.onclick = ()=>{ chooseIdea(); };
+laterIdea.onclick = ()=>{ currentIdea = null; ideaText.textContent = "Freestyle is on. Draw anything you like."; };
+freeMode.onclick = ()=>{ currentIdea=null; ideaText.textContent="Freestyle is on. Draw anything you like."; };
+
+drawAsk.onclick = ()=>{ currentIdea=null; chooseIdea(); };
+
+let autoCheckOn = true;
+autoCheck.setAttribute('aria-pressed','true');
+autoCheck.onclick = ()=>{ autoCheckOn = !autoCheckOn; autoCheck.setAttribute('aria-pressed', String(autoCheckOn)); setCheckMsg(autoCheckOn? "Auto‑Check is on." : "Auto‑Check is off."); };
+const checkMsg = document.getElementById('checkMsg');
+function setCheckMsg(t){ checkMsg.textContent = t; }
+
+/* TFJS MobileNet model for checking */
+/* loads in background; if network blocked, auto-check gracefully degrades */
+let mobilenetModel = null;
+(async()=>{ try{ mobilenetModel = await mobilenet.load({version:2, alpha:1.0}); }catch(e){ console.warn('Model failed to load', e); } })();
+
+let checkTimer=null;
+function queuedCheck(){ if(!autoCheckOn || !mobilenetModel || !currentIdea) return; clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 650); }
+async function runCheck(){
+  if(!mobilenetModel || !currentIdea) return;
+  const pred = await mobilenetModel.classify(doodle, 5); // top-5
+  const labels = pred.map(p=>p.className.toLowerCase());
+  const idea = currentIdea.toLowerCase();
+
+  // loose matching dictionary to bridge idea -> known labels
+  const alias = {
+    "bike":"bicycle","motorbike":"motorcycle","soccer ball":"soccer ball","basketball":"basketball",
+    "baseball":"baseball","tennis racket":"racket","glasses":"sunglasses","phone":"cellular telephone, cellular phone, cellphone",
+    "car":"car","bus":"bus","train":"train","boat":"boat","airplane":"airliner","helicopter":"helicopter",
+    "cat":"cat","dog":"dog","key":"key","ring":"ring","watch":"watch","piano":"piano","guitar":"acoustic guitar",
+    "drum":"drum","camera":"camera","clock":"analog clock","book":"book","umbrella":"umbrella","chair":"chair","table":"table",
+    "elephant":"elephant","bear":"bear","lion":"lion","tiger":"tiger","whale":"whale","turtle":"turtle","frog":"frog","owl":"owl","fox":"fox","rabbit":"hare",
+    "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","bus":"bus","truck":"pickup, pickup truck",
+    "pizza":"pizza","burger":"hamburger","fries":"french fries","banana":"banana","apple":"granny smith",
+    "strawberry":"strawberry","watermelon":"watermelon","grapes":"grapes"
+  };
+  const target = (alias[idea] || idea).split(',').map(s=>s.trim());
+  const matched = labels.some(l => target.some(t => l.includes(t)));
+  if(matched){
+    setCheckMsg(randomEncouragement(true));
+  }else{
+    setCheckMsg(randomEncouragement(false) + " Want to try again for fun?");
   }
-  requestAnimationFrame(drawGame);
 }
-game.addEventListener('click', e=>{
-  const r=game.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
-  for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; const dx=x-b.x, dy=y-b.y; if(dx*dx+dy*dy<=b.r*b.r){ bubbles.splice(i,1); score++; document.getElementById('score').textContent=score; break; } }
-});
-document.getElementById('start').addEventListener('click', ()=>{
-  if(timer) return;
-  spawning=true; spawn();
-  timer = setInterval(()=>{ secs--; document.getElementById('time').textContent=secs; if(secs%10===0){ level++; document.getElementById('level').textContent=level; } if(secs<=0){ clearInterval(timer); timer=null; spawning=false; } }, 1000);
-});
-document.getElementById('stop').addEventListener('click', ()=>{
-  spawning=false; clearInterval(timer); timer=null;
-});
-(function initGameCanvas(){ drawGame(); })();
+function randomEncouragement(ok){
+  const good = [
+    "Wow! That looks great! 🌟",
+    "Nice job—nailed it! ✅",
+    "Love the shapes you used. 💙",
+    "Beautiful lines! Keep going!",
+    "That’s it! You did it!"
+  ];
+  const tryAgain = [
+    "So close—want to try once more?",
+    "I like your style! Maybe tweak a tiny bit?",
+    "Fun attempt! Wanna try again?",
+    "Great effort! Another go?",
+    "You’re learning fast—one more try?"
+  ];
+  return ok ? good[Math.floor(Math.random()*good.length)]
+            : tryAgain[Math.floor(Math.random()*tryAgain.length)];
+}
 
-function startConfetti(){
-  if(document.getElementById('confettiCanvas')) return;
-  const c = document.createElement('canvas'); c.id='confettiCanvas'; c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:2500'; document.body.appendChild(c);
-  const ctx = c.getContext('2d'); let w= c.width= innerWidth, h= c.height= innerHeight; const parts = Array.from({length:160},()=>({x:Math.random()*w,y:Math.random()*-h,vx:(Math.random()-0.5)*1.2,vy:Math.random()*3+2,s:Math.random()*6+4,c:`hsl(${Math.random()*360},90%,60%)`,a:Math.random()*Math.PI}));
-  addEventListener('resize',()=>{w=c.width=innerWidth;h=c.height=innerHeight});
-  let raf; (function loop(){ ctx.clearRect(0,0,w,h); for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.a+=0.1; if(p.y>h){p.y=-10;p.x=Math.random()*w} ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore(); } raf=requestAnimationFrame(loop) })(); c.dataset.raf = '1';
+/* =========================
+   Bubble Pop (levels) — slowed a bit
+========================= */
+const game = document.getElementById('game');
+const gtx = game.getContext('2d');
+let bubbles=[], popped=0, goal=10, level=1, maxLevel=30, score=0, running=false, paused=false;
+const levelBadge = document.getElementById('levelBadge');
+const scoreBadge = document.getElementById('scoreBadge');
+const goalText = document.getElementById('goalText');
+const goalMeter = document.getElementById('goalMeter');
+const milestones = document.getElementById('milestones');
+const encBox = document.getElementById('encBox');
+
+function prepareGameCanvas(){
+  // ensure proper pixel scaling
+  const r = game.getBoundingClientRect();
+  game.width = Math.floor(r.width * devicePixelRatio);
+  game.height = Math.floor(r.height * devicePixelRatio);
+  gtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-function stopConfetti(){ const c=document.getElementById('confettiCanvas'); if(c){ cancelAnimationFrame(+c.dataset.raf||0); c.remove(); }}
-function startCelebration(){
-  startConfetti();
-  setTimeout(()=>{
-    const bgMusic = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"); bgMusic.volume=0.5; bgMusic.play();
-    const overlay = document.createElement("div");
-    overlay.id="credits"; overlay.style.cssText="position:fixed;inset:0;background:black;color:white;display:flex;justify-content:flex-end;align-items:center;font-family:Helvetica Neue,Arial,sans-serif;text-align:center;font-size:2em;overflow:hidden;z-index:3000;opacity:0;transition:opacity 1.2s";
-    const inner = document.createElement("div"); inner.id="creditsContent"; inner.style.cssText="display:flex;flex-direction:column;gap:40px;animation:scrollCredits 25s linear forwards";
-    inner.innerHTML = '<div>AuraAI 💫</div><div>Created by: Keshav & Kritika + Aadhya</div><div>Special thanks to all parents and Ms Anjali for the support</div><div>Coolest Projects Malaysia 2025 ✨</div><div style="margin-top:200px;font-size:.7em;opacity:.8">Press any key to return</div>';
-    overlay.appendChild(inner); document.body.appendChild(overlay); requestAnimationFrame(()=>{overlay.style.opacity=1});
-    if(typeof stopConfetti==="function"){ setTimeout(stopConfetti,2000); }
-    const exit=()=>{ overlay.remove(); removeEventListener("keydown",exit) }; addEventListener("keydown",exit,{once:true});
-  },10000);
+window.addEventListener('resize', ()=>{ prepareGameCanvas(); });
+
+function resetLevel(){
+  popped=0;
+  goal = 8 + level*2;
+  levelBadge.textContent = `Level ${level} / ${maxLevel}`;
+  goalText.textContent = `Pop ${goal} bubbles to pass.`;
+  goalMeter.style.width = '0%';
+  bubbles = [];
+  spawnBubbles();
+  encBox.textContent = level===1 ? "You’ve got this! 🎯" : randomGameEnc();
+  renderMilestones();
 }
-const __clk=document.getElementById("clock");function updateClock(){if(!__clk)return;const n=new Date();__clk.textContent=n.toLocaleTimeString();}setInterval(updateClock,1000);updateClock();
+function randomGameEnc(){
+  const arr = ["Nice pop!","Great focus!","Clean hit!","Cruising!","You’re on fire!","Sweet aim!"];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function renderMilestones(){
+  milestones.innerHTML='';
+  const marks=[25,50,100,150,200,300,400,500,600,700,800,900,1000];
+  marks.forEach(m=>{
+    const d=document.createElement('div'); d.className='badge'; d.textContent = m;
+    if(score>=m) d.style.background='linear-gradient(180deg,#59e48f55,#59e48f22)'; milestones.appendChild(d);
+  });
+}
+function spawnBubbles(){
+  const count = Math.min(10+level*2, 40);
+  for(let i=0;i<count;i++){
+    bubbles.push({
+      x: Math.random()*game.clientWidth,
+      y: game.clientHeight + Math.random()*200,
+      r: 12 + Math.random()* (10 + level),
+      // slight slow-down factor applied here (0.75) so overall feel is a bit calmer
+      v: (1.1 + Math.random()* (0.8 + level*0.15)) * 0.75,
+      hue: 180 + Math.random()*120,
+      alive: true
+    });
+  }
+}
+game.addEventListener('pointerdown', e=>{
+  if(!running || paused) return;
+  const rect = game.getBoundingClientRect();
+  const x = (e.clientX - rect.left);
+  const y = (e.clientY - rect.top);
+  for(const b of bubbles){
+    const dx=b.x - x, dy=b.y - y;
+    if(b.alive && Math.hypot(dx,dy) <= b.r){
+      b.alive=false; popped++; score+=5; scoreBadge.textContent=`Score ${score}`;
+      const p = Math.min(100, Math.floor((popped/goal)*100)); goalMeter.style.width = p+'%';
+      encBox.textContent = randomGameEnc();
+      break;
+    }
+  }
+});
+function step(){
+  if(!running || paused) return;
+  gtx.clearRect(0,0,game.clientWidth,game.clientHeight);
+  for(const b of bubbles){
+    if(!b.alive) continue;
+    b.y -= b.v;
+    // draw
+    gtx.beginPath(); gtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    const grd = gtx.createRadialGradient(b.x- b.r/3, b.y- b.r/3, 2, b.x, b.y, b.r);
+    grd.addColorStop(0, `hsla(${b.hue},80%,80%,0.95)`);
+    grd.addColorStop(1, `hsla(${b.hue},70%,50%,0.35)`);
+    gtx.fillStyle = grd; gtx.fill();
+  }
+  // cleanup + pass level
+  bubbles = bubbles.filter(b=>b.alive && b.y + b.r > -10);
+  if(bubbles.length < 8) spawnBubbles();
+  if(popped >= goal){
+    level = Math.min(maxLevel, level+1);
+    resetLevel();
+  }
+  requestAnimationFrame(step);
+}
+document.getElementById('startGame').onclick=()=>{ running=true; paused=false; prepareGameCanvas(); resetLevel(); step(); };
+document.getElementById('pauseGame').onclick=()=>{ if(!running) return; paused=!paused; if(!paused) step(); };
+document.getElementById('levelUp').onclick=()=>{ level=Math.min(maxLevel, level+1); resetLevel(); };
+document.getElementById('levelDown').onclick=()=>{ level=Math.max(1, level-1); resetLevel(); };
+
+/* Ensure immediate bubbles on first show */
+if(panels.bubble.classList.contains('active')){ prepareGameCanvas(); }
+
+/* =========================
+   Mute (placeholder for future sfx)
+========================= */
+let muted=false; document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
+
+/* =========================
+   Splash / start overlay logic
+   - appears on page load (or reload)
+   - pick an action and it opens that tab and hides the overlay
+========================= */
+const splash = document.getElementById('splash');
+const splashPlay = document.getElementById('splashPlay');
+const splashDraw = document.getElementById('splashDraw');
+const splashTalk = document.getElementById('splashTalk');
+
+function hideSplashAndGo(tab){
+  splash.style.display='none';
+  showTab(tab);
+  // warm up resources when user chooses
+  if(tab==='bubble'){ prepareGameCanvas(); }
+  if(tab==='draw'){ /* nothing extra */ }
+  if(tab==='aura'){ /* greet */ }
+}
+splashPlay.addEventListener('click', ()=>{ hideSplashAndGo('bubble'); });
+splashDraw.addEventListener('click', ()=>{ hideSplashAndGo('draw'); });
+splashTalk.addEventListener('click', ()=>{ hideSplashAndGo('aura'); });
+
+/* =========================
+   Small accessibility / keyboard close for splash
+========================= */
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){
+    if(splash.style.display!=='none'){ splash.style.display='none'; showTab('aura'); }
+    else if(panels.themes.style.display==='block'){ panels.themes.style.display='none'; showTab('aura'); }
+  }
+});
+
+/* Show splash on load (one-time per load). If you prefer persistence to hide after first-ever visit, replace with localStorage logic. */
+window.addEventListener('load', ()=>{
+  splash.style.display='flex';
+});
+
+/* =========================
+   Finish up: small safety falls-back
+========================= */
+/* if user uses theme tiles or clicks open themes via aura: already wired above */
+
+/* end of script */
 </script>
 </body>
 </html>
