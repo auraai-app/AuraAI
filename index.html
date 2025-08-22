@@ -1,1060 +1,888 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Aura • Chat • Draw • Pop</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AuraAI • Play • Create</title>
+<link rel="icon" href="data:,">
 <style>
   :root{
-    --bg: rgba(255,255,255,0.08);
-    --panel: rgba(255,255,255,0.12);
+    --bg: #0e1116;
+    --glass: rgba(255,255,255,0.12);
+    --glass-2: rgba(255,255,255,0.08);
     --stroke: rgba(255,255,255,0.18);
-    --text: #101214;
-    --muted:#3c3c3c;
-    --primary:#6E7CFF;
-    --accent:#8BD9FF;
-    --good:#19c37d;
-    --warn:#f5a623;
-    --bad:#ff4d4d;
-    --glass-blur: 14px;
-    --radius: 18px;
+    --text: #eef2f6;
+    --muted: #b8c0cc;
+    --accent: #7cc6ff;
+    --accent-2: #a8a6ff;
+    --good: #59e48f;
+    --bad: #ff7373;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0;
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    background: linear-gradient(120deg,#c9d6ff 0%, #e2e2e2 100%);
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
     color:var(--text);
-    overflow:hidden;
+    background: radial-gradient(1200px 1200px at 10% -10%, #31405644, transparent 60%),
+                radial-gradient(1000px 1000px at 90% -20%, #6245ff33, transparent 60%),
+                linear-gradient(180deg, #0b0f14, #0e1116);
+    backdrop-filter: blur(0.5px);
   }
-  .app{
-    height:100%;
-    display:grid;
-    grid-template-rows:auto 1fr auto;
-    grid-template-columns: 320px 1fr 360px;
-    grid-template-areas:
-      "topbar topbar topbar"
-      "sidebar main right"
-      "status status status";
-    gap:16px;
-    padding:16px;
+  .shell{
+    max-width:1200px; margin:32px auto; padding:24px;
+    border-radius:28px; background: var(--glass);
+    border:1px solid var(--stroke); box-shadow: 0 30px 80px #0007, inset 0 1px 0 #fff1;
+    backdrop-filter: blur(16px) saturate(120%);
+    position:relative;
   }
-  /* Top bar */
-  .topbar{
-    grid-area:topbar;
-    display:flex;align-items:center;justify-content:space-between;
-    background:var(--bg); backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-    border:1px solid var(--stroke); border-radius: var(--radius);
-    padding:10px 14px;
-  }
-  .brand{display:flex;gap:10px;align-items:center}
-  .brand .orb{
-    width:28px;height:28px;border-radius:50%;
-    background: radial-gradient(circle at 30% 30%, #9cd3ff, #6E7CFF 60%, #3f4fff 100%);
-    box-shadow: inset 0 0 12px rgba(255,255,255,.35), 0 6px 20px rgba(0,0,0,.25);
-  }
-  .brand h1{font-size:16px;margin:0;font-weight:800;letter-spacing:.2px}
+  /* mac-style live clock (top-right) */
   .clock{
-    font-variant-numeric: tabular-nums;
-    opacity:.9; font-weight:600;
-    padding:6px 10px; border-radius:12px;
-    background: rgba(255,255,255,.35);
-    border:1px solid rgba(255,255,255,.4);
+    position:absolute; top:14px; right:18px; padding:8px 12px;
+    border-radius:14px; background: var(--glass-2); border:1px solid var(--stroke);
+    font-variant-numeric: tabular-nums; letter-spacing:0.5px; box-shadow: inset 0 1px 0 #fff2;
   }
-  .controls{display:flex;gap:10px;align-items:center}
-  .btn{
-    appearance:none; border:1px solid var(--stroke); background: var(--panel);
-    color:var(--text); border-radius:12px; padding:8px 12px; font-weight:600;
-    cursor:pointer; backdrop-filter: blur(var(--glass-blur)); transition: .2s transform, .2s background, .2s border-color;
+
+  /* Top nav tabs */
+  .tabs{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center}
+  .tab{
+    padding:10px 14px; border-radius:16px;
+    background:linear-gradient(180deg, #ffffff14, #ffffff08);
+    border:1px solid var(--stroke); color:var(--text);
+    cursor:pointer; user-select:none; transition:.2s transform, .2s background;
+    box-shadow: 0 6px 16px #0005, inset 0 1px 0 #fff1;
   }
-  .btn:hover{transform:translateY(-1px); border-color: rgba(255,255,255,.35)}
-  .btn.ghost{background: transparent}
-  .pill{padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid var(--stroke); background:var(--bg)}
-  /* Left sidebar (Emotions + Theme) */
-  .sidebar{
-    grid-area:sidebar;
-    display:flex; flex-direction:column; gap:12px; min-height:0;
+  .tab:hover{transform:translateY(-1px)}
+  .tab.active{background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26); border-color:#7cc6ff66}
+
+  .bar{
+    display:flex; align-items:center; gap:10px; margin:10px 0 18px;
+    flex-wrap:wrap;
   }
-  .card{
-    background:var(--bg); border:1px solid var(--stroke); border-radius:var(--radius);
-    backdrop-filter: blur(var(--glass-blur)) saturate(140%); padding:12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.08);
-    min-height:0;
+  .chip{padding:6px 10px; border-radius:12px; background:var(--glass-2); border:1px solid var(--stroke); cursor:pointer}
+  .chip[aria-pressed="true"]{outline:2px solid var(--accent); background:#7cc6ff1f}
+
+  /* Left side: emotion switcher always visible */
+  .dock{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center
   }
-  .section-title{margin:0 0 10px 0; font-size:13px; text-transform:uppercase; letter-spacing:.12em; opacity:.75}
-  .emotions{
-    display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;
+  .dock .chip{display:flex; align-items:center; gap:6px}
+
+  /* Panels */
+  .panel{display:none}
+  .panel.active{display:block}
+
+  /* Aura chat area */
+  .chat-wrap{
+    display:grid; grid-template-columns: 280px 1fr; gap:16px;
   }
-  .toggle{
-    display:flex; align-items:center; gap:8px; padding:10px; border-radius:14px;
-    background:var(--panel); border:1px solid var(--stroke); cursor:pointer; user-select:none;
+  @media (max-width: 920px){ .chat-wrap{grid-template-columns:1fr} }
+  .side-card, .main-card{
+    background: var(--glass-2); border:1px solid var(--stroke); border-radius:20px; padding:14px;
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
   }
-  .toggle.active{outline:2px solid var(--primary); background: rgba(110,124,255,.18)}
-  .small{font-size:12px; opacity:.9}
-  /* Theme browser */
-  .themes-wrap{display:flex;flex-direction:column;gap:8px;min-height:0}
-  .tabs{display:flex; gap:6px; flex-wrap:wrap}
-  .tab{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--stroke);background:var(--panel);cursor:pointer}
-  .tab.active{background:rgba(110,124,255,.22); border-color:rgba(110,124,255,.45)}
-  .themes{
-    overflow:auto; max-height:38vh; padding-right:6px;
-    display:grid; grid-template-columns: repeat(3,1fr); gap:10px;
-  }
-  .theme{
-    position:relative; height:56px; border-radius:14px; border:1px solid var(--stroke); cursor:pointer; overflow:hidden;
-  }
-  .theme .tip{
-    position:absolute; bottom:6px; left:6px; right:6px; font-size:11px; padding:4px 6px;
-    border-radius:999px; background:rgba(0,0,0,.35); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5);
-    opacity:0; transform: translateY(4px); transition:.2s;
-    pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .theme:hover .tip{opacity:1; transform: translateY(0)}
-  /* Main: Aura */
-  .main{
-    grid-area:main; display:grid; grid-template-rows: minmax(320px, 58vh) 1fr; gap:12px; min-height:0;
-  }
-  .aura{
-    display:grid; grid-template-rows: 1fr auto; gap:10px; min-height:0;
-  }
-  .chat{
-    position:relative; overflow:auto; border-radius: var(--radius);
-    border:1px solid var(--stroke); background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.35));
-    backdrop-filter: blur(calc(var(--glass-blur) + 4px)); padding:14px;
-  }
-  .bubbles{display:flex; flex-direction:column; gap:10px}
-  .row{display:flex; gap:8px; align-items:flex-end}
-  .row.me{justify-content:flex-end}
+  .side-card h3{margin:6px 0 10px; font-size:14px; color:var(--muted); font-weight:600}
+  .bubble-list{display:flex; gap:8px; flex-wrap:wrap}
   .bubble{
-    max-width:70%; padding:10px 12px; border-radius:18px;
-    border:1px solid rgba(0,0,0,.08); box-shadow:0 8px 22px rgba(0,0,0,.06);
-    animation:fadeIn .25s ease; line-height:1.35;
+    padding:10px 12px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); cursor:pointer;
   }
-  .bubble.aura{ background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.65)); color: #0b1220 }
-  .bubble.me{ background: linear-gradient(180deg, #6E7CFF, #5766ff); color:#fff }
-  .choicebar{display:flex; gap:8px; flex-wrap:wrap}
-  .chip{border:1px solid var(--stroke); background:var(--panel); padding:8px 10px; border-radius:999px; cursor:pointer; font-weight:600}
-  .composer{display:flex; gap:8px; align-items:center}
-  .composer input{
-    flex:1; padding:12px 14px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,.75);
-    outline:none; font-size:14px;
+  .bubble[aria-pressed="true"]{outline:2px solid #ffffff55}
+  /* Chat bubbles like iMessage/WhatsApp */
+  .chat{
+    height:480px; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:8px;
+    scroll-behavior:smooth;
   }
-  .composer .btn{font-weight:800}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none}}
-  /* Right column: Draw + Bubble */
-  .right{grid-area:right; display:grid; grid-template-rows: minmax(220px, 45vh) minmax(220px, 45vh); gap:12px; min-height:0}
-  /* Draw pad */
-  .draw{
-    display:grid; grid-template-rows: auto 1fr auto; gap:8px; min-height:0;
+  .msg{
+    max-width:80%; padding:10px 14px; border-radius:18px; position:relative;
+    background:linear-gradient(180deg, #ffffff14, #ffffff0a); border:1px solid var(--stroke);
+    box-shadow: 0 8px 24px #0005, inset 0 1px 0 #fff2; animation: fadeIn .25s ease;
   }
-  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-  .toolbar .btn{padding:6px 10px}
-  .canvas-wrap{
-    position:relative; border:1px solid var(--stroke); border-radius:16px; overflow:hidden;
-    background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.6) 0 25%, rgba(255,255,255,.75) 0 50%) 50%/24px 24px,
-                linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.5));
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+  .msg.me{margin-left:auto; background:linear-gradient(180deg, #7cc6ff33, #a8a6ff26)}
+  .msg a{color:var(--accent)}
+  .composer{
+    display:flex; align-items:center; gap:8px; margin-top:10px
   }
-  canvas#sketch{display:block; width:100%; height:100%}
-  .promptbar{
-    display:flex; gap:8px; align-items:center; justify-content:space-between;
-    padding:6px 8px; border:1px dashed var(--stroke); border-radius:12px; background:rgba(255,255,255,.55)
+  .input{
+    flex:1; padding:12px 14px; border-radius:14px; background:#ffffff10; color:var(--text);
+    border:1px solid var(--stroke); outline:none;
   }
-  .prompttext{font-weight:700}
-  .soft{opacity:.85}
-  .statusline{font-size:12px; opacity:.85}
-  /* Bubble pop */
-  .pop{
-    display:grid; grid-template-rows: auto 1fr auto; gap:8px; min-height:0;
+  .btn{
+    padding:10px 12px; border-radius:12px; background:linear-gradient(180deg, #ffffff20, #ffffff0d);
+    border:1px solid var(--stroke); color:var(--text); cursor:pointer; user-select:none;
   }
-  .pop-stage{position:relative; border:1px solid var(--stroke); border-radius:16px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.6))}
-  canvas#pop{display:block; width:100%; height:100%}
-  .levelbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-  .meter{flex:1; height:10px; border-radius:999px; background:rgba(0,0,0,.08); overflow:hidden}
-  .meter > i{display:block; height:100%; width:0%; background:linear-gradient(90deg,#19c37d,#6E7CFF)}
-  /* Status bar */
-  .status{
-    grid-area:status; display:flex; justify-content:space-between; gap:10px; align-items:center;
-    border-radius:14px; border:1px solid var(--stroke); background:var(--bg); padding:10px 12px;
+  .btn.primary{background:linear-gradient(180deg, #7cc6ff3a, #a8a6ff2d); border-color:#7cc6ff66}
+  .btn.good{background:linear-gradient(180deg, #59e48f33, #59e48f1a); border-color:#59e48f77}
+  .btn.bad{background:linear-gradient(180deg, #ff737333, #ff73731a); border-color:#ff737377}
+
+  /* Draw */
+  .draw-grid{display:grid; grid-template-columns: 360px 1fr; gap:16px}
+  @media (max-width: 980px){ .draw-grid{grid-template-columns:1fr}}
+  canvas.doodle{
+    width:100%; aspect-ratio: 4/3; background:#111a22; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005; touch-action:none; cursor:crosshair;
   }
-  .player{display:flex; align-items:center; gap:10px}
-  .player .btn{padding:6px 10px}
-  /* Tooltips */
-  .tippy{position:relative}
-  .tippy:hover::after{
-    content:attr(data-tip); position:absolute; bottom: calc(100% + 8px); left:50%; transform:translateX(-50%);
-    background: rgba(33,33,33,.92); color:#fff; padding:6px 8px; border-radius:8px; font-size:12px; white-space:nowrap;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  .prompt-card{padding:14px; border-radius:18px; background:var(--glass-2); border:1px solid var(--stroke)}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  .okno{display:flex; gap:8px}
+  .hint{color:var(--muted); font-size:13px}
+
+  /* Bubble Pop */
+  .game-wrap{display:grid; grid-template-columns: 320px 1fr; gap:16px}
+  @media (max-width: 980px){ .game-wrap{grid-template-columns:1fr}}
+  .game-canvas{
+    width:100%; aspect-ratio: 16/9; background:#0a0f14; border-radius:18px; border:1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 #fff2, 0 10px 30px #0005;
   }
-  /* Animated backgrounds for animated themes */
-  .animated-bg{background-size:300% 300%; animation:flow 12s ease infinite}
-  @keyframes flow{
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+  .lvl{display:flex; gap:6px; flex-wrap:wrap}
+  .badge{padding:6px 8px; border-radius:10px; background:#ffffff12; border:1px solid var(--stroke); font-size:12px}
+  .meter{height:10px; border-radius:999px; background:#ffffff10; border:1px solid var(--stroke); overflow:hidden}
+  .meter > span{display:block; height:100%; width:0%; background: linear-gradient(90deg, #59e48f, #7cc6ff)}
+
+  /* Themes */
+  .themes-wrap{display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px}
+  .swatch{
+    padding:10px; border-radius:16px; border:1px solid var(--stroke); background:#ffffff12; cursor:pointer;
+    position:relative; overflow:hidden; min-height:72px;
   }
-  /* Hide scrollbars flair */
-  .chat::-webkit-scrollbar,.themes::-webkit-scrollbar{height:8px;width:8px}
-  .chat::-webkit-scrollbar-thumb,.themes::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:999px}
-  .hidden{display:none !important}
+  .swatch .tag{position:absolute; bottom:8px; left:8px; font-size:11px; color:#fff9; background:#0006; padding:4px 6px; border-radius:8px}
+  .swatch:hover{outline:2px solid #fff4}
+  .group-title{margin:14px 2px 8px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:11px}
+
+  /* Tooltips (for theme names) */
+  .has-tt{position:relative}
+  .has-tt:hover::after{
+    content: attr(data-tt);
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:#0a0f14; color:#fff; padding:6px 8px; border-radius:10px; border:1px solid var(--stroke);
+    white-space:nowrap; box-shadow: 0 10px 20px #0007; font-size:12px;
+  }
+
+  /* Small helpers */
+  .muted{color:var(--muted)} .spacer{flex:1}
 </style>
 </head>
 <body>
-<div class="app">
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <div class="brand">
-      <div class="orb"></div>
-      <h1>Aura</h1>
-      <span class="pill">friend</span>
-    </div>
-    <div class="controls">
-      <button id="themesBtn" class="btn tippy" data-tip="Browse themes">🎨 Themes</button>
-      <button id="muteBtn" class="btn tippy" data-tip="Mute / Unmute">🔇 Mute</button>
-      <div class="clock" id="clock">--:--</div>
-    </div>
+<div class="shell" id="app">
+  <div class="clock" id="clock">--:--:--</div>
+
+  <!-- Top Tabs -->
+  <div class="tabs" role="tablist" aria-label="Main sections">
+    <div class="tab active" data-tab="aura" role="tab" aria-selected="true">🫧 AuraAI</div>
+    <div class="tab" data-tab="draw" role="tab">🎨 Draw</div>
+    <div class="tab" data-tab="bubble" role="tab">🫧 Bubble Pop</div>
+    <div class="spacer"></div>
+    <!-- Music -->
+    <button class="btn" id="musicBtn" title="Play / Pause">⏯️ Music</button>
+    <audio id="music" preload="auto">
+      <source src="bgm1.mp3" type="audio/mpeg">
+      <source src="bgm2.mp3" type="audio/mpeg">
+      <source src="bgm3.mp3" type="audio/mpeg">
+    </audio>
   </div>
 
-  <!-- LEFT -->
-  <div class="sidebar">
-    <div class="card">
-      <div class="section-title">Feelings</div>
-      <div class="emotions" id="emotions">
-        <div class="toggle tippy" data-mode="happy" data-tip="Happy 😊"><span>😊</span><div><b>Happy</b><div class="small">light & upbeat</div></div></div>
-        <div class="toggle tippy" data-mode="sad" data-tip="Sad 😢"><span>😢</span><div><b>Sad</b><div class="small">gentle & warm</div></div></div>
-        <div class="toggle tippy" data-mode="angry" data-tip="Angry 😠"><span>😠</span><div><b>Angry</b><div class="small">steady & grounding</div></div></div>
-        <div class="toggle tippy" data-mode="nervous" data-tip="Nervous 😰"><span>😰</span><div><b>Nervous</b><div class="small">calm & safe</div></div></div>
+  <!-- AURA -->
+  <div class="panel active" id="panel-aura" role="tabpanel" aria-labelledby="aura-tab">
+    <div class="bar">
+      <div class="dock" id="emotionDock">
+        <div class="chip" data-emote="happy">😊 Happy</div>
+        <div class="chip" data-emote="sad">😢 Sad</div>
+        <div class="chip" data-emote="angry">😠 Angry</div>
+        <div class="chip" data-emote="nervous">😰 Nervous</div>
       </div>
+      <div class="spacer"></div>
+      <div class="chip has-tt" id="scriptedToggle" data-tt="Scripted Demo: Aura only replies when a line starts with ‘You:’">🎬 Scripted Demo</div>
+      <div class="chip has-tt" id="openThemes" data-tt="Change the look">🎨 Themes</div>
+      <div class="chip has-tt" id="muteBtn" data-tt="Mute encouragement sounds">🔇 Mute</div>
     </div>
 
-    <div class="card themes-wrap" id="themesPanel">
-      <div class="section-title">Themes</div>
-      <div class="tabs" id="themeTabs"></div>
-      <div class="themes" id="themesGrid"></div>
-      <div class="toolbar">
-        <label class="btn tippy" data-tip="Use your own background">
-          📁 Custom BG <input id="bgUpload" type="file" accept="image/*" class="hidden">
-        </label>
-        <button class="btn" id="resetTheme">Reset</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <!-- Aura -->
-    <div class="aura card">
-      <div class="chat" id="chat">
-        <div class="bubbles" id="bubbles"></div>
-      </div>
-      <div class="composer">
-        <div class="choicebar">
-          <button class="chip tippy" data-act="breathe" data-tip="Guided breath">🌬️ Breathe</button>
-          <button class="chip tippy" data-act="draw" data-tip="Open Drawing">🎨 Draw</button>
-          <button class="chip tippy" data-act="pop" data-tip="Bubble Pop">🫧 Pop</button>
-          <button class="chip tippy" data-act="music" data-tip="Play music">🎵 Music</button>
+    <div class="chat-wrap">
+      <div class="side-card">
+        <h3>Quick switches</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-say="How was your day?">How was your day?</div>
+          <div class="bubble" data-say="Want a quick breathing idea?">Breathing idea</div>
+          <div class="bubble" data-say="Pick an activity together?">Pick an activity</div>
         </div>
-        <input id="input" placeholder="Say anything… (Aura adapts)" />
-        <button id="send" class="btn">Send</button>
-      </div>
-    </div>
-
-    <!-- right info filler under Aura (optional space for future) -->
-    <div class="card" id="helperCard">
-      <div class="section-title">Tips</div>
-      <div id="helperText" class="soft">Switch feelings anytime on the left. Try activities with the chips above. Themes live on the left too — hover to see names.</div>
-    </div>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="right">
-    <!-- Draw -->
-    <div class="draw card">
-      <div class="toolbar">
-        <button class="btn" id="modeChallenge">🎯 Challenge</button>
-        <button class="btn" id="modeFreestyle">✍️ Freestyle</button>
-        <button class="btn" id="newTask">🔄 New</button>
-        <button class="btn" id="checkTask">✅ Auto‑Check</button>
-        <button class="btn" id="retryTask">🌀 Retry for fun</button>
-        <button class="btn" id="clearCanvas">🧽 Clear</button>
-        <span class="pill" id="drawStatus">Ready.</span>
-      </div>
-      <div class="canvas-wrap">
-        <canvas id="sketch"></canvas>
-      </div>
-      <div class="promptbar">
-        <div>
-          <div class="prompttext" id="taskText">Choose: Challenge or Freestyle</div>
-          <div class="statusline" id="taskHint">We’ll suggest something fun to draw. If you pick Challenge, we’ll auto‑check it.</div>
+        <h3 style="margin-top:14px">Activities</h3>
+        <div class="bubble-list">
+          <div class="bubble" data-action="openDraw">Open Draw</div>
+          <div class="bubble" data-action="openBubble">Play Bubble Pop</div>
+          <div class="bubble" data-action="sendHug">Virtual hug 🤗</div>
+          <div class="bubble" data-action="breathing">4-4-6 breathing</div>
         </div>
-        <div>
-          <span class="pill" id="autoCheckLamp">Auto‑Check: Off</span>
+        <h3 style="margin-top:14px">Tips</h3>
+        <p class="hint">Use simple words. If you like, start messages with <strong>You:</strong> to run the scripted demo.</p>
+      </div>
+
+      <div class="main-card">
+        <div id="chat" class="chat" aria-live="polite"></div>
+        <div class="composer">
+          <input id="input" class="input" placeholder="Type here… (e.g., You: I feel nervous)"/>
+          <button id="send" class="btn primary">Send</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Bubble Pop -->
-    <div class="pop card">
-      <div class="levelbar">
-        <button class="btn" id="popStart">▶️ Start</button>
-        <button class="btn" id="popPause">⏸️ Pause</button>
-        <button class="btn" id="popReset">⟲ Reset</button>
-        <span class="pill" id="popInfo">Level 1 • Score 0</span>
-        <div class="meter"><i id="popMeter"></i></div>
+  <!-- DRAW -->
+  <div class="panel" id="panel-draw" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="drawAsk" data-tt="Get a drawing idea">🧠 New idea</div>
+      <div class="chip has-tt" id="autoCheck" data-tt="Auto-check with AI" aria-pressed="true">✅ Auto‑Check</div>
+      <div class="chip has-tt" id="freeMode" data-tt="Free drawing">✍️ Freestyle</div>
+      <div class="spacer"></div>
+      <div class="chip has-tt" id="clearCanvas" data-tt="Clear the canvas">🧼 Clear</div>
+      <div class="chip has-tt" id="undoDraw" data-tt="Undo last stroke">↩️ Undo</div>
+      <div class="chip has-tt" id="redoDraw" data-tt="Redo">↪️ Redo</div>
+    </div>
+    <div class="draw-grid">
+      <div class="prompt-card">
+        <div class="row" style="margin-bottom:6px">
+          <div class="hint" id="ideaText">Want to try drawing something? (OK / No / Later)</div>
+        </div>
+        <div class="row okno">
+          <button class="btn good" id="okIdea">OK</button>
+          <button class="btn bad" id="noIdea">No</button>
+          <button class="btn" id="laterIdea">Later</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="hint">After you draw, Aura can check if it looks right and cheer you on. 💙</div>
       </div>
-      <div class="pop-stage"><canvas id="pop"></canvas></div>
-      <div class="soft" id="popMsg">Pop bubbles to reach the goal! 30 levels. Encouragements on milestones.</div>
+      <div>
+        <canvas id="doodle" class="doodle" width="800" height="600"></canvas>
+        <div class="row" style="margin-top:10px">
+          <span class="hint" id="checkMsg">Auto‑Check is on.</span>
+          <div class="spacer"></div>
+          <button class="btn" id="savePNG">Save PNG</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- STATUS / PLAYER -->
-  <div class="status">
-    <div class="soft">Status: <span id="statusLine">Welcome ✨</span></div>
-    <div class="player">
-      <audio id="audio" preload="auto">
-        <source src="bgm.mp3" type="audio/mpeg">
-        <source src="bgm2.mp3" type="audio/mpeg">
-        <source src="bgm3.mp3" type="audio/mpeg">
-      </audio>
-      <button class="btn" id="play">⏯ Play/Pause</button>
-      <button class="btn" id="next">⏭ Next</button>
-      <span class="pill" id="trackName">bgm.mp3</span>
+  <!-- BUBBLE POP -->
+  <div class="panel" id="panel-bubble" role="tabpanel">
+    <div class="bar">
+      <div class="chip has-tt" id="startGame" data-tt="Start / Restart">▶️ Start</div>
+      <div class="chip has-tt" id="pauseGame" data-tt="Pause / Resume">⏸️ Pause</div>
+      <div class="chip has-tt" id="levelDown" data-tt="Previous level">⬅️</div>
+      <div class="chip has-tt" id="levelUp" data-tt="Next level">➡️</div>
+      <div class="spacer"></div>
+      <div class="badge" id="levelBadge">Level 1 / 30</div>
+      <div class="badge" id="scoreBadge">Score 0</div>
     </div>
+    <div class="game-wrap">
+      <div class="side-card">
+        <h3>Goals</h3>
+        <p class="hint" id="goalText">Pop 10 bubbles to pass.</p>
+        <div class="meter" style="margin-top:8px"><span id="goalMeter"></span></div>
+        <h3 style="margin-top:14px">Milestones</h3>
+        <div class="lvl" id="milestones"></div>
+        <h3 style="margin-top:14px">Encouragement</h3>
+        <div id="encBox" class="hint">You’ve got this! 🎯</div>
+      </div>
+      <canvas id="game" class="game-canvas" width="1280" height="720"></canvas>
+    </div>
+  </div>
+
+  <!-- THEMES -->
+  <div class="panel" id="panel-themes" role="tabpanel" style="display:none">
+    <div class="bar">
+      <div class="chip" id="backToAura">⬅ Back</div>
+      <div class="spacer"></div>
+      <div class="hint">Hover a tile to see its name • Click to apply</div>
+    </div>
+    <div id="themesRoot"></div>
   </div>
 </div>
 
+<!-- TFJS + MobileNet (no-login, free CDNs) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+
 <script>
-/* ========== CLOCK ========== */
+/* =========================
+   Live Clock (HH:MM:SS)
+========================= */
 const clockEl = document.getElementById('clock');
+function pad(n){return String(n).padStart(2,'0')}
 function tickClock(){
-  const d=new Date();
-  const hh=String(d.getHours()).padStart(2,'0');
-  const mm=String(d.getMinutes()).padStart(2,'0');
-  clockEl.textContent=`${hh}:${mm}`;
+  const d = new Date();
+  clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
-setInterval(tickClock, 1000); tickClock();
+tickClock(); setInterval(tickClock, 1000);
 
-/* ========== GLOBAL THEME DATA (100+) ========== */
-const THEMES = {
-'Grayscale': [
- { name:'Pure White', type:'color', bg:'#ffffff', grad:'#f0f0f0', text:'#000000' },
- { name:'White Smoke', type:'color', bg:'#F5F5F5', grad:'#E8E8E8', text:'#3c3c3c' },
- { name:'Light Gray', type:'color', bg:'#d3d3d3', grad:'#c0c0c0', text:'#3c3c3c' },
- { name:'Silver Mist', type:'color', bg:'#b0b0b0', grad:'#a0a0a0', text:'#fff' },
- { name:'Steel Gray', type:'color', bg:'#708090', grad:'#6c7a89', text:'#fff' },
- { name:'Slate', type:'color', bg:'#405d72', grad:'#3c586b', text:'#fff' },
- { name:'Gunmetal', type:'color', bg:'#2c3539', grad:'#364044', text:'#fff' },
- { name:'Charcoal', type:'color', bg:'#36454f', grad:'#2c3539', text:'#fff' },
- { name:'Dark Slate', type:'color', bg:'#2f4f4f', grad:'#243c3c', text:'#fff' },
- { name:'Jet Black', type:'color', bg:'#000000', grad:'#1a1a1a', text:'#fff' },
- { name:'White', type:'color', bg:'#ffffff', text:'#000000' },
- { name:'Gray', type:'color', bg:'#808080', text:'#fff' },
- { name:'Black', type:'color', bg:'#000000', text:'#fff' },
- { name:'Off White', type:'color', bg:'#fafafa', text:'#3c3c3c' },
- { name:'Dim Gray', type:'color', bg:'#696969', text:'#fff' },
- { name:'Dark Gray', type:'color', bg:'#a9a9a9', text:'#fff' },
- { name:'Slate Gray', type:'color', bg:'#708090', text:'#fff' },
- { name:'Light Slate Gray', type:'color', bg:'#778899', text:'#fff' },
- { name:'Dark Slate Gray', type:'color', bg:'#2f4f4f', text:'#fff' },
- { name:'Snow', type:'color', bg:'#FFFAFA', text:'#3c3c3c' },
- { name:'Ivory', type:'color', bg:'#FFFFF0', text:'#3c3c3c' },
- { name:'Gainsboro', type:'color', bg:'#DCDCDC', text:'#3c3c3c' },
- { name:'Alice Blue', type:'color', bg:'#F0F8FF', text:'#3c3c3c' },
- { name:'Ghost White', type:'color', bg:'#F8F8FF', text:'#3c3c3c' },
- { name:'Dark White', type:'color', bg:'#F1F1F1', text:'#3c3c3c' },
- { name:'Midnight Blue', type:'color', bg:'#191970', text:'#fff' },
- { name:'Dark Blue', type:'color', bg:'#00008b', text:'#fff' },
- { name:'Steel Blue', type:'color', bg:'#4682b4', text:'#fff' },
- { name:'Dark Steel Blue', type:'color', bg:'#483d8b', text:'#fff' },
- { name:'Light Steel Blue', type:'color', bg:'#b0c4de', text:'#3c3c3c' }
-],
-'Gradient': [
- { name:'Aurora', type:'color', bg:'#a8cdf1', grad:'#f7b7b9', text:'#0b3c61' },
- { name:'Sunset', type:'color', bg:'#fdbb2d', grad:'#22c1c3', text:'#3c3c3c' },
- { name:'Forest', type:'color', bg:'#43ac62', grad:'#6a9d77', text:'#f0f0f0' },
- { name:'Ocean', type:'color', bg:'#005bea', grad:'#00c6fb', text:'#fff' },
- { name:'Lavender', type:'color', bg:'#c495d4', grad:'#b669c6', text:'#fff' },
- { name:'Night Sky', type:'color', bg:'#1c1c1c', grad:'#3f3f3f', text:'#fff' },
- { name:'Candy', type:'color', bg:'#ff7e5f', grad:'#feb47b', text:'#fff' },
- { name:'Mint', type:'color', bg:'#9de0ad', grad:'#45a247', text:'#fff' },
- { name:'Fire', type:'color', bg:'#ff416c', grad:'#ff4b2b', text:'#fff' },
- { name:'Emerald', type:'color', bg:'#56ab2f', grad:'#a8e063', text:'#fff' },
- { name:'Grape', type:'color', bg:'#662d8c', grad:'#ed1e79', text:'#fff' },
- { name:'Sky', type:'color', bg:'#a8c0ff', grad:'#3f2b96', text:'#fff' },
- { name:'Plum', type:'color', bg:'#61045f', grad:'#ae2869', text:'#fff' },
- { name:'Rose', type:'color', bg:'#fecfef', grad:'#ff9a9e', text:'#3c3c3c' },
- { name:'Aqua', type:'color', bg:'#74ebd5', grad:'#acb6e5', text:'#3c3c3c' },
- { name:'Teal', type:'color', bg:'#008b8b', grad:'#00ced1', text:'#fff' },
- { name:'Coral', type:'color', bg:'#ff6b6b', grad:'#ffc87c', text:'#fff' },
- { name:'Violet', type:'color', bg:'#8c52ff', grad:'#5ce1e6', text:'#fff' },
- { name:'Sunburst', type:'color', bg:'#ff9900', grad:'#ffb366', text:'#fff' },
- { name:'Cobalt', type:'color', bg:'#0047ab', grad:'#1e90ff', text:'#fff' },
- { name:'Denim', type:'color', bg:'#1565c0', grad:'#2196f3', text:'#fff' },
- { name:'Sky Blue', type:'color', bg:'#87ceeb', grad:'#b0e0e6', text:'#3c3c3c' },
- { name:'Tangerine', type:'color', bg:'#f28500', grad:'#ff7518', text:'#fff' },
- { name:'Jade', type:'color', bg:'#00a86b', grad:'#00a880', text:'#fff' },
- { name:'Turquoise', type:'color', bg:'#40e0d0', grad:'#48d1cc', text:'#3c3c3c' },
- { name:'Indigo', type:'color', bg:'#4b0082', grad:'#5c4179', text:'#fff' },
- { name:'Lilac', type:'color', bg:'#b66dff', grad:'#c5a0d3', text:'#fff' },
- { name:'Forest Green', type:'color', bg:'#013220', grad:'#015e34', text:'#fff' },
- { name:'Navy', type:'color', bg:'#000080', grad:'#0000a0', text:'#fff' },
- { name:'Grapefruit', type:'color', bg:'#ff6a6a', grad:'#ff66c4', text:'#fff' },
- { name:'Lagoon', type:'color', bg:'#0061ff', grad:'#60efbc', text:'#fff' },
- { name:'Peaches', type:'color', bg:'#ffb347', grad:'#ffcc33', text:'#fff' },
- { name:'Neon', type:'color', bg:'#39ff14', grad:'#00ffc8', text:'#3c3c3c' },
- { name:'Cosmic', type:'color', bg:'#232c3f', grad:'#48587c', text:'#fff' },
- { name:'Electric', type:'color', bg:'#8e2de2', grad:'#4a00e0', text:'#fff' },
- { name:'Ocean 2', type:'color', bg:'#06637e', grad:'#46a3b2', text:'#fff' }
-],
-'Pastel': [
- { name:'Pastel Dreams', type:'color', bg:'#ffb3ba', grad:'#ffdfba', text:'#3c3c3c' },
- { name:'Lemonade', type:'color', bg:'#fffacd', grad:'#b3e0ff', text:'#3c3c3c' },
- { name:'Strawberry', type:'color', bg:'#f1a89c', grad:'#f3c4c0', text:'#3c3c3c' },
- { name:'Aqua Mint', type:'color', bg:'#b2fef8', grad:'#b5ffeb', text:'#3c3c3c' },
- { name:'Powder Blue', type:'color', bg:'#b1d4e0', grad:'#b3d3e3', text:'#3c3c3c' },
- { name:'Wisteria', type:'color', bg:'#c9b1e5', grad:'#c1b4e5', text:'#3c3c3c' },
- { name:'Dusty Rose', type:'color', bg:'#e0c9c7', grad:'#e3d2cf', text:'#3c3c3c' },
- { name:'Lime', type:'color', bg:'#c6ffdd', grad:'#fbd786', text:'#3c3c3c' },
- { name:'Sand', type:'color', bg:'#f1d2b1', grad:'#e2bc91', text:'#4a3220' },
- { name:'Mystic', type:'color', bg:'#d4c7f0', grad:'#a894cc', text:'#3c3c3c' },
- { name:'Cotton Candy', type:'color', bg:'#ffb6c1', grad:'#ffa07a', text:'#3c3c3c' },
- { name:'Bubblegum', type:'color', bg:'#ff85a1', grad:'#ffc0cb', text:'#fff' },
- { name:'Cloudy Sky', type:'color', bg:'#d3e8f1', grad:'#e0f1f9', text:'#3c3c3c' },
- { name:'Soft Peach', type:'color', bg:'#ffdab9', grad:'#ffc4b1', text:'#3c3c3c' },
- { name:'Seafoam', type:'color', bg:'#b5e3d7', grad:'#aed9cb', text:'#3c3c3c' },
- { name:'Lilac Petals', type:'color', bg:'#c8a2c8', grad:'#d4b7d4', text:'#3c3c3c' }
-],
-'Metallic': [
- { name:'Gold', type:'color', bg:'#b8924b', grad:'#d7c797', text:'#4a3220' },
- { name:'Silver', type:'color', bg:'#c0c0c0', grad:'#d9d9d9', text:'#3c3c3c' },
- { name:'Bronze', type:'color', bg:'#cd7f32', grad:'#8b4513', text:'#fff' },
- { name:'Copper', type:'color', bg:'#b87333', grad:'#b56149', text:'#fff' },
- { name:'Platinum', type:'color', bg:'#e5e4e2', grad:'#c0c0c0', text:'#3c3c3c' },
- { name:'Ruby', type:'color', bg:'#e0115f', grad:'#c00742', text:'#fff' },
- { name:'Sapphire', type:'color', bg:'#0f52ba', grad:'#0073e6', text:'#fff' },
- { name:'Emerald Gem', type:'color', bg:'#046307', grad:'#05900a', text:'#fff' },
- { name:'Amethyst', type:'color', bg:'#9966cc', grad:'#b399e5', text:'#fff' },
- { name:'Steel', type:'color', bg:'#4682b4', grad:'#6a8db6', text:'#fff' },
- { name:'Chrome', type:'color', bg:'#8d929b', grad:'#a2a7af', text:'#3c3c3c' },
- { name:'Rose Gold', type:'color', bg:'#b76e79', grad:'#c18f8f', text:'#fff' }
-],
-'Animated': [
- { name:'Shifting Rainbow', type:'animated', grad:'#ff6b6b, #ffc87c, #d5a3ff, #8aff8a', text:'#fff' },
- { name:'Ocean Waves', type:'animated', grad:'#005bea, #00c6fb, #61d7f6, #005bea', text:'#fff' },
- { name:'Forest Glow', type:'animated', grad:'#43ac62, #6a9d77, #8bb87d, #43ac62', text:'#fff' },
- { name:'Cosmic Dust', type:'animated', grad:'#1c1c1c, #3f3f3f, #5b5b5b, #1c1c1c', text:'#fff' },
- { name:'Liquid Fire', type:'animated', grad:'#ff416c, #ff4b2b, #ff8c00, #ff416c', text:'#fff' },
- { name:'Cyber Blue', type:'animated', grad:'#00ffc8, #006aff, #8a2be2, #00ffc8', text:'#fff' },
- { name:'Synthwave', type:'animated', grad:'#8e2de2, #4a00e0, #ff007f, #8e2de2', text:'#fff' },
- { name:'Volcano', type:'animated', grad:'#d21f3c, #ff4500, #ffd700, #d21f3c', text:'#fff' }
-],
-'Poster': [
- { name:'Crimson', type:'color', bg:'#8d0426', text:'#fff' },
- { name:'Slate', type:'color', bg:'#405d72', text:'#fff' },
- { name:'Carbon', type:'color', bg:'#232526', text:'#fff' },
- { name:'Ruby', type:'color', bg:'#d62828', text:'#fff' },
- { name:'Mahogany', type:'color', bg:'#4c1e19', text:'#fff' },
- { name:'Olive', type:'color', bg:'#556b2f', text:'#fff' },
- { name:'Charcoal', type:'color', bg:'#36454f', text:'#fff' },
- { name:'Lemon', type:'color', bg:'#fff733', text:'#3c3c3c' },
- { name:'Azure', type:'color', bg:'#007fff', text:'#fff' },
- { name:'Maroon', type:'color', bg:'#800000', text:'#fff' },
- { name:'Jade', type:'color', bg:'#00a86b', text:'#fff' },
- { name:'Navy Blue', type:'color', bg:'#000080', text:'#fff' },
- { name:'Slate Gray', type:'color', bg:'#708090', text:'#fff' },
- { name:'Chocolate', type:'color', bg:'#7b3f00', text:'#fff' },
- { name:'Dark Green', type:'color', bg:'#006400', text:'#fff' },
- { name:'Midnight', type:'color', bg:'#0a0a23', text:'#fff' },
- { name:'Teal Green', type:'color', bg:'#008080', text:'#fff' },
- { name:'Eggplant', type:'color', bg:'#614051', text:'#fff' },
- { name:'Burnt Orange', type:'color', bg:'#cc5500', text:'#fff' },
- { name:'Mustard', type:'color', bg:'#ffdb58', text:'#3c3c3c' },
- { name:'Terracotta', type:'color', bg:'#e2725b', text:'#fff' },
- { name:'Rust', type:'color', bg:'#b7410e', text:'#fff' },
- { name:'Dark Cyan', type:'color', bg:'#008b8b', text:'#fff' },
- { name:'Dark Magenta', type:'color', bg:'#8b008b', text:'#fff' },
- { name:'Sienna', type:'color', bg:'#a0522d', text:'#fff' },
- { name:'Olive Drab', type:'color', bg:'#6b8e23', text:'#fff' },
- { name:'Pine Green', type:'color', bg:'#01796f', text:'#fff' },
- { name:'Navy', type:'color', bg:'#000080', text:'#fff' },
- { name:'Dark Slate Blue', type:'color', bg:'#483d8b', text:'#fff' },
- { name:'Steel Blue', type:'color', bg:'#4682b4', text:'#fff' },
- { name:'Slate Grey', type:'color', bg:'#708090', text:'#fff' },
- { name:'Deep Sea', type:'color', bg:'#003153', text:'#fff' },
- { name:'Oxblood', type:'color', bg:'#4a0000', text:'#fff' },
- { name:'Graphite', type:'color', bg:'#2f4f4f', text:'#fff' },
- { name:'Falu Red', type:'color', bg:'#801818', text:'#fff' }
-]
+/* =========================
+   Tab system + Music
+========================= */
+const tabs = [...document.querySelectorAll('.tab')];
+const panels = {
+  aura: document.getElementById('panel-aura'),
+  draw: document.getElementById('panel-draw'),
+  bubble: document.getElementById('panel-bubble'),
+  themes: document.getElementById('panel-themes'),
 };
-
-/* ========== THEME RENDERING ========== */
-const themeTabs = document.getElementById('themeTabs');
-const themesGrid = document.getElementById('themesGrid');
-const themesBtn = document.getElementById('themesBtn');
-const themesPanel = document.getElementById('themesPanel');
-const resetTheme = document.getElementById('resetTheme');
-const bgUpload = document.getElementById('bgUpload');
-let currentGroup = Object.keys(THEMES)[0];
-let customBG = null;
-
-function buildThemeTabs(){
-  themeTabs.innerHTML='';
-  Object.keys(THEMES).forEach((g,i)=>{
-    const el=document.createElement('button');
-    el.className='tab'+(i===0?' active':'');
-    el.textContent=g;
-    el.addEventListener('click', ()=>{currentGroup=g; [...themeTabs.children].forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderThemes();});
-    themeTabs.appendChild(el);
-  });
+function showTab(name){
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  Object.values(panels).forEach(p=>p.classList.remove('active'));
+  Object.values(panels).forEach(p=>p.style.display='none');
+  const el = panels[name];
+  el.style.display='block';
+  requestAnimationFrame(()=>el.classList.add('active'));
+  if(name==='bubble'){prepareGameCanvas()} // ensure bubbles spawn without resize
 }
+tabs.forEach(t=>t.addEventListener('click', ()=>showTab(t.dataset.tab)));
+
+const music = document.getElementById('music');
+const musicBtn = document.getElementById('musicBtn');
+let tracks = ["bgm1.mp3","bgm2.mp3","bgm3.mp3"];
+let currentTrack = 0;
+function pickTrack(){ currentTrack = Math.floor(Math.random()*tracks.length); music.src=tracks[currentTrack]; }
+pickTrack();
+musicBtn.addEventListener('click', ()=>{
+  if(music.paused){ music.play(); musicBtn.textContent='⏸️ Music'; }
+  else{ music.pause(); musicBtn.textContent='⏯️ Music'; }
+});
+music.addEventListener('ended', ()=>{ pickTrack(); music.play(); });
+
+/* =========================
+   THEMES (Your sets + extras)
+========================= */
+const THEME_GROUPS = {
+  'Grayscale': [
+    { name:'Pure White',bg:'#ffffff',grad:'#f0f0f0',text:'#000000'},
+    { name:'White Smoke',bg:'#F5F5F5',grad:'#E8E8E8',text:'#3c3c3c'},
+    { name:'Light Gray',bg:'#d3d3d3',grad:'#c0c0c0',text:'#3c3c3c'},
+    { name:'Silver Mist',bg:'#b0b0b0',grad:'#a0a0a0',text:'#ffffff'},
+    { name:'Steel Gray',bg:'#708090',grad:'#6c7a89',text:'#ffffff'},
+    { name:'Slate',bg:'#405d72',grad:'#3c586b',text:'#ffffff'},
+    { name:'Gunmetal',bg:'#2c3539',grad:'#364044',text:'#ffffff'},
+    { name:'Charcoal',bg:'#36454f',grad:'#2c3539',text:'#ffffff'},
+    { name:'Dark Slate',bg:'#2f4f4f',grad:'#243c3c',text:'#ffffff'},
+    { name:'Jet Black',bg:'#000000',grad:'#1a1a1a',text:'#ffffff'},
+    { name:'White',bg:'#ffffff',text:'#000000'},
+    { name:'Gray',bg:'#808080',text:'#ffffff'},
+    { name:'Black',bg:'#000000',text:'#ffffff'},
+    { name:'Off White',bg:'#fafafa',text:'#3c3c3c'},
+    { name:'Dim Gray',bg:'#696969',text:'#ffffff'},
+    { name:'Dark Gray',bg:'#a9a9a9',text:'#ffffff'},
+    { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+    { name:'Light Slate Gray',bg:'#778899',text:'#ffffff'},
+    { name:'Dark Slate Gray',bg:'#2f4f4f',text:'#ffffff'},
+    { name:'Snow',bg:'#FFFAFA',text:'#3c3c3c'},
+    { name:'Ivory',bg:'#FFFFF0',text:'#3c3c3c'},
+    { name:'Gainsboro',bg:'#DCDCDC',text:'#3c3c3c'},
+    { name:'Alice Blue',bg:'#F0F8FF',text:'#3c3c3c'},
+    { name:'Ghost White',bg:'#F8F8FF',text:'#3c3c3c'},
+    { name:'Dark White',bg:'#F1F1F1',text:'#3c3c3c'},
+    { name:'Midnight Blue',bg:'#191970',text:'#ffffff'},
+    { name:'Dark Blue',bg:'#00008b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Dark Steel Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Light Steel Blue',bg:'#b0c4de',text:'#3c3c3c'}
+  ],
+  'Gradient': [
+    { name:'Aurora',bg:'#a8cdf1',grad:'#f7b7b9',text:'#0b3c61'},
+    { name:'Sunset',bg:'#fdbb2d',grad:'#22c1c3',text:'#3c3c3c'},
+    { name:'Forest',bg:'#43ac62',grad:'#6a9d77',text:'#f0f0f0'},
+    { name:'Ocean',bg:'#005bea',grad:'#00c6fb',text:'#ffffff'},
+    { name:'Lavender',bg:'#c495d4',grad:'#b669c6',text:'#ffffff'},
+    { name:'Night Sky',bg:'#1c1c1c',grad:'#3f3f3f',text:'#ffffff'},
+    { name:'Candy',bg:'#ff7e5f',grad:'#feb47b',text:'#ffffff'},
+    { name:'Mint',bg:'#9de0ad',grad:'#45a247',text:'#ffffff'},
+    { name:'Fire',bg:'#ff416c',grad:'#ff4b2b',text:'#ffffff'},
+    { name:'Emerald',bg:'#56ab2f',grad:'#a8e063',text:'#ffffff'},
+    { name:'Grape',bg:'#662d8c',grad:'#ed1e79',text:'#ffffff'},
+    { name:'Sky',bg:'#a8c0ff',grad:'#3f2b96',text:'#ffffff'},
+    { name:'Plum',bg:'#61045f',grad:'#ae2869',text:'#ffffff'},
+    { name:'Rose',bg:'#fecfef',grad:'#ff9a9e',text:'#3c3c3c'},
+    { name:'Aqua',bg:'#74ebd5',grad:'#acb6e5',text:'#3c3c3c'},
+    { name:'Teal',bg:'#008b8b',grad:'#00ced1',text:'#ffffff'},
+    { name:'Coral',bg:'#ff6b6b',grad:'#ffc87c',text:'#ffffff'},
+    { name:'Violet',bg:'#8c52ff',grad:'#5ce1e6',text:'#ffffff'},
+    { name:'Sunburst',bg:'#ff9900',grad:'#ffb366',text:'#ffffff'},
+    { name:'Cobalt',bg:'#0047ab',grad:'#1e90ff',text:'#ffffff'},
+    { name:'Denim',bg:'#1565c0',grad:'#2196f3',text:'#ffffff'},
+    { name:'Sky Blue',bg:'#87ceeb',grad:'#b0e0e6',text:'#3c3c3c'},
+    { name:'Tangerine',bg:'#f28500',grad:'#ff7518',text:'#ffffff'},
+    { name:'Jade',bg:'#00a86b',grad:'#00a880',text:'#ffffff'},
+    { name:'Turquoise',bg:'#40e0d0',grad:'#48d1cc',text:'#3c3c3c'},
+    { name:'Indigo',bg:'#4b0082',grad:'#5c4179',text:'#ffffff'},
+    { name:'Lilac',bg:'#b66dff',grad:'#c5a0d3',text:'#ffffff'},
+    { name:'Forest Green',bg:'#013220',grad:'#015e34',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',grad:'#0000a0',text:'#ffffff'},
+    { name:'Grapefruit',bg:'#ff6a6a',grad:'#ff66c4',text:'#ffffff'},
+    { name:'Lagoon',bg:'#0061ff',grad:'#60efbc',text:'#ffffff'},
+    { name:'Peaches',bg:'#ffb347',grad:'#ffcc33',text:'#ffffff'},
+    { name:'Neon',bg:'#39ff14',grad:'#00ffc8',text:'#3c3c3c'},
+    { name:'Cosmic',bg:'#232c3f',grad:'#48587c',text:'#ffffff'},
+    { name:'Electric',bg:'#8e2de2',grad:'#4a00e0',text:'#ffffff'},
+    { name:'Ocean 2',bg:'#06637e',grad:'#46a3b2',text:'#ffffff'}
+  ],
+  'Pastel': [
+    { name:'Pastel Dreams',bg:'#ffb3ba',grad:'#ffdfba',text:'#3c3c3c'},
+    { name:'Lemonade',bg:'#fffacd',grad:'#b3e0ff',text:'#3c3c3c'},
+    { name:'Strawberry',bg:'#f1a89c',grad:'#f3c4c0',text:'#3c3c3c'},
+    { name:'Aqua Mint',bg:'#b2fef8',grad:'#b5ffeb',text:'#3c3c3c'},
+    { name:'Powder Blue',bg:'#b1d4e0',grad:'#b3d3e3',text:'#3c3c3c'},
+    { name:'Wisteria',bg:'#c9b1e5',grad:'#c1b4e5',text:'#3c3c3c'},
+    { name:'Dusty Rose',bg:'#e0c9c7',grad:'#e3d2cf',text:'#3c3c3c'},
+    { name:'Lime',bg:'#c6ffdd',grad:'#fbd786',text:'#3c3c3c'},
+    { name:'Sand',bg:'#f1d2b1',grad:'#e2bc91',text:'#4a3220'},
+    { name:'Mystic',bg:'#d4c7f0',grad:'#a894cc',text:'#3c3c3c'},
+    { name:'Cotton Candy',bg:'#ffb6c1',grad:'#ffa07a',text:'#3c3c3c'},
+    { name:'Bubblegum',bg:'#ff85a1',grad:'#ffc0cb',text:'#ffffff'},
+    { name:'Cloudy Sky',bg:'#d3e8f1',grad:'#e0f1f9',text:'#3c3c3c'},
+    { name:'Soft Peach',bg:'#ffdab9',grad:'#ffc4b1',text:'#3c3c3c'},
+    { name:'Seafoam',bg:'#b5e3d7',grad:'#aed9cb',text:'#3c3c3c'},
+    { name:'Lilac Petals',bg:'#c8a2c8',grad:'#d4b7d4',text:'#3c3c3c'}
+  ],
+  'Metallic': [
+    { name:'Gold',bg:'#b8924b',grad:'#d7c797',text:'#4a3220'},
+    { name:'Silver',bg:'#c0c0c0',grad:'#d9d9d9',text:'#3c3c3c'},
+    { name:'Bronze',bg:'#cd7f32',grad:'#8b4513',text:'#ffffff'},
+    { name:'Copper',bg:'#b87333',grad:'#b56149',text:'#ffffff'},
+    { name:'Platinum',bg:'#e5e4e2',grad:'#c0c0c0',text:'#3c3c3c'},
+    { name:'Ruby',bg:'#e0115f',grad:'#c00742',text:'#ffffff'},
+    { name:'Sapphire',bg:'#0f52ba',grad:'#0073e6',text:'#ffffff'},
+    { name:'Emerald Gem',bg:'#046307',grad:'#05900a',text:'#ffffff'},
+    { name:'Amethyst',bg:'#9966cc',grad:'#b399e5',text:'#ffffff'},
+    { name:'Steel',bg:'#4682b4',grad:'#6a8db6',text:'#ffffff'},
+    { name:'Chrome',bg:'#8d929b',grad:'#a2a7af',text:'#3c3c3c'},
+    { name:'Rose Gold',bg:'#b76e79',grad:'#c18f8f',text:'#ffffff'}
+  ],
+  'Animated': [
+    { name:'Shifting Rainbow', animated:true, grad:'#ff6b6b, #ffc87c, #d5a3ff, #8aff8a', text:'#ffffff' },
+    { name:'Ocean Waves', animated:true, grad:'#005bea, #00c6fb, #61d7f6, #005bea', text:'#ffffff' },
+    { name:'Forest Glow', animated:true, grad:'#43ac62, #6a9d77, #8bb87d, #43ac62', text:'#ffffff' },
+    { name:'Cosmic Dust', animated:true, grad:'#1c1c1c, #3f3f3f, #5b5b5b, #1c1c1c', text:'#ffffff' },
+    { name:'Liquid Fire', animated:true, grad:'#ff416c, #ff4b2b, #ff8c00, #ff416c', text:'#ffffff' },
+    { name:'Cyber Blue', animated:true, grad:'#00ffc8, #006aff, #8a2be2, #00ffc8', text:'#ffffff' },
+    { name:'Synthwave', animated:true, grad:'#8e2de2, #4a00e0, #ff007f, #8e2de2', text:'#ffffff' },
+    { name:'Volcano', animated:true, grad:'#d21f3c, #ff4500, #ffd700, #d21f3c', text:'#ffffff' }
+  ],
+  'Poster': [
+    { name:'Crimson',bg:'#8d0426',text:'#ffffff'},
+    { name:'Slate',bg:'#405d72',text:'#ffffff'},
+    { name:'Carbon',bg:'#232526',text:'#ffffff'},
+    { name:'Ruby',bg:'#d62828',text:'#ffffff'},
+    { name:'Mahogany',bg:'#4c1e19',text:'#ffffff'},
+    { name:'Olive',bg:'#556b2f',text:'#ffffff'},
+    { name:'Charcoal',bg:'#36454f',text:'#ffffff'},
+    { name:'Lemon',bg:'#fff733',text:'#3c3c3c'},
+    { name:'Azure',bg:'#007fff',text:'#ffffff'},
+    { name:'Maroon',bg:'#800000',text:'#ffffff'},
+    { name:'Jade',bg:'#00a86b',text:'#ffffff'},
+    { name:'Navy Blue',bg:'#000080',text:'#ffffff'},
+    { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+    { name:'Chocolate',bg:'#7b3f00',text:'#ffffff'},
+    { name:'Dark Green',bg:'#006400',text:'#ffffff'},
+    { name:'Midnight',bg:'#0a0a23',text:'#ffffff'},
+    { name:'Teal Green',bg:'#008080',text:'#ffffff'},
+    { name:'Eggplant',bg:'#614051',text:'#ffffff'},
+    { name:'Burnt Orange',bg:'#cc5500',text:'#ffffff'},
+    { name:'Mustard',bg:'#ffdb58',text:'#3c3c3c'},
+    { name:'Terracotta',bg:'#e2725b',text:'#ffffff'},
+    { name:'Rust',bg:'#b7410e',text:'#ffffff'},
+    { name:'Dark Cyan',bg:'#008b8b',text:'#ffffff'},
+    { name:'Dark Magenta',bg:'#8b008b',text:'#ffffff'},
+    { name:'Sienna',bg:'#a0522d',text:'#ffffff'},
+    { name:'Olive Drab',bg:'#6b8e23',text:'#ffffff'},
+    { name:'Pine Green',bg:'#01796f',text:'#ffffff'},
+    { name:'Navy',bg:'#000080',text:'#ffffff'},
+    { name:'Dark Slate Blue',bg:'#483d8b',text:'#ffffff'},
+    { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+    { name:'Slate Grey',bg:'#708090',text:'#ffffff'},
+    { name:'Deep Sea',bg:'#003153',text:'#ffffff'},
+    { name:'Oxblood',bg:'#4a0000',text:'#ffffff'},
+    { name:'Graphite',bg:'#2f4f4f',text:'#ffffff'},
+    { name:'Falu Red',bg:'#801818',text:'#ffffff'}
+  ]
+};
+// render themes
+const themesRoot = document.getElementById('themesRoot');
 function renderThemes(){
-  themesGrid.innerHTML='';
-  THEMES[currentGroup].forEach((t,idx)=>{
-    const sw=document.createElement('div');
-    sw.className='theme tippy';
-    sw.dataset.tip=t.name;
-    if(t.type==='animated'){
-      sw.style.background=`linear-gradient(135deg, ${t.grad})`;
-      sw.classList.add('animated-bg');
-    }else{
-      const g=t.grad||t.bg;
-      sw.style.background=`linear-gradient(135deg, ${t.bg}, ${g})`;
-    }
-    sw.addEventListener('click', ()=>applyTheme(t));
-    const tip=document.createElement('div'); tip.className='tip'; tip.textContent=t.name; sw.appendChild(tip);
-    themesGrid.appendChild(sw);
-  });
+  themesRoot.innerHTML='';
+  for(const [group, items] of Object.entries(THEME_GROUPS)){
+    const title = document.createElement('div'); title.className='group-title'; title.textContent=group; themesRoot.appendChild(title);
+    const grid = document.createElement('div'); grid.className='themes-wrap'; themesRoot.appendChild(grid);
+    items.forEach(theme=>{
+      const tile = document.createElement('div'); tile.className='swatch has-tt'; tile.dataset.tt = theme.name;
+      // visual
+      if(theme.animated){
+        tile.style.background = `linear-gradient(120deg, ${theme.grad})`;
+        tile.style.backgroundSize = '300% 300%';
+        tile.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:5000,iterations:Infinity});
+      }else if(theme.grad){
+        tile.style.background = `linear-gradient(135deg, ${theme.bg}, ${theme.grad})`;
+      }else{ tile.style.background = theme.bg; }
+      tile.innerHTML = `<span class="tag">${group}</span>`;
+      tile.addEventListener('click', ()=>applyTheme(theme));
+      grid.appendChild(tile);
+    });
+  }
 }
+renderThemes();
+
 function applyTheme(t){
-  customBG=null;
-  document.body.classList.remove('animated-bg');
-  if(t.type==='animated'){
-    document.body.style.background=`linear-gradient(120deg, ${t.grad})`;
-    document.body.classList.add('animated-bg');
+  // set CSS vars to keep whole UI coherent
+  document.documentElement.style.setProperty('--bg', t.bg || '#0e1116');
+  document.documentElement.style.setProperty('--text', t.text || '#eef2f6');
+  // Accent based on bg to keep contrast
+  document.documentElement.style.setProperty('--accent', '#7cc6ff');
+  document.documentElement.style.setProperty('--accent-2', '#a8a6ff');
+  // background art
+  const body = document.body;
+  if(t.animated){
+    body.style.background = `linear-gradient(120deg, ${t.grad})`;
+    body.style.backgroundSize = '300% 300%';
+    body.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
+  }else if(t.grad){
+    body.style.background = `linear-gradient(180deg, ${t.bg}, ${t.grad})`;
   }else{
-    const g=t.grad||t.bg;
-    document.body.style.background=`linear-gradient(120deg, ${t.bg}, ${g})`;
-  }
-  document.documentElement.style.setProperty('--text', t.text||'#101214');
-  status(`Theme: ${t.name}`);
-}
-bgUpload.addEventListener('change', e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const url=URL.createObjectURL(f); customBG=url;
-  document.body.style.background=`center/cover no-repeat url('${url}') fixed`;
-  document.body.classList.remove('animated-bg');
-  status('Custom background applied');
-});
-resetTheme.addEventListener('click', ()=>{
-  customBG=null;
-  document.body.classList.remove('animated-bg');
-  document.body.style.background='linear-gradient(120deg,#c9d6ff 0%, #e2e2e2 100%)';
-  document.documentElement.style.setProperty('--text', '#101214');
-  status('Theme reset');
-});
-themesBtn.addEventListener('click', ()=>{
-  themesPanel.scrollIntoView({behavior:'smooth',block:'center'});
-  themesPanel.classList.add('pulse');
-  setTimeout(()=>themesPanel.classList.remove('pulse'),600);
-});
-
-/* ========== MUSIC PLAYER ========== */
-const audio=document.getElementById('audio');
-const playBtn=document.getElementById('play');
-const nextBtn=document.getElementById('next');
-const trackName=document.getElementById('trackName');
-const TRACKS=['bgm.mp3','bgm2.mp3','bgm3.mp3'];
-let trackIdx=0, muted=false;
-function setTrack(i){ trackIdx=((i%TRACKS.length)+TRACKS.length)%TRACKS.length; audio.src=TRACKS[trackIdx]; trackName.textContent=TRACKS[trackIdx]; }
-playBtn.onclick=()=>{ if(audio.paused){ audio.play(); playBtn.textContent='⏸ Pause'; } else { audio.pause(); playBtn.textContent='▶️ Play'; } }
-nextBtn.onclick=()=>{ setTrack(trackIdx+1); audio.play(); playBtn.textContent='⏸ Pause'; }
-document.getElementById('muteBtn').onclick=()=>{ muted=!muted; audio.muted=muted; status(muted?'Muted':'Unmuted'); };
-audio.addEventListener('ended',()=>{ setTrack(trackIdx+1); audio.play(); });
-setTrack(0);
-
-/* ========== STATUS ========== */
-const statusLine=document.getElementById('statusLine');
-function status(s){ statusLine.textContent=s; }
-
-/* ========== AURA CHATBOT ========== */
-const bubbles=document.getElementById('bubbles');
-const input=document.getElementById('input');
-const send=document.getElementById('send');
-const emotions=document.getElementById('emotions');
-
-let mode='happy'; // happy | sad | angry | nervous
-emotions.querySelectorAll('.toggle').forEach(t=>{
-  if(t.dataset.mode===mode) t.classList.add('active');
-  t.onclick=()=>{ emotions.querySelectorAll('.toggle').forEach(x=>x.classList.remove('active')); t.classList.add('active'); mode=t.dataset.mode; auraGreet(true); }
-});
-
-function addBubble(text, who='aura'){
-  const row=document.createElement('div'); row.className='row '+(who==='me'?'me':'');
-  const b=document.createElement('div'); b.className='bubble '+(who==='me'?'me':'aura'); b.innerHTML=text;
-  row.appendChild(b); bubbles.appendChild(row);
-  bubbles.parentElement.scrollTop=bubbles.parentElement.scrollHeight;
-}
-function auraGreet(switching=false){
-  const openers={
-    happy:["Hey! ☀️ What’s something awesome right now?","I’m bright-eyed today — what’s up? ✨"],
-    sad:["Hi 💙 I’m here with you. Want a tiny comfort idea?","I hear you. I can sit with you — we can breathe or chat."],
-    angry:["Hey. I’ve got room for your fire. Want to vent safely? 🔥","We can channel it — words or tapping bubbles?"],
-    nervous:["You’re safe here. Try a mini reset with me?","We can go slow. Your pace, your space. 🌿"]
-  };
-  if(switching){ addBubble("Switched vibe to <b>"+mode+"</b>. I’ll match your energy. 💫"); }
-  addBubble(openers[mode][Math.floor(Math.random()*openers[mode].length)]);
-  addBubble(`Activities: <span class="chip" data-act="breathe">🌬️</span> <span class="chip" data-act="draw">🎨</span> <span class="chip" data-act="pop">🫧</span> <span class="chip" data-act="music">🎵</span> — tap any.`)
-}
-function handleIntent(msg){
-  const m=msg.toLowerCase();
-  if(/(draw|doodle|sketch)/.test(m)) openDraw();
-  if(/(pop|bubble)/.test(m)) openPop();
-  if(/(music|song|play)/.test(m)) { audio.play(); playBtn.textContent='⏸ Pause'; status('Music playing'); }
-  if(/(breath|breathe|calm|anx|nervous)/.test(m)) {
-    addBubble("Try this: inhale 4s, hold 4s, exhale 6s — twice. 🌬️");
+    body.style.background = t.bg;
   }
 }
-function auraReply(msg){
-  // lightweight intent + mood-specific response
-  const base = {
-    happy:[
-      "Love that energy! 😊",
-      "Tell me one tiny win today?",
-      "Want to pair it with a quick doodle or song?"
-    ],
-    sad:[
-      "Thanks for sharing — that’s valid. 💙",
-      "Want a cozy idea or a tiny step we can do together?",
-      "We can draw, breathe, or just talk — your call."
-    ],
-    angry:[
-      "I feel the heat with you. 🔥",
-      "Want to vent for 60 seconds — no fixes, just release?",
-      "Bubbles can take a punch. Want to pop a few?"
-    ],
-    nervous:[
-      "I’m here. You’re safe with me. 🌿",
-      "Let’s slow the body: 4‑in / 4‑hold / 6‑out.",
-      "We can doodle something simple together if you like."
-    ]
-  };
-  const mood=base[mode];
-  const pick = mood[Math.floor(Math.random()*mood.length)];
-  addBubble(pick);
-  handleIntent(msg);
-  // offer actionable chips inline
-  addBubble(`<div class="choicebar">
-    <span class="chip" data-act="breathe">🌬️ Breathe</span>
-    <span class="chip" data-act="draw">🎨 Draw</span>
-    <span class="chip" data-act="pop">🫧 Pop</span>
-    <span class="chip" data-act="music">🎵 Music</span>
-  </div>`);
-}
-send.onclick=()=>{
-  const v=input.value.trim(); if(!v) return;
-  addBubble(v,'me'); input.value='';
-  auraReply(v);
-};
-input.addEventListener('keydown',e=>{ if(e.key==='Enter') send.click(); });
-document.querySelectorAll('.choicebar,.composer').forEach(el=>{
-  el.addEventListener('click',e=>{
-    const chip=e.target.closest('.chip'); if(!chip) return;
-    const act=chip.dataset.act;
-    if(act==='draw') openDraw();
-    if(act==='pop') openPop();
-    if(act==='music'){ audio.play(); playBtn.textContent='⏸ Pause'; status('Music playing'); }
-    if(act==='breathe') addBubble("Try this: inhale 4s, hold 4s, exhale 6s — repeat 3×. 🌬️");
-  })
+
+/* Theme panel open/close */
+const openThemes = document.getElementById('openThemes');
+const backToAura = document.getElementById('backToAura');
+openThemes.addEventListener('click', ()=>{ panels.themes.style.display='block'; showTab('themes'); });
+backToAura.addEventListener('click', ()=>{ showTab('aura'); });
+
+/* =========================
+   AuraAI Chat
+========================= */
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+const emotionDock = document.getElementById('emotionDock');
+const scriptedToggle = document.getElementById('scriptedToggle');
+
+let scriptedOnly = false;
+scriptedToggle.addEventListener('click', ()=>{
+  scriptedOnly = !scriptedOnly;
+  scriptedToggle.setAttribute('aria-pressed', scriptedOnly);
+  auraSay(scriptedOnly ? "Scripted demo is ON. Start your line with “You:” and I’ll respond." : "Scripted demo is OFF. I’ll respond to anything you say.");
 });
-auraGreet(false);
 
-/* ========== DRAWING PAD + TFJS CHECK ========== */
-const sketch=document.getElementById('sketch');
-const sketchCtx=sketch.getContext('2d',{willReadFrequently:true});
-const clearCanvas=document.getElementById('clearCanvas');
-const modeChallenge=document.getElementById('modeChallenge');
-const modeFreestyle=document.getElementById('modeFreestyle');
-const newTask=document.getElementById('newTask');
-const checkTask=document.getElementById('checkTask');
-const retryTask=document.getElementById('retryTask');
-const taskText=document.getElementById('taskText');
-const taskHint=document.getElementById('taskHint');
-const drawStatus=document.getElementById('drawStatus');
-const autoCheckLamp=document.getElementById('autoCheckLamp');
-let drawDown=false, last=[0,0], drawMode='none', task=null, autoCheck=false;
-let mobilenetModel=null;
-
-/* 100 tasks (sketch-friendly; mapped to MobileNet label keywords) */
-const TASKS = [
-'cat','dog','bird','fish','butterfly','flower','tree','leaf','sun','moon',
-'star','cloud','rainbow','house','car','bicycle','boat','airplane','train','bus',
-'cup','bottle','mug','teapot','fork','spoon','knife','plate','pizza','burger',
-'ice cream','cake','donut','apple','banana','grapes','strawberry','pineapple','watermelon','cherry',
-'watch','phone','laptop','keyboard','mouse','camera','guitar','piano','drum','headphones',
-'shoe','hat','glasses','backpack','key','lock','clock','light bulb','candle','book',
-'pen','pencil','paintbrush','scissors','ruler','envelope','map','globe','telescope','microscope',
-'rocket','robot','spaceship','ufo','castle','bridge','lighthouse','mountain','river','tree stump',
-'cactus','pumpkin','ghost','snowman','heart','smiley face','starfish','shell','whale','dolphin',
-'elephant','giraffe','lion','tiger','zebra','horse','rabbit','turtle','frog','snail'
-];
-/* MobileNet label maps (accept if any keyword appears in top‑3). */
-const LABEL_MAP = {
-  'cat':['cat','kitten','siamese','tabby'],
-  'dog':['dog','puppy','retriever','bulldog'],
-  'bird':['bird','parrot','sparrow','warbler','robin'],
-  'fish':['fish','goldfish'],
-  'butterfly':['butterfly'],
-  'flower':['flower','daisy','sunflower'],
-  'tree':['tree','pine','oak','palm'],
-  'leaf':['leaf'],
-  'sun':['sun'],
-  'moon':['moon'],
-  'star':['star'],
-  'cloud':['cloud'],
-  'rainbow':['rainbow'],
-  'house':['house','home'],
-  'car':['car','sports car','convertible'],
-  'bicycle':['bicycle','mountain bike'],
-  'boat':['boat','ship'],
-  'airplane':['airliner','warplane','aircraft'],
-  'train':['train','loco'],
-  'bus':['bus'],
-  'cup':['cup'],
-  'bottle':['bottle'],
-  'mug':['mug'],
-  'teapot':['teapot'],
-  'fork':['fork'],
-  'spoon':['spoon'],
-  'knife':['knife'],
-  'plate':['plate'],
-  'pizza':['pizza'],
-  'burger':['hamburger','cheeseburger'],
-  'ice cream':['ice cream'],
-  'cake':['cake'],
-  'donut':['dough'],
-  'apple':['apple'],
-  'banana':['banana'],
-  'grapes':['grape'],
-  'strawberry':['strawberry'],
-  'pineapple':['pineapple'],
-  'watermelon':['watermelon'],
-  'cherry':['cherry'],
-  'watch':['watch'],
-  'phone':['cellular','phone'],
-  'laptop':['laptop','notebook'],
-  'keyboard':['keyboard'],
-  'mouse':['mouse','computer mouse'],
-  'camera':['camera'],
-  'guitar':['guitar'],
-  'piano':['piano'],
-  'drum':['drum'],
-  'headphones':['headphone'],
-  'shoe':['shoe','sneaker'],
-  'hat':['hat','cowboy hat'],
-  'glasses':['sunglass','eyeglass'],
-  'backpack':['backpack'],
-  'key':['key'],
-  'lock':['padlock','lock'],
-  'clock':['clock'],
-  'light bulb':['bulb','lampshade','lamp'],
-  'candle':['candle'],
-  'book':['book'],
-  'pen':['pen'],
-  'pencil':['pencil'],
-  'paintbrush':['paintbrush'],
-  'scissors':['scissor'],
-  'ruler':['ruler'],
-  'envelope':['envelope'],
-  'map':['map'],
-  'globe':['globe'],
-  'telescope':['telescope'],
-  'microscope':['microscope'],
-  'rocket':['rocket'],
-  'robot':['robot'],
-  'spaceship':['space shuttle','rocket'],
-  'ufo':['flying saucer'],
-  'castle':['castle'],
-  'bridge':['bridge'],
-  'lighthouse':['lighthouse'],
-  'mountain':['alp','mountain'],
-  'river':['river'],
-  'tree stump':['stump'],
-  'cactus':['cactus'],
-  'pumpkin':['pumpkin'],
-  'ghost':['ghost'],
-  'snowman':['snowman'],
-  'heart':['heart'],
-  'smiley face':['face','smiley'],
-  'starfish':['starfish'],
-  'shell':['seashell'],
-  'whale':['whale'],
-  'dolphin':['dolphin'],
-  'elephant':['elephant'],
-  'giraffe':['giraffe'],
-  'lion':['lion'],
-  'tiger':['tiger'],
-  'zebra':['zebra'],
-  'horse':['horse'],
-  'rabbit':['rabbit','bunny'],
-  'turtle':['turtle'],
-  'frog':['frog'],
-  'snail':['snail']
+const emotionPrompts = {
+  happy: [
+    "Hi! 👋 How was your day? 😊",
+    "Love hearing the good stuff. Want to celebrate a small win?",
+    "Pick an activity: Draw, Bubble Pop, or music?",
+  ],
+  sad: [
+    "I hear you. 💙 Want a small comfort idea?",
+    "We can draw, breathe together, or pop bubbles—your pick.",
+    "You’re not alone here. Would you like a gentle activity?",
+  ],
+  angry: [
+    "That’s tough. I’m here with you.",
+    "Want a short 10‑breath reset or a game to vent?",
+    "I can listen as long as you like.",
+  ],
+  nervous: [
+    "It’s okay to be nervous. You’re safe here.",
+    "Try this: inhale 4s, hold 4s, exhale 6s—repeat 3×.",
+    "Would a simple drawing or Bubble Pop help?",
+  ]
 };
 
-function resizeSketch(){
-  const rect=sketch.parentElement.getBoundingClientRect();
-  const tmp=document.createElement('canvas');
-  tmp.width=sketch.width; tmp.height=sketch.height;
-  tmp.getContext('2d').drawImage(sketch,0,0);
-  sketch.width=Math.max(300, rect.width);
-  sketch.height=Math.max(180, rect.height);
-  sketchCtx.fillStyle='rgba(255,255,255,.0)';
-  sketchCtx.fillRect(0,0,sketch.width,sketch.height);
-  sketchCtx.drawImage(tmp,0,0,sketch.width,sketch.height);
+function auraSay(text){ addMsg(text,false); }
+function meSay(text){ addMsg(text,true); }
+function addMsg(text, mine){
+  const div = document.createElement('div');
+  div.className = 'msg' + (mine?' me':'');
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
-window.addEventListener('resize', resizeSketch);
-resizeSketch();
 
-function setDrawStyle(){
-  sketchCtx.lineWidth=6; sketchCtx.lineCap='round'; sketchCtx.lineJoin='round';
-  sketchCtx.strokeStyle='#111';
+function respond(msg){
+  // Scripted mode: reply only if starts with "You:"
+  if(scriptedOnly && !/^you:/i.test(msg)) return;
+
+  const clean = msg.toLowerCase();
+  // simple detection
+  if(/(happy|great|good|yay)/.test(clean)) auraSay("That’s awesome! 🎉 Want to pick an activity or keep chatting?");
+  else if(/(sad|down|blue|cry|upset)/.test(clean)) auraSay("I’m here. 💙 Want a comfort idea or an activity together?");
+  else if(/(angry|mad|frustrated|annoyed)/.test(clean)) auraSay("Makes sense to feel that way. Want to pop bubbles to vent or try a calming breath?");
+  else if(/(nervous|anxious|worry|scared)/.test(clean)) auraSay("Thanks for sharing. Try a 4‑4‑6 breath with me, or we can draw gently.");
+  else if(/(draw|sketch|paint)/.test(clean)){ auraSay("Opening Draw for you. ✨"); showTab('draw'); }
+  else if(/(bubble|game|play)/.test(clean)){ auraSay("Let’s play Bubble Pop! 🫧"); showTab('bubble'); }
+  else if(/(hug)/.test(clean)){ auraSay("Sending a big gentle hug 🤗 You’re cared for."); }
+  else auraSay("Got it. Tell me more, or choose an activity: Draw • Bubble Pop • Music.");
 }
-setDrawStyle();
 
-sketch.addEventListener('pointerdown',e=>{ drawDown=true; const r=sketch.getBoundingClientRect(); last=[e.clientX-r.left, e.clientY-r.top]; });
-sketch.addEventListener('pointermove',e=>{
-  if(!drawDown) return; const r=sketch.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
-  sketchCtx.beginPath(); sketchCtx.moveTo(last[0],last[1]); sketchCtx.lineTo(x,y); sketchCtx.stroke(); last=[x,y];
+sendBtn.addEventListener('click', ()=>{
+  const v = input.value.trim(); if(!v) return;
+  meSay(v); respond(v); input.value='';
 });
-window.addEventListener('pointerup',()=>{ drawDown=false; if(autoCheck && task){ autoCheckNow(); } });
+input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendBtn.click(); });
 
-clearCanvas.onclick=()=>{ sketchCtx.clearRect(0,0,sketch.width,sketch.height); setDrawStyle(); drawStatus.textContent='Cleared.'; };
-
-function pickTask(){
-  task = TASKS[Math.floor(Math.random()*TASKS.length)];
-  taskText.textContent = `Try drawing: ${task}`;
-  taskHint.textContent = `Tap OK to start; or ‘Later’ to free draw.`;
-}
-function openDraw(){
-  document.querySelector('.draw').scrollIntoView({behavior:'smooth',block:'center'});
-}
-function openPop(){
-  document.querySelector('.pop').scrollIntoView({behavior:'smooth',block:'center'});
-}
-
-modeChallenge.onclick=()=>{ drawMode='challenge'; autoCheck=true; autoCheckLamp.textContent='Auto‑Check: On'; pickTask(); status('Challenge mode'); };
-modeFreestyle.onclick=()=>{ drawMode='freestyle'; autoCheck=false; autoCheckLamp.textContent='Auto‑Check: Off'; task=null; taskText.textContent='Freestyle — draw anything you want'; taskHint.textContent='Switch back to Challenge anytime.'; status('Freestyle'); };
-newTask.onclick=()=>{ if(drawMode!=='challenge'){ modeChallenge.click(); return; } pickTask(); };
-retryTask.onclick=()=>{ sketchCtx.clearRect(0,0,sketch.width,sketch.height); setDrawStyle(); drawStatus.textContent='That was fun — want to try again for style?'; };
-checkTask.onclick=()=>{ if(!task){ drawStatus.textContent='Pick Challenge first.'; return; } autoCheckNow(); };
-
-async function ensureModel(){
-  if(!mobilenetModel){
-    drawStatus.textContent='Loading model…';
-    mobilenetModel = await mobilenet.load({version:2, alpha:1.0});
-    drawStatus.textContent='Model ready.';
-  }
-}
-function canvasToImageTensor(){
-  const pad=20;
-  const tmp=document.createElement('canvas');
-  tmp.width=224; tmp.height=224;
-  const tctx=tmp.getContext('2d');
-  tctx.fillStyle='#fff'; tctx.fillRect(0,0,224,224);
-  // fit sketch into 224 with aspect
-  const w=sketch.width, h=sketch.height;
-  const scale=Math.min((224-2*pad)/w, (224-2*pad)/h);
-  const nw=w*scale, nh=h*scale;
-  tctx.drawImage(sketch, (224-nw)/2, (224-nh)/2, nw, nh);
-  return tf.browser.fromPixels(tmp);
-}
-function matchLabel(predictions, target){
-  const accept = LABEL_MAP[target] || [target];
-  const labels = predictions.slice(0,3).map(p=>p.className.toLowerCase());
-  return accept.some(k=>labels.some(l=>l.includes(k)));
-}
-async function autoCheckNow(){
-  await ensureModel();
-  const img=canvasToImageTensor();
-  const preds=await mobilenetModel.classify(img);
-  img.dispose();
-  const ok = matchLabel(preds, task);
-  if(ok){
-    const yay = ["Wow! That looks great! 🌟","Nice job — nailed it! ✅","Love the lines — you got it! 🎯","Chef’s kiss. Keep going! 👌"];
-    drawStatus.textContent = yay[Math.floor(Math.random()*yay.length)];
-  }else{
-    const gentle = ["Cute sketch! Wanna try one more time? ✨","I see the idea — want to tweak it a little?","Almost there — one more stroke?","So close! Try again for fun?"];
-    drawStatus.textContent = gentle[Math.floor(Math.random()*gentle.length)];
-  }
-}
-
-/* ========== BUBBLE POP (30 levels) with dynamic canvas sizing ========== */
-const pop=document.getElementById('pop');
-const pctx=pop.getContext('2d');
-const popStart=document.getElementById('popStart');
-const popPause=document.getElementById('popPause');
-const popReset=document.getElementById('popReset');
-const popInfo=document.getElementById('popInfo');
-const popMeter=document.getElementById('popMeter');
-const popMsg=document.getElementById('popMsg');
-
-let running=false, level=1, score=0, goal=25, bubbles=[], raf=0, lastTime=0;
-
-function resizePop(){
-  const rect=pop.parentElement.getBoundingClientRect();
-  pop.width=Math.max(320, rect.width);
-  pop.height=Math.max(200, rect.height);
-  if(bubbles.length===0) spawnWave();
-}
-window.addEventListener('resize', resizePop);
-resizePop();
-
-function spawnBubble(){
-  const r = rand(12, 28)+level*0.2;
-  const x = rand(r, pop.width - r);
-  const y = pop.height + r + rand(0, 80);
-  const dy = -rand(0.6, 1.4) - level*0.02;
-  const hp = 1;
-  return {x,y,r,dy,hp,color:`hsla(${rand(180,260)},70%,70%,0.9)`};
-}
-function spawnWave(){
-  const n = Math.min(12 + Math.floor(level*0.8), 40);
-  bubbles = Array.from({length:n}, ()=>spawnBubble());
-}
-function rand(a,b){return a+Math.random()*(b-a)}
-
-function update(dt){
-  pctx.clearRect(0,0,pop.width,pop.height);
-  bubbles.forEach(b=>{
-    b.y += b.dy * dt*0.06;
-    pctx.beginPath(); pctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-    const g=pctx.createRadialGradient(b.x-5,b.y-8,3,b.x,b.y,b.r);
-    g.addColorStop(0,'rgba(255,255,255,.9)'); g.addColorStop(1,b.color);
-    pctx.fillStyle=g; pctx.fill();
-    pctx.strokeStyle='rgba(255,255,255,.6)'; pctx.lineWidth=2; pctx.stroke();
+emotionDock.querySelectorAll('.chip').forEach(ch=>{
+  ch.addEventListener('click', ()=>{
+    emotionDock.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));
+    ch.setAttribute('aria-pressed','true');
+    const em = ch.dataset.emote;
+    emotionPrompts[em].forEach(auraSay);
   });
-  // remove offscreen
-  bubbles = bubbles.filter(b=>b.y + b.r > -20);
-  if(bubbles.length<8) bubbles.push(spawnBubble());
+});
+// quick bubbles
+document.querySelectorAll('.bubble').forEach(b=>{
+  const say = b.dataset.say; const act = b.dataset.action;
+  b.addEventListener('click', ()=>{
+    if(say){ meSay(say); respond(say); }
+    if(act==='openDraw'){ showTab('draw'); }
+    if(act==='openBubble'){ showTab('bubble'); }
+    if(act==='sendHug'){ auraSay("🤗 A warm hug, just for you."); }
+    if(act==='breathing'){ auraSay("Let’s do 4‑4‑6 together. Inhale 4, hold 4, exhale 6 — three times."); }
+  });
+});
+// greet
+auraSay("Hello! I’m Aura. 💫 How do you feel today?");
+auraSay("You can switch feelings anytime with the buttons above.");
+
+/* =========================
+   DRAW + Auto‑check
+========================= */
+const doodle = document.getElementById('doodle');
+const ctx = doodle.getContext('2d');
+let drawing=false, last=null;
+let stack=[], redo=[];
+function resizeCanvas(){ /* keep pixel size stable via width/height attributes already set */ }
+resizeCanvas();
+
+function strokeStart(x,y){ drawing=true; last=[x,y]; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=14; ctx.strokeStyle='#e6f0ff'; ctx.shadowBlur=0; pushState(); }
+function strokeMove(x,y){ if(!drawing) return; ctx.beginPath(); ctx.moveTo(last[0],last[1]); ctx.lineTo(x,y); ctx.stroke(); last=[x,y]; }
+function strokeEnd(){ drawing=false; last=null; if(autoCheckOn) queuedCheck(); }
+function getPos(e){
+  const r = doodle.getBoundingClientRect();
+  const x = (e.touches?e.touches[0].clientX:e.clientX) - r.left;
+  const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
+  return [x * doodle.width / r.width, y * doodle.height / r.height];
 }
-function loop(ts){
-  if(!running){ lastTime=ts; return; }
-  const dt=ts-lastTime; lastTime=ts;
-  update(dt);
-  raf=requestAnimationFrame(loop);
+doodle.addEventListener('pointerdown', e=>{doodle.setPointerCapture(e.pointerId); const [x,y]=getPos(e); strokeStart(x,y)});
+doodle.addEventListener('pointermove', e=>{const [x,y]=getPos(e); strokeMove(x,y)});
+doodle.addEventListener('pointerup', strokeEnd);
+doodle.addEventListener('pointerleave', strokeEnd);
+
+/* Undo/Redo */
+function pushState(){ try{ stack.push(doodle.toDataURL()); redo.length=0; }catch(e){} }
+function undo(){ if(stack.length){ const last=stack.pop(); redo.push(last); const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,doodle.width,doodle.height); ctx.drawImage(img,0,0)}; if(stack.length){img.src=stack[stack.length-1]} else {ctx.clearRect(0,0,doodle.width,doodle.height)} } }
+function redoFn(){ if(redo.length){ const src=redo.pop(); stack.push(src); const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0); img.src=src; } }
+document.getElementById('undoDraw').onclick=undo;
+document.getElementById('redoDraw').onclick=redoFn;
+
+document.getElementById('clearCanvas').onclick=()=>{ ctx.clearRect(0,0,doodle.width,doodle.height); if(autoCheckOn) setCheckMsg("Canvas cleared. Ready when you are."); };
+
+document.getElementById('savePNG').onclick=()=>{
+  const a=document.createElement('a'); a.download='aura-doodle.png'; a.href=doodle.toDataURL('image/png'); a.click();
+};
+
+/* Idea chooser (no “prompt” word) */
+const ideaText = document.getElementById('ideaText');
+const okIdea = document.getElementById('okIdea');
+const noIdea = document.getElementById('noIdea');
+const laterIdea = document.getElementById('laterIdea');
+const freeMode = document.getElementById('freeMode');
+const autoCheck = document.getElementById('autoCheck');
+const drawAsk = document.getElementById('drawAsk');
+
+const IDEAS = [
+  "cat","dog","fish","bird","butterfly","flower","tree","leaf","house","car","bus","train","boat","rocket","star","moon","sun","rainbow",
+  "heart","smile","key","lock","cup","ice cream","pizza","burger","fries","cookie","cake","banana","apple","grapes","strawberry","watermelon",
+  "ball","kite","guitar","piano","drum","book","clock","glasses","shoe","hat","crown","ring","watch","camera","phone","robot","dinosaur","elephant",
+  "lion","tiger","bear","whale","turtle","frog","penguin","owl","fox","rabbit","horse","snail","spider","dragonfly","octopus","jellyfish","starfish",
+  "mountain","river","treehouse","castle","bridge","lighthouse","tent","campfire","snowman","gift","balloon","umbrella","airplane","helicopter",
+  "backpack","pencil","paintbrush","scissors","ruler","toothbrush","tooth","bicycle","motorbike","scooter","tractor","skateboard","soccer ball",
+  "basketball","baseball","tennis racket","medal","trophy"
+];
+let currentIdea = null;
+function askIdea(){ ideaText.textContent = "Try drawing a [thing]? (OK / No / Later)"; }
+function chooseIdea(){
+  currentIdea = IDEAS[Math.floor(Math.random()*IDEAS.length)];
+  ideaText.innerHTML = `Try drawing <strong>${currentIdea}</strong>. You can say “No” for a different one or “Later” to freestyle.`;
+}
+askIdea();
+okIdea.onclick = ()=>{ if(!currentIdea) chooseIdea(); else ideaText.innerHTML = `You picked <strong>${currentIdea}</strong>. Go for it!`; };
+noIdea.onclick = ()=>{ chooseIdea(); };
+laterIdea.onclick = ()=>{ currentIdea = null; ideaText.textContent = "Freestyle is on. Draw anything you like."; };
+freeMode.onclick = ()=>{ currentIdea=null; ideaText.textContent="Freestyle is on. Draw anything you like."; };
+
+drawAsk.onclick = ()=>{ currentIdea=null; chooseIdea(); };
+
+let autoCheckOn = true;
+autoCheck.setAttribute('aria-pressed','true');
+autoCheck.onclick = ()=>{ autoCheckOn = !autoCheckOn; autoCheck.setAttribute('aria-pressed', String(autoCheckOn)); setCheckMsg(autoCheckOn? "Auto‑Check is on." : "Auto‑Check is off."); };
+const checkMsg = document.getElementById('checkMsg');
+function setCheckMsg(t){ checkMsg.textContent = t; }
+
+/* TFJS MobileNet model for checking */
+let mobilenetModel = null;
+(async()=>{ try{ mobilenetModel = await mobilenet.load({version:2, alpha:1.0}); }catch(e){ console.warn('Model failed to load', e); } })();
+
+let checkTimer=null;
+function queuedCheck(){ if(!autoCheckOn || !mobilenetModel || !currentIdea) return; clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 650); }
+async function runCheck(){
+  if(!mobilenetModel || !currentIdea) return;
+  // scale canvas to image for model
+  const pred = await mobilenetModel.classify(doodle, 5); // top-5
+  const labels = pred.map(p=>p.className.toLowerCase());
+  const idea = currentIdea.toLowerCase();
+
+  // loose matching dictionary to bridge idea -> known labels
+  const alias = {
+    "bike":"bicycle","motorbike":"motorcycle","soccer ball":"soccer ball","basketball":"basketball",
+    "baseball":"baseball","tennis racket":"racket","glasses":"sunglasses","phone":"cellular telephone, cellular phone, cellphone",
+    "car":"car","bus":"bus","train":"train","boat":"boat","airplane":"airliner","helicopter":"helicopter",
+    "cat":"cat","dog":"dog","key":"key","ring":"ring","watch":"watch","piano":"piano","guitar":"acoustic guitar",
+    "drum":"drum","camera":"camera","clock":"analog clock","book":"book","umbrella":"umbrella","chair":"chair","table":"table",
+    "elephant":"elephant","bear":"bear","lion":"lion","tiger":"tiger","whale":"whale","turtle":"turtle","frog":"frog","owl":"owl","fox":"fox","rabbit":"hare",
+    "horse":"horse","dinosaur":"dinosaur","penguin":"penguin","bus":"bus","truck":"pickup, pickup truck",
+    "pizza":"pizza","burger":"hamburger","fries":"french fries","banana":"banana","apple":"granny smith",
+    "strawberry":"strawberry","watermelon":"watermelon","grapes":"custard apple" // rough
+  };
+  const target = (alias[idea] || idea).split(',').map(s=>s.trim());
+  const matched = labels.some(l => target.some(t => l.includes(t)));
+  if(matched){
+    setCheckMsg(randomEncouragement(true));
+  }else{
+    setCheckMsg(randomEncouragement(false) + " Want to try again for fun?");
+  }
+}
+function randomEncouragement(ok){
+  const good = [
+    "Wow! That looks great! 🌟",
+    "Nice job—nailed it! ✅",
+    "Love the shapes you used. 💙",
+    "Beautiful lines! Keep going!",
+    "That’s it! You did it!"
+  ];
+  const tryAgain = [
+    "So close—want to try once more?",
+    "I like your style! Maybe tweak a tiny bit?",
+    "Fun attempt! Wanna try again?",
+    "Great effort! Another go?",
+    "You’re learning fast—one more try?"
+  ];
+  return ok ? good[Math.floor(Math.random()*good.length)]
+            : tryAgain[Math.floor(Math.random()*tryAgain.length)];
 }
 
-pop.addEventListener('pointerdown', e=>{
-  const r=pop.getBoundingClientRect(); const x=e.clientX-r.left, y=e.clientY-r.top;
-  for(let i=bubbles.length-1;i>=0;i--){
-    const b=bubbles[i];
-    const dx=b.x-x, dy=b.y-y;
-    if(dx*dx+dy*dy <= b.r*b.r){
-      bubbles.splice(i,1);
-      score++;
-      milestone();
-      popInfo.textContent=`Level ${level} • Score ${score}`;
-      const p= Math.min(100, Math.floor((score/goal)*100));
-      popMeter.style.width=p+'%';
-      if(score>=goal){ levelUp(); }
+/* =========================
+   Bubble Pop (levels)
+========================= */
+const game = document.getElementById('game');
+const gtx = game.getContext('2d');
+let bubbles=[], popped=0, goal=10, level=1, maxLevel=30, score=0, running=false, paused=false;
+const levelBadge = document.getElementById('levelBadge');
+const scoreBadge = document.getElementById('scoreBadge');
+const goalText = document.getElementById('goalText');
+const goalMeter = document.getElementById('goalMeter');
+const milestones = document.getElementById('milestones');
+const encBox = document.getElementById('encBox');
+
+function prepareGameCanvas(){
+  // ensure proper pixel scaling
+  const r = game.getBoundingClientRect();
+  game.width = Math.floor(r.width * devicePixelRatio);
+  game.height = Math.floor(r.height * devicePixelRatio);
+  gtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener('resize', ()=>{ prepareGameCanvas(); });
+
+function resetLevel(){
+  popped=0;
+  goal = 8 + level*2;
+  levelBadge.textContent = `Level ${level} / ${maxLevel}`;
+  goalText.textContent = `Pop ${goal} bubbles to pass.`;
+  goalMeter.style.width = '0%';
+  bubbles = [];
+  spawnBubbles();
+  encBox.textContent = level===1 ? "You’ve got this! 🎯" : randomGameEnc();
+  renderMilestones();
+}
+function randomGameEnc(){
+  const arr = ["Nice pop!","Great focus!","Clean hit!","Cruising!","You’re on fire!","Sweet aim!"];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function renderMilestones(){
+  milestones.innerHTML='';
+  const marks=[25,50,100,150,200,300,400,500,600,700,800,900,1000];
+  marks.forEach(m=>{
+    const d=document.createElement('div'); d.className='badge'; d.textContent = m;
+    if(score>=m) d.style.background='linear-gradient(180deg,#59e48f55,#59e48f22)'; milestones.appendChild(d);
+  });
+}
+function spawnBubbles(){
+  const count = Math.min(10+level*2, 40);
+  for(let i=0;i<count;i++){
+    bubbles.push({
+      x: Math.random()*game.clientWidth, y: game.clientHeight + Math.random()*200,
+      r: 12 + Math.random()* (10 + level),
+      v: 1.1 + Math.random()* (0.8 + level*0.15),
+      hue: 180 + Math.random()*120, alive: true
+    });
+  }
+}
+game.addEventListener('pointerdown', e=>{
+  if(!running || paused) return;
+  const rect = game.getBoundingClientRect();
+  const x = (e.clientX - rect.left);
+  const y = (e.clientY - rect.top);
+  for(const b of bubbles){
+    const dx=b.x - x, dy=b.y - y;
+    if(b.alive && Math.hypot(dx,dy) <= b.r){
+      b.alive=false; popped++; score+=5; scoreBadge.textContent=`Score ${score}`;
+      const p = Math.min(100, Math.floor((popped/goal)*100)); goalMeter.style.width = p+'%';
+      encBox.textContent = randomGameEnc();
       break;
     }
   }
 });
-
-function milestone(){
-  const notes=[
-    [25,"Nice start! 25 popped! 🎉"],
-    [50,"Halfway hero — 50! 💪"],
-    [75,"75! You’re cooking! 🔥"],
-    [100,"100! Clean pops! 🫧"],
-    [150,"150! Bubble master!"],
-    [200,"200! Crisp!"],
-    [300,"300! Elite popper!"],
-    [500,"500! Legend!"],
-    [800,"800! Mythic!"],
-    [1000,"1000! GODLIKE!"]
-  ];
-  const hit = notes.find(n=>score===n[0]);
-  if(hit) popMsg.textContent=hit[1];
+function step(){
+  if(!running || paused) return;
+  gtx.clearRect(0,0,game.clientWidth,game.clientHeight);
+  for(const b of bubbles){
+    if(!b.alive) continue;
+    b.y -= b.v;
+    // draw
+    gtx.beginPath(); gtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    const grd = gtx.createRadialGradient(b.x- b.r/3, b.y- b.r/3, 2, b.x, b.y, b.r);
+    grd.addColorStop(0, `hsla(${b.hue},80%,80%,0.95)`);
+    grd.addColorStop(1, `hsla(${b.hue},70%,50%,0.35)`);
+    gtx.fillStyle = grd; gtx.fill();
+  }
+  // cleanup + pass level
+  bubbles = bubbles.filter(b=>b.alive && b.y + b.r > -10);
+  if(bubbles.length < 8) spawnBubbles();
+  if(popped >= goal){
+    level = Math.min(maxLevel, level+1);
+    resetLevel();
+  }
+  requestAnimationFrame(step);
 }
-function levelUp(){
-  level = Math.min(30, level+1);
-  const inc = Math.round(goal*1.25);
-  goal = Math.min(1000, inc);
-  score=0; popMeter.style.width='0%';
-  popInfo.textContent=`Level ${level} • Score ${score}`;
-  popMsg.textContent = `Level up! New goal ${goal}.`;
-  spawnWave();
-}
+document.getElementById('startGame').onclick=()=>{ running=true; paused=false; prepareGameCanvas(); resetLevel(); step(); };
+document.getElementById('pauseGame').onclick=()=>{ if(!running) return; paused=!paused; if(!paused) step(); };
+document.getElementById('levelUp').onclick=()=>{ level=Math.min(maxLevel, level+1); resetLevel(); };
+document.getElementById('levelDown').onclick=()=>{ level=Math.max(1, level-1); resetLevel(); };
 
-popStart.onclick=()=>{ running=true; cancelAnimationFrame(raf); requestAnimationFrame((t)=>{lastTime=t; loop(t);}); status('Bubble Pop running'); };
-popPause.onclick=()=>{ running=false; status('Bubble Pop paused'); };
-popReset.onclick=()=>{ running=false; level=1; goal=25; score=0; popMeter.style.width='0%'; popInfo.textContent=`Level ${level} • Score ${score}`; spawnWave(); status('Bubble Pop reset'); };
+/* Ensure immediate bubbles on first show */
+if(panels.bubble.classList.contains('active')){ prepareGameCanvas(); }
 
-/* ========== UTIL: make “Themes” button open panel ========== */
-document.getElementById('themesBtn').addEventListener('click',()=>{
-  themesPanel.classList.remove('hidden');
+/* =========================
+   Mute (placeholder for future sfx)
+========================= */
+let muted=false; document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').setAttribute('aria-pressed', muted); };
+
+/* =========================
+   Theme trigger from Aura tab
+========================= */
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'openThemes'){ /* handled above */ }
 });
-
-/* ========== STARTUP ========== */
-buildThemeTabs(); renderThemes();
-status('Ready.');
-
-/* ========== BONUS: make chips in Aura clickable (delegate) ========== */
-document.getElementById('chat').addEventListener('click',e=>{
-  const chip=e.target.closest('.chip'); if(!chip) return;
-  const act=chip.dataset.act; if(act==='draw') openDraw(); if(act==='pop') openPop(); if(act==='music'){ audio.play(); playBtn.textContent='⏸ Pause';}
-});
-
-/* ========== FIX: window resize on load for initial correct canvases ========== */
-window.addEventListener('load', ()=>{ resizeSketch(); resizePop(); });
-
-/* ========== FRIENDLY STARTER LINES (Sad / Nervous 10 lines) ========== */
-(function seedConversation(){
-  const scripts = {
-    sad:[
-      "Hi 💙 I’m here with you.",
-      "Want a tiny comfort idea or just space to share?",
-      "If it helps: you can try a 4‑4‑6 breath with me.",
-      "Or we can doodle something cozy together. 🎨",
-      "Some days feel heavy — you’re not a burden.",
-      "Do you want to name one feeling showing up?",
-      "We can also pop a few bubbles — low effort, soothing. 🫧",
-      "If your thoughts get loud, I’ll stay until they settle.",
-      "Hydration check? A sip of water can help. 💧",
-      "I’m proud of you for being here."
-    ],
-    nervous:[
-      "You’re safe with me. 🌿",
-      "We’ll go slow — your pace.",
-      "Try noticing 5 things you see, 4 you feel, 3 you hear.",
-      "We can breathe together anytime.",
-      "A tiny task can ground us — want to draw?",
-      "You don’t have to fix everything right now.",
-      "If your chest is tight, soften the shoulders.",
-      "We can anchor to sounds — I can play music softly.",
-      "You’re doing enough, truly.",
-      "Ready when you are."
-    ]
-  };
-  // default greet in current mode
-  auraGreet(false);
-  // preload supportive thread for sad/nervous when selected
-  document.querySelectorAll('.toggle').forEach(t=>{
-    t.addEventListener('click',()=>{
-      const m=t.dataset.mode;
-      if(scripts[m]){
-        scripts[m].forEach((line,i)=> setTimeout(()=>addBubble(line), 120*i));
-      }
-    });
-  });
-})();
-
 </script>
 </body>
 </html>
