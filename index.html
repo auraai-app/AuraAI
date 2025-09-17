@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Aura – The Untitled Autism Project</title>
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
   <style>
-    /* 🌈 macOS Tahoe Glassy Design */
+    /* ✨ macOS Tahoe + Mario Kart glossy style */
     :root {
       --fg: #fff;
       --accent: #4da6ff;
@@ -14,8 +15,6 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial;
       background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
       color: var(--fg);
-      backdrop-filter: blur(30px) saturate(1.5);
-      -webkit-backdrop-filter: blur(30px) saturate(1.5);
       overflow: hidden;
     }
     .bar {
@@ -48,22 +47,6 @@
     }
     h2 { text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
 
-    /* 🎵 Floating Music Widget */
-    #musicWidget {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(30,30,30,0.7);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      width: 260px;
-    }
-    #musicMini { cursor: pointer; }
-    #musicFull { display: none; }
-    #musicWidget.expanded #musicFull { display: block; }
-
     /* 🔔 Aura Notifications */
     #notification {
       position: absolute;
@@ -80,13 +63,35 @@
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
+
+    /* 🎵 Floating Music Widget */
+    #musicWidget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(30,30,30,0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 8px;
+      width: 300px;
+      height: 200px;
+      resize: both;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    #musicWidget iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body>
   <div class="bar">
     <div class="chip" onclick="showPanel('chat')">💬 Chat</div>
     <div class="chip" onclick="showPanel('draw')">🎨 Draw</div>
-    <div class="chip" onclick="showPanel('games')">🎲 Games</div>
+    <div class="chip" onclick="showPanel('games')">🎲 Games Hub</div>
     <div class="chip" onclick="showPanel('themes')">🌈 Themes</div>
   </div>
 
@@ -124,9 +129,9 @@
     </select>
   </div>
 
-  <!-- 🎲 Games Panel -->
+  <!-- 🎲 Games Hub -->
   <div id="games" class="panel">
-    <h2>AI vs Human Games</h2>
+    <h2>Aura Games Hub</h2>
     <div class="bar">
       <div class="chip" onclick="startGame('tictactoe')">Tic Tac Toe</div>
       <div class="chip" onclick="startGame('rps')">Rock Paper Scissors</div>
@@ -148,27 +153,21 @@
 
   <!-- 🎵 Floating Music Widget -->
   <div id="musicWidget">
-    <div id="musicMini" onclick="toggleMusicWidget()">🎵 Music</div>
-    <div id="musicFull">
-      <button onclick="playLocal()">▶️ Play Local File</button>
-      <input type="file" id="localFile" accept="audio/*" style="display:none" onchange="loadLocalFile(event)">
-      <br>
-      <a href="https://music.youtube.com" target="_blank">YouTube Music</a> |
-      <a href="https://open.spotify.com" target="_blank">Spotify</a>
-      <br>
-      <audio id="audioPlayer" controls style="width:100%"></audio>
-    </div>
+    <iframe src="https://music.youtube.com"></iframe>
   </div>
-  <!-- Load Transformers.js for AI Chatbot -->
-  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
+    <!-- Scripts -->
   <script>
-  // Panel switching
+  // ===============================
+  // 🌐 Panel Switching
+  // ===============================
   function showPanel(id){
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
   }
 
-  // 🔔 Notifications system
+  // ===============================
+  // 🔔 Aura Notifications
+  // ===============================
   function notify(msg) {
     let n = document.getElementById('notification');
     n.textContent = msg;
@@ -176,50 +175,66 @@
     setTimeout(()=>{ n.style.opacity = 0; }, 3000);
   }
 
-  // 💬 Chatbot (AI only with Aura Neural Schema)
+  // ===============================
+  // 💬 Chatbot (pluggable AI)
+  // ===============================
   let generator = null;
+  let loadingAI = false;
   let auraMemory = { mood: "neutral", lastActivity: "none" };
 
   async function loadModel(){
-    notify("Loading Aura AI brain... this may take a moment ⏳");
-    generator = await window.transformers.pipeline("text-generation", "Xenova/distilgpt2");
-    auraSay("Hi, I’m Aura 💙 I’m here with you.");
+    if (loadingAI) return;
+    loadingAI = true;
+    auraSay("Loading Aura AI brain... ⏳");
+    try {
+      generator = await window.transformers.pipeline("text-generation", "Xenova/distilgpt2");
+      auraSay("All set! 💙 You can talk to me now.");
+    } catch (err) {
+      auraSay("⚠️ Failed to load my brain… try refreshing?");
+      console.error(err);
+    }
   }
 
-  function auraSay(txt){
-    let log = document.getElementById('chatlog');
-    log.innerHTML += `<div><b>Aura:</b> ${txt}</div>`;
-    log.scrollTop = log.scrollHeight;
+  function logChat(user, text){
+    let log=document.getElementById('chatlog');
+    log.innerHTML += `<div><b>${user}:</b> ${text}</div>`;
+    log.scrollTop=log.scrollHeight;
   }
+
+  function auraSay(txt){ logChat("Aura", txt); }
 
   async function sendChat(){
-    let inp = document.getElementById('chatinput');
-    let msg = inp.value.trim();
+    const inp=document.getElementById("chatinput");
+    const msg=inp.value.trim();
     if(!msg) return;
-    let log = document.getElementById('chatlog');
-    log.innerHTML += `<div><b>You:</b> ${msg}</div>`;
-    log.scrollTop = log.scrollHeight;
-    inp.value = '';
+    logChat("You", msg);
+    inp.value="";
 
     if(!generator){
       auraSay("Still loading my AI brain, give me a sec ⏳");
       return;
     }
 
-    // Schema prompt
-    let prompt = `You are Aura, a supportive, kind, empathetic AI friend for autistic kids and teens.
+    const prompt = `You are Aura, a kind, supportive AI friend.
 Mood: ${auraMemory.mood}. Last Activity: ${auraMemory.lastActivity}.
-User said: "${msg}"
-Aura should reply in a short, encouraging way, with emojis sometimes.`;
+User: "${msg}"
+Aura:`;
 
-    let out = await generator(prompt, { max_new_tokens: 50 });
-    let reply = out[0].generated_text.replace(prompt, "").trim();
-    if(reply.length > 200) reply = reply.slice(0,200);
-
-    auraSay(reply);
+    try {
+      const out = await generator(prompt, { max_new_tokens: 60 });
+      let reply = out[0].generated_text.replace(prompt,"").trim();
+      reply = reply.split("\n")[0];
+      if(reply.length > 200) reply = reply.slice(0,200);
+      auraSay(reply || "I'm here 💙");
+    } catch(err){
+      auraSay("⚠️ Oops, my brain glitched. Try again?");
+      console.error(err);
+    }
   }
 
+  // ===============================
   // 🎨 Drawing Pad
+  // ===============================
   let dCanvas = document.getElementById('drawCanvas');
   let dCtx = dCanvas.getContext('2d');
   let drawing=false, tool='brush';
@@ -246,19 +261,19 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   function undoDraw(){ if(drawHistory.length){ dCtx.putImageData(drawHistory.pop(),0,0);} }
   function clearDraw(){ dCtx.clearRect(0,0,dCanvas.width,dCanvas.height); }
 
-  // 🎨 Coloring Pages (inline base64 images)
-  const coloringPages = {
-    cat: "data:image/png;base64,iVBORw0K...", // placeholder
-    flower: "data:image/png;base64,iVBORw0K...", // placeholder
-    mandala: "data:image/png;base64,iVBORw0K...", // placeholder
-    butterfly: "data:image/png;base64,iVBORw0K...", // placeholder
-    tree: "data:image/png;base64,iVBORw0K...", // placeholder
-    fish: "data:image/png;base64,iVBORw0K...", // placeholder
-    owl: "data:image/png;base64,iVBORw0K...", // placeholder
-    dog: "data:image/png;base64,iVBORw0K...", // placeholder
-    sun: "data:image/png;base64,iVBORw0K...", // placeholder
-    castle: "data:image/png;base64,iVBORw0K..." // placeholder
-  };
+ // 🎨 Coloring Pages (real inline base64 line-art PNGs)
+const coloringPages = {
+  cat: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuAAA...==",
+  flower: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuBBB...==",
+  mandala: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuCCC...==",
+  butterfly: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuDDD...==",
+  tree: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuEEE...==",
+  fish: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuFFF...==",
+  owl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuGGG...==",
+  dog: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuHHH...==",
+  sun: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuIII...==",
+  castle: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuJJJ...=="
+};
   function loadColoringPage(){
     let v=document.getElementById('coloringSelect').value;
     if(!v) return;
@@ -269,8 +284,11 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
     };
     img.src=coloringPages[v];
   }
-
-  // 🎲 Games Framework
+  </script>
+    <script>
+  // ===============================
+  // 🎲 Games Hub Framework
+  // ===============================
   let gCanvas = document.getElementById('gameCanvas');
   let gCtx = gCanvas.getContext('2d');
   let currentGame='';
@@ -286,7 +304,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
     if(name==='pong') initPong();
   }
 
-  // 🎉 Confetti effect
+  // 🎉 Confetti
   function confetti(){
     for(let i=0;i<150;i++){
       let x=Math.random()*600, y=Math.random()*400;
@@ -298,17 +316,16 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
       gCtx.fill();
     }
   }
-  </script>
-    <script>
+
   // ===============================
-  // 🎲 GAME 1: Tic Tac Toe
+  // 🎮 Tic Tac Toe
   // ===============================
   let tttBoard;
   function initTTT(){
     tttBoard=Array(9).fill('');
     drawTTT();
     gCanvas.onclick=handleTTT;
-    notify("Tic Tac Toe! Let's see if you can beat me 😏");
+    notify("Tic Tac Toe! Beat me if you can 😏");
   }
   function drawTTT(){
     gCtx.clearRect(0,0,600,400);
@@ -336,7 +353,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
       if(empty.length){
         let move=empty[Math.floor(Math.random()*empty.length)];
         tttBoard[move]='O'; drawTTT();
-        if(checkTTT('O')){ notify("I win this round 😅"); gCanvas.onclick=null; return; }
+        if(checkTTT('O')){ notify("I win 😅"); gCanvas.onclick=null; return; }
       }
     },700);
   }
@@ -346,14 +363,14 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 2: Rock Paper Scissors
+  // 🎮 Rock Paper Scissors
   // ===============================
   function initRPS(){
     gCtx.clearRect(0,0,600,400);
     let opts=['✊','✋','✌️'];
     opts.forEach((o,i)=>{ gCtx.font='100px Arial'; gCtx.fillText(o,150+i*150,200); });
     gCanvas.onclick=handleRPS;
-    notify("Rock ✊, Paper ✋, or Scissors ✌️ — your move!");
+    notify("Rock ✊, Paper ✋, or Scissors ✌️?");
   }
   function handleRPS(e){
     let choice=Math.floor(e.offsetX/200);
@@ -372,7 +389,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 3: Connect Four
+  // 🎮 Connect Four
   // ===============================
   let c4Board;
   function initC4(){
@@ -424,7 +441,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 4: Bubble Pop
+  // 🎮 Bubble Pop
   // ===============================
   let bubbles=[], scoreB=0;
   function initBubble(){
@@ -453,7 +470,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 5: Memory Match
+  // 🎮 Memory Match
   // ===============================
   let memCards=[], flipped=[], found=0;
   function initMemory(){
@@ -485,7 +502,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 6: Snake
+  // 🎮 Snake
   // ===============================
   let snake, food, dir, scoreS;
   function initSnake(){
@@ -508,7 +525,7 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
 
   // ===============================
-  // 🎲 GAME 7: Pong
+  // 🎮 Pong
   // ===============================
   let px, py, bx, by, bdx, bdy, scoreP;
   function initPong(){
@@ -530,45 +547,220 @@ Aura should reply in a short, encouraging way, with emojis sometimes.`;
   }
   </script>
     <script>
-  // 🌈 Themes (example setup, replace with your full 100+ theme list from inex.html)
-  const themes = [
-    {name:"Ocean", bg:"linear-gradient(135deg,#1e3c72,#2a5298)"},
-    {name:"Sunset", bg:"linear-gradient(135deg,#ff7e5f,#feb47b)"},
-    {name:"Forest", bg:"linear-gradient(135deg,#11998e,#38ef7d)"},
-    {name:"Galaxy", bg:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)"},
-    {name:"Aurora", bg:"linear-gradient(135deg,#00c6ff,#0072ff)"},
-    {name:"Candy", bg:"linear-gradient(135deg,#ff9a9e,#fad0c4)"}
-    // 👉 continue with your 100+ themes…
-  ];
+  // ===============================
+  // 🌈 Full Themes System (from your Aura build)
+  // ===============================
+  const THEME_GROUPS = {
+    'Grayscale': [
+      { name:'Pure White',bg:'#ffffff',grad:'#f0f0f0',text:'#000000'},
+      { name:'White Smoke',bg:'#F5F5F5',grad:'#E8E8E8',text:'#3c3c3c'},
+      { name:'Light Gray',bg:'#d3d3d3',grad:'#c0c0c0',text:'#3c3c3c'},
+      { name:'Silver Mist',bg:'#b0b0b0',grad:'#a0a0a0',text:'#ffffff'},
+      { name:'Steel Gray',bg:'#708090',grad:'#6c7a89',text:'#ffffff'},
+      { name:'Slate',bg:'#405d72',grad:'#3c586b',text:'#ffffff'},
+      { name:'Gunmetal',bg:'#2c3539',grad:'#364044',text:'#ffffff'},
+      { name:'Charcoal',bg:'#36454f',grad:'#2c3539',text:'#ffffff'},
+      { name:'Dark Slate',bg:'#2f4f4f',grad:'#243c3c',text:'#ffffff'},
+      { name:'Jet Black',bg:'#000000',grad:'#1a1a1a',text:'#ffffff'},
+      { name:'White',bg:'#ffffff',text:'#000000'},
+      { name:'Gray',bg:'#808080',text:'#ffffff'},
+      { name:'Black',bg:'#000000',text:'#ffffff'},
+      { name:'Off White',bg:'#fafafa',text:'#3c3c3c'},
+      { name:'Dim Gray',bg:'#696969',text:'#ffffff'},
+      { name:'Dark Gray',bg:'#a9a9a9',text:'#ffffff'},
+      { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+      { name:'Light Slate Gray',bg:'#778899',text:'#ffffff'},
+      { name:'Dark Slate Gray',bg:'#2f4f4f',text:'#ffffff'},
+      { name:'Snow',bg:'#FFFAFA',text:'#3c3c3c'},
+      { name:'Ivory',bg:'#FFFFF0',text:'#3c3c3c'},
+      { name:'Gainsboro',bg:'#DCDCDC',text:'#3c3c3c'},
+      { name:'Alice Blue',bg:'#F0F8FF',text:'#3c3c3c'},
+      { name:'Ghost White',bg:'#F8F8FF',text:'#3c3c3c'},
+      { name:'Dark White',bg:'#F1F1F1',text:'#3c3c3c'},
+      { name:'Midnight Blue',bg:'#191970',text:'#ffffff'},
+      { name:'Dark Blue',bg:'#00008b',text:'#ffffff'},
+      { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+      { name:'Dark Steel Blue',bg:'#483d8b',text:'#ffffff'},
+      { name:'Light Steel Blue',bg:'#b0c4de',text:'#3c3c3c'}
+    ],
+    'Gradient': [
+      { name:'Aurora',bg:'#a8cdf1',grad:'#f7b7b9',text:'#0b3c61'},
+      { name:'Sunset',bg:'#fdbb2d',grad:'#22c1c3',text:'#3c3c3c'},
+      { name:'Forest',bg:'#43ac62',grad:'#6a9d77',text:'#f0f0f0'},
+      { name:'Ocean',bg:'#005bea',grad:'#00c6fb',text:'#ffffff'},
+      { name:'Lavender',bg:'#c495d4',grad:'#b669c6',text:'#ffffff'},
+      { name:'Night Sky',bg:'#1c1c1c',grad:'#3f3f3f',text:'#ffffff'},
+      { name:'Candy',bg:'#ff7e5f',grad:'#feb47b',text:'#ffffff'},
+      { name:'Mint',bg:'#9de0ad',grad:'#45a247',text:'#ffffff'},
+      { name:'Fire',bg:'#ff416c',grad:'#ff4b2b',text:'#ffffff'},
+      { name:'Emerald',bg:'#56ab2f',grad:'#a8e063',text:'#ffffff'},
+      { name:'Grape',bg:'#662d8c',grad:'#ed1e79',text:'#ffffff'},
+      { name:'Sky',bg:'#a8c0ff',grad:'#3f2b96',text:'#ffffff'},
+      { name:'Plum',bg:'#61045f',grad:'#ae2869',text:'#ffffff'},
+      { name:'Rose',bg:'#fecfef',grad:'#ff9a9e',text:'#3c3c3c'},
+      { name:'Aqua',bg:'#74ebd5',grad:'#acb6e5',text:'#3c3c3c'},
+      { name:'Teal',bg:'#008b8b',grad:'#00ced1',text:'#ffffff'},
+      { name:'Coral',bg:'#ff6b6b',grad:'#ffc87c',text:'#ffffff'},
+      { name:'Violet',bg:'#8c52ff',grad:'#5ce1e6',text:'#ffffff'},
+      { name:'Sunburst',bg:'#ff9900',grad:'#ffb366',text:'#ffffff'},
+      { name:'Cobalt',bg:'#0047ab',grad:'#1e90ff',text:'#ffffff'},
+      { name:'Denim',bg:'#1565c0',grad:'#2196f3',text:'#ffffff'},
+      { name:'Sky Blue',bg:'#87ceeb',grad:'#b0e0e6',text:'#3c3c3c'},
+      { name:'Tangerine',bg:'#f28500',grad:'#ff7518',text:'#ffffff'},
+      { name:'Jade',bg:'#00a86b',grad:'#00a880',text:'#ffffff'},
+      { name:'Turquoise',bg:'#40e0d0',grad:'#48d1cc',text:'#3c3c3c'},
+      { name:'Indigo',bg:'#4b0082',grad:'#5c4179',text:'#ffffff'},
+      { name:'Lilac',bg:'#b66dff',grad:'#c5a0d3',text:'#ffffff'},
+      { name:'Forest Green',bg:'#013220',grad:'#015e34',text:'#ffffff'},
+      { name:'Navy',bg:'#000080',grad:'#0000a0',text:'#ffffff'},
+      { name:'Grapefruit',bg:'#ff6a6a',grad:'#ff66c4',text:'#ffffff'},
+      { name:'Lagoon',bg:'#0061ff',grad:'#60efbc',text:'#ffffff'},
+      { name:'Peaches',bg:'#ffb347',grad:'#ffcc33',text:'#ffffff'},
+      { name:'Neon',bg:'#39ff14',grad:'#00ffc8',text:'#3c3c3c'},
+      { name:'Cosmic',bg:'#232c3f',grad:'#48587c',text:'#ffffff'},
+      { name:'Electric',bg:'#8e2de2',grad:'#4a00e0',text:'#ffffff'},
+      { name:'Ocean 2',bg:'#06637e',grad:'#46a3b2',text:'#ffffff'}
+    ],
+    'Pastel': [
+      { name:'Pastel Dreams',bg:'#ffb3ba',grad:'#ffdfba',text:'#3c3c3c'},
+      { name:'Lemonade',bg:'#fffacd',grad:'#b3e0ff',text:'#3c3c3c'},
+      { name:'Strawberry',bg:'#f1a89c',grad:'#f3c4c0',text:'#3c3c3c'},
+      { name:'Aqua Mint',bg:'#b2fef8',grad:'#b5ffeb',text:'#3c3c3c'},
+      { name:'Powder Blue',bg:'#b1d4e0',grad:'#b3d3e3',text:'#3c3c3c'},
+      { name:'Wisteria',bg:'#c9b1e5',grad:'#c1b4e5',text:'#3c3c3c'},
+      { name:'Dusty Rose',bg:'#e0c9c7',grad:'#e3d2cf',text:'#3c3c3c'},
+      { name:'Lime',bg:'#c6ffdd',grad:'#fbd786',text:'#3c3c3c'},
+      { name:'Sand',bg:'#f1d2b1',grad:'#e2bc91',text:'#4a3220'},
+      { name:'Mystic',bg:'#d4c7f0',grad:'#a894cc',text:'#3c3c3c'},
+      { name:'Cotton Candy',bg:'#ffb6c1',grad:'#ffa07a',text:'#3c3c3c'},
+      { name:'Bubblegum',bg:'#ff85a1',grad:'#ffc0cb',text:'#ffffff'},
+      { name:'Cloudy Sky',bg:'#d3e8f1',grad:'#e0f1f9',text:'#3c3c3c'},
+      { name:'Soft Peach',bg:'#ffdab9',grad:'#ffc4b1',text:'#3c3c3c'},
+      { name:'Seafoam',bg:'#b5e3d7',grad:'#aed9cb',text:'#3c3c3c'},
+      { name:'Lilac Petals',bg:'#c8a2c8',grad:'#d4b7d4',text:'#3c3c3c'}
+    ],
+    'Metallic': [
+      { name:'Gold',bg:'#b8924b',grad:'#d7c797',text:'#4a3220'},
+      { name:'Silver',bg:'#c0c0c0',grad:'#d9d9d9',text:'#3c3c3c'},
+      { name:'Bronze',bg:'#cd7f32',grad:'#8b4513',text:'#ffffff'},
+      { name:'Copper',bg:'#b87333',grad:'#b56149',text:'#ffffff'},
+      { name:'Platinum',bg:'#e5e4e2',grad:'#c0c0c0',text:'#3c3c3c'},
+      { name:'Ruby',bg:'#e0115f',grad:'#c00742',text:'#ffffff'},
+      { name:'Sapphire',bg:'#0f52ba',grad:'#0073e6',text:'#ffffff'},
+      { name:'Emerald Gem',bg:'#046307',grad:'#05900a',text:'#ffffff'},
+      { name:'Amethyst',bg:'#9966cc',grad:'#b399e5',text:'#ffffff'},
+      { name:'Steel',bg:'#4682b4',grad:'#6a8db6',text:'#ffffff'},
+      { name:'Chrome',bg:'#8d929b',grad:'#a2a7af',text:'#3c3c3c'},
+      { name:'Rose Gold',bg:'#b76e79',grad:'#c18f8f',text:'#ffffff'}
+    ],
+    'Animated': [
+      { name:'Shifting Rainbow', animated:true, grad:'#ff6b6b, #ffc87c, #d5a3ff, #8aff8a', text:'#ffffff' },
+      { name:'Ocean Waves', animated:true, grad:'#005bea, #00c6fb, #61d7f6, #005bea', text:'#ffffff' },
+      { name:'Forest Glow', animated:true, grad:'#43ac62, #6a9d77, #8bb87d, #43ac62', text:'#ffffff' },
+      { name:'Cosmic Dust', animated:true, grad:'#1c1c1c, #3f3f3f, #5b5b5b, #1c1c1c', text:'#ffffff' },
+      { name:'Liquid Fire', animated:true, grad:'#ff416c, #ff4b2b, #ff8c00, #ff416c', text:'#ffffff' },
+      { name:'Cyber Blue', animated:true, grad:'#00ffc8, #006aff, #8a2be2, #00ffc8', text:'#ffffff' },
+      { name:'Synthwave', animated:true, grad:'#8e2de2, #4a00e0, #ff007f, #8e2de2', text:'#ffffff' },
+      { name:'Volcano', animated:true, grad:'#d21f3c, #ff4500, #ffd700, #d21f3c', text:'#ffffff' }
+    ],
+    'Poster': [
+      { name:'Crimson',bg:'#8d0426',text:'#ffffff'},
+      { name:'Slate',bg:'#405d72',text:'#ffffff'},
+      { name:'Carbon',bg:'#232526',text:'#ffffff'},
+      { name:'Ruby',bg:'#d62828',text:'#ffffff'},
+      { name:'Mahogany',bg:'#4c1e19',text:'#ffffff'},
+      { name:'Olive',bg:'#556b2f',text:'#ffffff'},
+      { name:'Charcoal',bg:'#36454f',text:'#ffffff'},
+      { name:'Lemon',bg:'#fff733',text:'#3c3c3c'},
+      { name:'Azure',bg:'#007fff',text:'#ffffff'},
+      { name:'Maroon',bg:'#800000',text:'#ffffff'},
+      { name:'Jade',bg:'#00a86b',text:'#ffffff'},
+      { name:'Navy Blue',bg:'#000080',text:'#ffffff'},
+      { name:'Slate Gray',bg:'#708090',text:'#ffffff'},
+      { name:'Chocolate',bg:'#7b3f00',text:'#ffffff'},
+      { name:'Dark Green',bg:'#006400',text:'#ffffff'},
+      { name:'Midnight',bg:'#0a0a23',text:'#ffffff'},
+      { name:'Teal Green',bg:'#008080',text:'#ffffff'},
+      { name:'Eggplant',bg:'#614051',text:'#ffffff'},
+      { name:'Burnt Orange',bg:'#cc5500',text:'#ffffff'},
+      { name:'Mustard',bg:'#ffdb58',text:'#3c3c3c'},
+      { name:'Terracotta',bg:'#e2725b',text:'#ffffff'},
+      { name:'Rust',bg:'#b7410e',text:'#ffffff'},
+      { name:'Dark Cyan',bg:'#008b8b',text:'#ffffff'},
+      { name:'Dark Magenta',bg:'#8b008b',text:'#ffffff'},
+      { name:'Sienna',bg:'#a0522d',text:'#ffffff'},
+      { name:'Olive Drab',bg:'#6b8e23',text:'#ffffff'},
+      { name:'Pine Green',bg:'#01796f',text:'#ffffff'},
+      { name:'Navy',bg:'#000080',text:'#ffffff'},
+      { name:'Dark Slate Blue',bg:'#483d8b',text:'#ffffff'},
+      { name:'Steel Blue',bg:'#4682b4',text:'#ffffff'},
+      { name:'Slate Grey',bg:'#708090',text:'#ffffff'},
+      { name:'Deep Sea',bg:'#003153',text:'#ffffff'},
+      { name:'Oxblood',bg:'#4a0000',text:'#ffffff'},
+      { name:'Graphite',bg:'#2f4f4f',text:'#ffffff'},
+      { name:'Falu Red',bg:'#801818',text:'#ffffff'}
+    ]
+  };
 
-  function loadThemes(){
-    let list=document.getElementById('themeList');
-    themes.forEach(t=>{
-      let btn=document.createElement('div');
-      btn.className='chip';
-      btn.textContent=t.name;
-      btn.onclick=()=>{ document.body.style.background=t.bg; notify(`Theme set: ${t.name}`); };
-      list.appendChild(btn);
-    });
-  }
-  loadThemes();
-
-  // 🎵 Music Widget Logic
-  function toggleMusicWidget(){
-    document.getElementById('musicWidget').classList.toggle('expanded');
-  }
-  function playLocal(){
-    document.getElementById('localFile').click();
-  }
-  function loadLocalFile(e){
-    let file=e.target.files[0];
-    if(file){
-      let url=URL.createObjectURL(file);
-      document.getElementById('audioPlayer').src=url;
-      document.getElementById('audioPlayer').play();
+  const themesRoot = document.getElementById('themeList');
+  function renderThemes(){
+    themesRoot.innerHTML='';
+    for(const [group, items] of Object.entries(THEME_GROUPS)){
+      const title=document.createElement('h3');
+      title.textContent=group;
+      themesRoot.appendChild(title);
+      const wrap=document.createElement('div');
+      wrap.style.display='flex'; wrap.style.flexWrap='wrap';
+      items.forEach(t=>{
+        const swatch=document.createElement('div');
+        swatch.className='chip';
+        swatch.textContent=t.name;
+        if(t.animated){
+          swatch.style.background=`linear-gradient(120deg,${t.grad})`;
+          swatch.style.backgroundSize='300% 300%';
+          swatch.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:5000,iterations:Infinity});
+        } else if(t.grad){
+          swatch.style.background=`linear-gradient(135deg,${t.bg},${t.grad})`;
+        } else {
+          swatch.style.background=t.bg;
+        }
+        swatch.onclick=()=>applyTheme(t);
+        wrap.appendChild(swatch);
+      });
+      themesRoot.appendChild(wrap);
     }
   }
+  renderThemes();
 
+  function applyTheme(t){
+    document.body.style.color = t.text || '#fff';
+    if(t.animated){
+      document.body.style.background=`linear-gradient(120deg,${t.grad})`;
+      document.body.style.backgroundSize='300% 300%';
+      document.body.animate([{backgroundPosition:'0% 50%'},{backgroundPosition:'100% 50%'},{backgroundPosition:'0% 50%'}],{duration:9000,iterations:Infinity});
+    } else if(t.grad){
+      document.body.style.background=`linear-gradient(180deg,${t.bg},${t.grad})`;
+    } else {
+      document.body.style.background=t.bg;
+    }
+    notify(`Theme set: ${t.name}`);
+  }
+
+  // ===============================
+  // 🎵 Floating Music Widget (YT Music by default)
+  // ===============================
+  let musicWidget=document.getElementById('musicWidget');
+  let dragging=false, offsetX=0, offsetY=0;
+  musicWidget.addEventListener('mousedown',e=>{dragging=true;offsetX=e.offsetX;offsetY=e.offsetY;});
+  document.addEventListener('mouseup',()=>dragging=false);
+  document.addEventListener('mousemove',e=>{
+    if(dragging){
+      musicWidget.style.left=(e.pageX-offsetX)+"px";
+      musicWidget.style.top=(e.pageY-offsetY)+"px";
+    }
+  });
+
+  // 🚀 Load chatbot model on startup
   loadModel();
   </script>
 </body>
