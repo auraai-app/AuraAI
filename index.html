@@ -97,7 +97,16 @@
           <div class="chip bubble" data-say="How was your day?">How was your day?</div>
           <div class="chip bubble" data-say="I'm feeling nervous">I'm feeling nervous</div>
           <div class="chip bubble" data-say="Give me a breathing exercise">Breathing</div>
+        
+        <!-- NEW MOOD SELECTOR -->
+        <h3 style="margin-top:12px">Mood</h3>
+        <div class="bubble-list">
+          <div class="chip mood" data-mood="happy">😊 Happy</div>
+          <div class="chip mood" data-mood="sad">😢 Sad</div>
+          <div class="chip mood" data-mood="angry">😡 Angry</div>
+          <div class="chip mood" data-mood="nervous">😰 Nervous</div>
         </div>
+</div>
         <h3 style="margin-top:12px">Activities</h3>
         <div class="bubble-list">
           <div class="chip bubble" data-action="openDraw">Open Draw</div>
@@ -349,16 +358,87 @@ function sendChat(){
   setTimeout(()=> generateReply(v), 260);
 }
 function addMsg(html, who='bot'){ const el=document.createElement('div'); el.className='msg'+(who==='me'?' me':''); el.innerHTML = html; $('#chat').appendChild(el); $('#chat').scrollTop = $('#chat').scrollHeight; }
+
+
+/* ---- NEW MOOD CHIP CLICK HANDLER ---- */
+$all('.mood').forEach(m=>{
+  m.addEventListener('click',()=>{
+    const mood=m.dataset.mood;
+    handleMood(mood);
+  });
+});
+function handleMood(mood){
+  if(mood==='happy'){addMsg("Nice! What makes you happy?");return;}
+  if(mood==='sad'){addMsg("I’m sorry to hear that. Why are you feeling sad?");return;}
+  if(mood==='angry'){addMsg("It’s okay to be frustrated. Want to talk about what’s making you feel angry?");return;}
+  if(mood==='nervous'){addMsg("It’s okay to feel nervous. Do you want to try a calming exercise together?");return;}
+}
+
 function generateReply(text){
-  const t = text.toLowerCase();
+  const t = String(text || '').toLowerCase().trim();
+
+  // 🔹 NEW DISTRESS DETECTION & SUPPORT FEATURE 🔹
+  const distressKeywords = [
+    'bullied','teased','harassed','abused','nervous','sad','upset',
+    'scared','anxious','afraid','lonely','cry','hurt','anxiety','stress','angry','frustrated'
+  ];
+  if (distressKeywords.some(k => t.includes(k))) {
+    addMsg("Hey… I’m really sorry you’re feeling this way. You’re safe here and your feelings are valid. ❤️");
+    addMsg("Let’s try a calming exercise: breathe in gently for 4 counts, hold for 4, and exhale slowly for 6. Repeat a few times.");
+    addMsg("Please consider talking to a trusted adult, teacher, or counselor about what’s happening — they can help and protect you.");
+    return;
+  }
+
+  // 🔹 NEW APPRECIATION RESPONSE FEATURE 🔹
+  const thanksRegex = /\b(thanks?|thank you|thanks a lot|tysm|thx|appreciate|grateful)\b/;
+  if (thanksRegex.test(t)) {
+    const replies = [
+      "You're very welcome — I'm glad I could help. 💖",
+      "Anytime! I'm here for you whenever you need.",
+      "My pleasure — that makes me happy to hear."
+    ];
+    addMsg(replies[Math.floor(Math.random()*replies.length)]);
+    return;
+  }
+
+  // 🔹 NEW HAPPY / JOYFUL RESPONSE FEATURE 🔹
+  const happyTriggers = [
+    'i went out','i got a new','i got a','i got the','i got my','i got','i made a new friend',
+    'i made a friend','i made friends','i am happy',"i'm happy",'i had fun','i played','i met',
+    'i found a','i bought','i received','i got a toy','i went to','i played with','i had a great'
+  ];
+  if (happyTriggers.some(k => t.includes(k))) {
+    const replies = [
+      "That sounds wonderful! 😊 What was it like?",
+      "Yay — I'm so happy for you! Can you tell me more about it?",
+      "Amazing! What part did you enjoy the most?"
+    ];
+    addMsg(replies[Math.floor(Math.random()*replies.length)]);
+    return;
+  }
+
+  // 🔹 DETAIL FOLLOW-UP (when user gives more info) 🔹
+  const detailTriggers = ['it was','it\'s','it is','it was a','it was the','it was so','my new','its a','its','it was really','i met','i played with','i loved','i like','i liked','it was blue','it was red','it was green'];
+  if (detailTriggers.some(k => t.includes(k)) && t.length > 8) {
+    const replies = [
+      "Wow — that sounds amazing! What did you like most about it?",
+      "Oooh, tell me more! What made it special?",
+      "That sounds fun — how did that make you feel?"
+    ];
+    addMsg(replies[Math.floor(Math.random()*replies.length)]);
+    return;
+  }
+
+  // --- existing basic handlers ---
   if(/\b(hi|hello|hey|yo)\b/.test(t)) return addMsg("Hey! I'm Aura — I can chat, suggest activities, or open tools.");
   if(t.includes('draw')){ showTab('draw'); return addMsg("Opening Draw — freestyle time!"); }
   if(t.includes('color')){ showTab('color'); return addMsg("Opening Coloring Book 🎨"); }
   if(t.includes('music')){ showTab('music'); return addMsg("Music tab ready — play something nice."); }
   if(t.includes('journal')){ showTab('journal'); return addMsg("Journal opened — tell me about your day."); }
-  if(t.includes('breathe')||t.includes('calm')) return addMsg("Try: inhale 4 — hold 4 — exhale 6. Repeat 3 times.");
+  if(t.includes('breathe')||t.includes('calm')) return addMsg("Try this: inhale 4 — hold 4 — exhale 6. Repeat 3 times.");
   addMsg("Cool. Want to try draw, color, or play a game?");
 }
+
 
 /* Assist toggle (offline / api-ready label only) */
 let assistMode='offline';
@@ -1116,5 +1196,34 @@ function runRunner(container){
   return { stop: ()=> running=false };
 }
 </script>
+
+
+<!-- PATCH: ensure coloring thumbnails always load correctly -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const colorTab = document.querySelector('.tab[data-tab="color"]');
+    if (colorTab) {
+      colorTab.addEventListener('click', () => {
+        setTimeout(()=> { try { if (typeof loadColoring === 'function') loadColoring(currentPage); } catch(e){} }, 50);
+      });
+    }
+    const thumbsRoot = document.getElementById('colorThumbs');
+    if (thumbsRoot) {
+      thumbsRoot.addEventListener('click', (e)=>{
+        const thumb = e.target.closest('.thumb');
+        if(!thumb) return;
+        const thumbs = Array.from(thumbsRoot.querySelectorAll('.thumb'));
+        const idx = thumbs.indexOf(thumb);
+        if(idx >= 0 && typeof loadColoring === 'function') loadColoring(idx);
+      });
+    }
+  } catch(err){
+    console.warn('Coloring patch failed', err);
+  }
+});
+</script>
+</body>
+</html>
 </body>
 </html>
