@@ -17,18 +17,18 @@
     radial-gradient(1000px 1000px at 90% -20%, #6245ff33, transparent 60%),
     linear-gradient(180deg,#0b0f14,#0e1116); color:var(--text); -webkit-font-smoothing:antialiased;overflow:hidden}
   body.fade-in{animation:pageIn 420ms ease both} @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  /* Lock */
   .lock-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(4,6,10,0.6), rgba(4,6,10,0.6));backdrop-filter:blur(6px);z-index:9999}
   .lock-card{width:420px;max-width:94%;padding:28px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.06);text-align:center;box-shadow:0 12px 40px #0009}
-  .lock-avatar{width:120px;height:120px;border-radius:50%;background:#ffffff12;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700}
+  .lock-avatar{width:120px;height:120px;border-radius:50%;background:#ffffff12;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700;transition:all 240ms}
+  .lock-avatar img{width:100%;height:100%;object-fit:cover;display:block}
   .lock-clock{font-size:36px;font-weight:600;margin-bottom:6px}
   .lock-date{color:var(--muted);margin-bottom:12px}
   .lock-input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--stroke);background:#ffffff06;color:var(--text);margin-bottom:8px;outline:none}
   .row{display:flex;gap:8px;align-items:center}
   .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,#ffffff12,#ffffff08);cursor:pointer;color:var(--text);transition:all var(--trans)}
   .btn.primary{background:linear-gradient(180deg,var(--accent)33,#a8a6ff26);border-color:var(--accent)66}
+  .lang-select{border-radius:8px;padding:8px;background:#ffffff08;border:1px solid var(--stroke);color:var(--text)}
   .hint{color:var(--muted);font-size:13px}
-  /* Shell */
   .shell{max-width:1320px;margin:18px auto;padding:18px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);box-shadow:0 30px 80px #0007,inset 0 1px 0 #fff1;min-height:820px;position:relative;overflow:auto}
   .clock{position:absolute;right:18px;top:14px;padding:8px 12px;border-radius:14px;background:var(--glass-2);border:1px solid var(--stroke);font-variant-numeric:tabular-nums;transition:all var(--trans)}
   .tabs{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
@@ -50,18 +50,16 @@
   .tag{position:absolute;left:8px;bottom:8px;background:#0005;padding:4px 6px;border-radius:6px;color:#fff;font-size:12px}
   .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
   .game-card{background:linear-gradient(180deg,#ffffff07,#ffffff03);border:1px solid var(--stroke);padding:10px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center}
-  .hint.small{font-size:12px;color:var(--muted)}
+  .game-area{background:#061218;border-radius:10px;padding:8px;border:1px solid var(--stroke);min-height:420px;display:flex;align-items:center;justify-content:center}
   .panel{display:none}
   .panel.active{display:block}
-  /* responsive */
-  @media(max-width:980px){ .chat-wrap{grid-template-columns:1fr} }
+  @media(max-width:980px){ .chat-wrap{grid-template-columns:1fr} .game-area{min-height:320px} }
 </style>
 </head>
 <body>
-<!-- LOCK -->
 <div id="lock" class="lock-wrap" aria-hidden="false">
   <div class="lock-card" role="dialog" aria-modal="true">
-    <div class="lock-avatar" id="lockAvatar"><div id="lockAvatarPlaceholder">Aura</div></div>
+    <div class="lock-avatar" id="lockAvatar"><img id="lockAvatarImg" src="" style="display:none"><div id="lockAvatarPlaceholder">Guest</div></div>
     <div class="lock-clock" id="lockClock">--:--</div>
     <div class="lock-date" id="lockDate">Loading date...</div>
 
@@ -73,14 +71,16 @@
     </div>
     <div style="height:10px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <div class="hint">Startup login</div>
-      <select id="langSelectLock" class="lang-select" aria-label="Language selector"></select>
+      <div class="hint" id="startupLabel">Startup login</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="langSelectLock" class="lang-select" aria-label="Language selector"></select>
+        <div class="chip" id="modeChip" title="Chat mode">Mode: Classic</div>
+      </div>
     </div>
     <div id="lockMsg" class="hint" style="margin-top:10px"></div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="shell" style="display:none">
   <div class="clock" id="clock">--:--:--</div>
   <div class="tabs" role="tablist" aria-label="Main sections">
@@ -96,18 +96,17 @@
     <button id="logoutBtn" class="btn">Log out</button>
   </div>
 
-  <!-- AURA CHAT -->
   <div class="panel active" id="panel-aura">
     <div class="bar"><div class="chip" id="openThemes">🎨 Themes</div><div class="spacer"></div><div class="chip" id="assistToggle">🤖 Assist: Offline</div></div>
     <div class="chat-wrap">
       <div class="side-card">
-        <h3>Quick</h3>
+        <h3 id="quickTitle">Quick</h3>
         <div class="bubble-list">
           <div class="chip bubble" data-say="How was your day?">How was your day?</div>
           <div class="chip bubble" data-say="I'm feeling nervous">I'm feeling nervous</div>
           <div class="chip bubble" data-say="Give me a breathing exercise">Breathing</div>
         </div>
-        <h3 style="margin-top:12px">Activities</h3>
+        <h3 style="margin-top:12px" id="activitiesTitle">Activities</h3>
         <div class="bubble-list">
           <div class="chip bubble" data-action="openDraw">Open Draw</div>
           <div class="chip bubble" data-action="openColor">Open Coloring</div>
@@ -125,7 +124,6 @@
     </div>
   </div>
 
-  <!-- DRAW -->
   <div class="panel" id="panel-draw">
     <div class="bar">
       <div class="chip" id="clearDraw">🧼 Clear</div>
@@ -133,7 +131,7 @@
       <div class="chip" id="redoDraw">↪️ Redo</div>
       <div class="spacer"></div>
       <div class="row">
-        <label class="hint" style="margin-right:6px">Brush</label>
+        <label class="hint" style="margin-right:6px" id="brushLabel">Brush</label>
         <input id="brushSize" type="range" min="1" max="64" value="10">
         <input id="brushColor" type="color" value="#ffffff" style="margin-left:8px">
         <button id="saveDraw" class="btn">Save</button>
@@ -142,17 +140,14 @@
 
     <div style="display:grid;grid-template-columns:280px 1fr;gap:12px">
       <div class="side-card">
-        <div class="hint">Freestyle drawing — no prompts. Use undo/redo, clear, and save.</div>
-        <div style="height:8px"></div>
-        <div class="hint">Tip: Use different brush sizes for texture.</div>
+        <div class="hint" id="drawHint">Freestyle drawing — no prompts. Use undo/redo, clear, and save.</div>
       </div>
       <div class="main-card">
-        <canvas id="doodle" class="doodle" width="1200" height="900"></canvas>
+        <canvas id="doodle" class="doodle"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- COLORING -->
   <div class="panel" id="panel-color">
     <div class="bar">
       <div class="chip" id="newColor">🖼 New</div>
@@ -164,7 +159,7 @@
       <div class="chip" id="undoColor">↩️ Undo</div>
       <div class="chip" id="redoColor">↪️ Redo</div>
       <div class="spacer"></div>
-      <label class="hint">Size</label>
+      <label class="hint" id="sizeLabel">Size</label>
       <input id="colorSize" type="range" min="1" max="80" value="16">
       <input id="colorPicker" type="color" value="#ff4b6b" style="margin-left:8px">
       <button id="saveColor" class="btn">Save</button>
@@ -172,38 +167,35 @@
 
     <div style="display:grid;grid-template-columns:280px 1fr;gap:12px">
       <div class="side-card">
-        <h3>Gallery</h3>
+        <h3 id="galleryTitle">Gallery</h3>
         <div id="colorThumbs" class="color-grid"></div>
         <div style="height:8px"></div>
-        <div class="hint">Outlines are thick to make bucket fills reliable.</div>
+        <div class="hint" id="outlineHint">Outlines are thick to make bucket fills reliable.</div>
       </div>
       <div class="main-card">
-        <canvas id="colorCanvas" class="colorCanvas" width="1200" height="900"></canvas>
+        <canvas id="colorCanvas" class="colorCanvas"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- THEMES -->
   <div class="panel" id="panel-themes">
     <div class="bar">
       <div class="chip" id="backToAura">⬅ Back</div>
       <div class="chip" id="surpriseThemeTop">🎲 Surprise Me</div>
       <div class="spacer"></div>
-      <div class="hint">100+ unique themes grouped by section (grayscale, poster, gradients, animated).</div>
+      <div class="hint" id="themesHint">100+ unique themes grouped by section (grayscale, poster, gradients, animated).</div>
     </div>
     <div id="themesRoot" class="themes-wrap"></div>
   </div>
 
-  <!-- MUSIC (Spotify kept as requested) -->
   <div class="panel" id="panel-music">
     <div class="bar">
       <div class="chip" id="openSpotify">Open in Spotify</div>
       <div class="spacer"></div>
-      <div class="hint">Embedded Spotify album — left as-is.</div>
+      <div class="hint" id="musicHint">Embedded Spotify album — left as-is.</div>
     </div>
     <div class="main-card">
       <div class="spotify-wrap" style="padding:14px">
-        <!-- spotify iframe kept; user asked not to change it -->
         <iframe id="spotifyEmbed" src="https://open.spotify.com/embed/album/7shstgp8BAiSrFryJu4K8I" width="100%" height="520" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
       </div>
       <div style="height:8px"></div>
@@ -211,15 +203,12 @@
     </div>
   </div>
 
-  <!-- GAMES -->
   <div class="panel" id="panel-games">
-    <div class="bar"><div class="chip" id="refreshGames">↻ Refresh</div><div class="spacer"></div><div class="hint">Gaming Hub — click a game to launch.</div></div>
+    <div class="bar"><div class="chip" id="refreshGames">↻ Refresh</div><div class="spacer"></div><div class="hint" id="gamesHint">Gaming Hub — click a game to launch.</div></div>
     <div style="display:grid;grid-template-columns:320px 1fr;gap:12px">
       <div class="side-card">
-        <h3>Games</h3>
+        <h3 id="gamesTitle">Games</h3>
         <div id="gamesList" class="games-grid"></div>
-        <div style="height:8px"></div>
-        <div class="hint">Each game runs in the right-side play area.</div>
       </div>
       <div class="main-card">
         <div id="gameInfo" style="margin-bottom:8px" class="hint">Select a game to play.</div>
@@ -228,7 +217,6 @@
     </div>
   </div>
 
-  <!-- JOURNAL -->
   <div class="panel" id="panel-journal">
     <div style="display:flex;flex-direction:column;gap:8px">
       <textarea id="journalText" class="journal-textarea" placeholder="Dear journal..." style="height:520px;background:#ffffff08;border:1px solid var(--stroke);padding:12px;border-radius:10px;color:var(--text)"></textarea>
@@ -240,7 +228,6 @@
     </div>
   </div>
 
-  <!-- ACCOUNT -->
   <div class="panel" id="panel-account">
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <div class="side-card" style="min-width:240px;max-width:320px">
@@ -289,240 +276,418 @@
 </div>
 
 <script>
-/* ================= Config ================= */
-const BACKEND = 'https://tenantable-matt-tactless.ngrok-free.dev/'; // user-specified
-const TOKEN_KEY = 'Aura_Token_v1';
-const PROFILE_KEY = 'Aura_Profile_v1';
-/* ================= Helpers ================= */
+/* CONFIG */
+const BACKEND = 'https://tenantable-matt-tactless.ngrok-free.dev/';
+const TOKEN_KEY='Aura_Token_v1', PROFILE_KEY='Aura_Profile_v1';
+const TRANSLATE_ENDPOINT = 'https://libretranslate.de/translate';
+
+/* HELPERS */
 const $ = (s,ctx=document)=>ctx.querySelector(s);
 const $all = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
-function tLog(...a){console.log('[AuraOS]',...a)}
+let UI_LANG = 'en';
+let CHAT_MODE = 'classic'; // 'classic' or 'genz' only applies for English
 
-/* ============ Lock UI ============ */
+/* UI strings (for labels) */
+const UI_STRINGS = {
+  en: { signIn:'Sign in', register:'Register', username:'Username', password:'Password', startup:'Startup login', loginError:'Login failed', welcome:'Welcome back',
+        quick:'Quick', activities:'Activities', brush:'Brush', drawHint:'Freestyle drawing — no prompts. Use undo/redo, clear, and save.',
+        gallery:'Gallery', outlineHint:'Outlines are thick to make bucket fills reliable.', size:'Size', themesHint:'100+ unique themes grouped by section (grayscale, poster, gradients, animated).',
+        musicHint:'Embedded Spotify album — left as-is.', gamesHint:'Gaming Hub — click a game to launch.', gamesTitle:'Games', modeClassic:'Mode: Classic', modeGenZ:'Mode: Gen Z', send:'Send', logout:'Log out' },
+  ta: { signIn:'உள்நுழைய', register:'பதிவு', username:'பயனர்பெயர்', password:'கடவுச்சொல்', startup:'ஆரம்ப புகுபதிகை', loginError:'உள்நுழைவு தோல்வி', welcome:'திரும்ப வருக',
+        quick:'சுருக்கம்', activities:'செயற்பாடுகள்', brush:'பிரஷ்', drawHint:'விரைவில் வரைவோம் — undo/redo, clear மற்றும் save ஐப் பயன்படுத்தவும்.',
+        gallery:'கேலரி', outlineHint:'கட்டுப்பாடுகள் பக்கங்கள் தெளிவாக உள்ளன.', size:'அளவு', themesHint:'100+ தனிச்சிறப்பான தீம்கள்.', musicHint:'Spotify ஆல் பாடல் சேர்க்கப்பட்டது.', gamesHint:'கேம்ஸ் — கிளிக் செய்து தொடங்கவும்.', gamesTitle:'கேம்ஸ்', modeClassic:'முறை: பாரம்பரியம்', modeGenZ:'முறை: Gen Z', send:'அறிக்கை', logout:'பிறக்க' },
+  hi: { signIn:'साइन इन', register:'रजिस्टर', username:'यूज़रनाम', password:'पासवर्ड', startup:'स्टार्टअप लॉगिन', loginError:'लॉगिन विफल', welcome:'वापसी पर स्वागत',
+        quick:'तुरंत', activities:'गतिविधियाँ', brush:'ब्रश', drawHint:'फ्रीहैंड ड्राइंग — undo/redo, clear और save का उपयोग करें।',
+        gallery:'गैलरी', outlineHint:'आउटलाइन्स मोटी हैं ताकि भरना भरोसेमंद रहे।', size:'आकार', themesHint:'100+ थीम।', musicHint:'Spotify एलबम एम्बेड किया गया है।', gamesHint:'गेमिंग हब — क्लिक करके लॉन्च करें।', gamesTitle:'गेम्स', modeClassic:'मोड: क्लासिक', modeGenZ:'मोड: Gen Z', send:'भेजें', logout:'लॉग आउट' },
+  ms: { signIn:'Log Masuk', register:'Daftar', username:'Nama Pengguna', password:'Kata Laluan', startup:'Log Masuk Permulaan', loginError:'Gagal log masuk', welcome:'Selamat datang kembali',
+        quick:'Pantas', activities:'Aktiviti', brush:'Berus', drawHint:'Melukis bebas — guna undo/redo, clear dan save.', gallery:'Galeri', outlineHint:'Garis besar tebal untuk kebolehisian isian.', size:'Saiz', themesHint:'100+ tema unik.', musicHint:'Album Spotify disertakan.', gamesHint:'Pusat permainan — klik untuk lancar.', gamesTitle:'Permainan', modeClassic:'Mod: Klasik', modeGenZ:'Mod: Gen Z', send:'Hantar', logout:'Log keluar' },
+  zh: { signIn:'登录', register:'注册', username:'用户名', password:'密码', startup:'启动登录', loginError:'登录失败', welcome:'欢迎回来',
+        quick:'快速', activities:'活动', brush:'画笔', drawHint:'自由绘画 — 使用 undo/redo、clear、save。', gallery:'画廊', outlineHint:'轮廓较粗以利填充。', size:'大小', themesHint:'100+ 主题。', musicHint:'嵌入的 Spotify 专辑。', gamesHint:'游戏中心 — 点击启动。', gamesTitle:'游戏', modeClassic:'模式: 经典', modeGenZ:'模式: Gen Z', send:'发送', logout:'退出' }
+};
+
+function applyLangUI(){
+  const s = UI_STRINGS[UI_LANG] || UI_STRINGS.en;
+  $('#lockLogin').textContent = s.signIn;
+  $('#lockRegister').textContent = s.register;
+  $('#lockUser').placeholder = s.username;
+  $('#lockPass').placeholder = s.password;
+  $('#startupLabel').textContent = s.startup;
+  $('#quickTitle').textContent = s.quick;
+  $('#activitiesTitle').textContent = s.activities;
+  $('#brushLabel').textContent = s.brush;
+  $('#drawHint').textContent = s.drawHint;
+  $('#galleryTitle').textContent = s.gallery;
+  $('#outlineHint').textContent = s.outlineHint;
+  $('#sizeLabel').textContent = s.size;
+  $('#themesHint').textContent = s.themesHint;
+  $('#musicHint').textContent = s.musicHint;
+  $('#gamesHint').textContent = s.gamesHint;
+  $('#gamesTitle').textContent = s.gamesTitle;
+  $('#send').textContent = s.send;
+  $('#logoutBtn').textContent = s.logout;
+  $('#modeChip').textContent = CHAT_MODE==='genz' ? s.modeGenZ : s.modeClassic;
+}
+
+/* populate languages */
 function populateLangs(){
-  const LANGS = ['en','ta','zh','ms','hi'];
+  const LANGS=['en','ta','zh','ms','hi'];
   const sel = $('#langSelectLock');
-  if(!sel) return;
   sel.innerHTML='';
-  LANGS.forEach(l=>{
-    const opt=document.createElement('option'); opt.value=l;
-    opt.textContent = (l==='en'?'English': l==='ta'?'தமிழ்': l==='zh'?'中文': l==='ms'?'Bahasa Melayu': l==='hi'?'हिन्दी':l);
-    sel.appendChild(opt);
-  });
+  LANGS.forEach(l=>{ const o=document.createElement('option'); o.value=l; o.textContent=(l==='en'?'English': l==='ta'?'தமிழ்': l==='zh'?'中文': l==='ms'?'Bahasa Melayu': l==='hi'?'हिन्दी':l); sel.appendChild(o); });
+  const saved = localStorage.getItem('Aura_UI_Lang')||'en';
+  sel.value = saved; UI_LANG = saved; applyLangUI();
 }
 populateLangs();
+$('#langSelectLock').addEventListener('change',(e)=>{ UI_LANG = e.target.value; localStorage.setItem('Aura_UI_Lang', UI_LANG); applyLangUI(); });
 
-function tickClock(){
-  const d=new Date();
-  $('#lockClock').textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  $('#lockDate').textContent = d.toDateString();
-}
+/* mode toggle: Gen Z only applies when UI_LANG === 'en' */
+$('#modeChip').addEventListener('click', ()=>{ if(UI_LANG!=='en'){ alert('Gen Z mode only available for English chat.'); return; } CHAT_MODE = CHAT_MODE==='classic' ? 'genz' : 'classic'; applyLangUI(); });
+
+/* Clock */
+function tickClock(){ const d=new Date(); $('#lockClock').textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); $('#lockDate').textContent = d.toDateString(); }
 setInterval(tickClock,1000); tickClock();
 
-/* ============ Auth API ============ */
+/* AUTH wrappers */
 async function registerUser(username,password,displayName){
-  try{
-    const r = await fetch(BACKEND + 'register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username, password, displayName }) });
-    return await r.json();
-  }catch(e){ return { error:'network' } }
+  try{ const r=await fetch(BACKEND+'register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password,displayName})}); return await r.json(); }catch(e){ return {error:'network'} }
 }
 async function loginUser(username,password){
-  try{
-    const r = await fetch(BACKEND + 'login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username, password }) });
-    return await r.json();
-  }catch(e){ return { error:'network' } }
+  try{ const r=await fetch(BACKEND+'login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}); return await r.json(); }catch(e){ return {error:'network'} }
 }
-async function whoami(){
-  const token = localStorage.getItem(TOKEN_KEY);
-  if(!token) return null;
-  try{
-    const r = await fetch(BACKEND + 'profile', { headers:{ Authorization: 'Bearer ' + token } });
-    if(r.status===200){ const j=await r.json(); return j.user; }
-    return null;
-  }catch(e){ return null; }
-}
+async function whoami(){ const token=localStorage.getItem(TOKEN_KEY); if(!token) return null; try{ const r=await fetch(BACKEND+'profile',{headers:{Authorization:'Bearer '+token}}); if(r.status===200){ const j=await r.json(); return j.user; } return null; }catch(e){ return null; } }
 
-/* ============ Lock wiring ============ */
-$('#lockLogin')?.addEventListener('click', async ()=>{
+/* login/register wiring with avatar transition */
+$('#lockLogin').addEventListener('click', async ()=>{
   $('#lockMsg').textContent='';
-  const u = $('#lockUser').value.trim(), p = $('#lockPass').value;
-  if(!u||!p){ $('#lockMsg').textContent='Provide username & password'; return; }
-  $('#lockLogin').disabled=true; $('#lockLogin').textContent='Signing in...';
+  const u=$('#lockUser').value.trim(), p=$('#lockPass').value;
+  if(!u||!p){ $('#lockMsg').textContent = UI_STRINGS[UI_LANG].loginError; return; }
+  $('#lockLogin').disabled=true; $('#lockLogin').textContent = UI_STRINGS[UI_LANG].signIn + '...';
   const res = await loginUser(u,p);
-  $('#lockLogin').disabled=false; $('#lockLogin').textContent='Sign in';
+  $('#lockLogin').disabled=false; $('#lockLogin').textContent = UI_STRINGS[UI_LANG].signIn;
   if(res && res.ok && res.token){
     localStorage.setItem(TOKEN_KEY, res.token);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(res.user.profile||{}));
-    finalizeLogin();
-  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : 'Login failed'; }
+    const user = await whoami();
+    if(user && user.profile){
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(user.profile));
+      await showLoginTransition(user.profile);
+      finalizeLogin();
+    } else finalizeLogin();
+  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : UI_STRINGS[UI_LANG].loginError; }
 });
-
-$('#lockRegister')?.addEventListener('click', async ()=>{
+$('#lockRegister').addEventListener('click', async ()=>{
   $('#lockMsg').textContent='';
-  const u = $('#lockUser').value.trim(), p = $('#lockPass').value;
-  if(!u||!p){ $('#lockMsg').textContent='Provide username & password'; return; }
-  $('#lockRegister').disabled=true; $('#lockRegister').textContent='Registering...';
+  const u=$('#lockUser').value.trim(), p=$('#lockPass').value;
+  if(!u||!p){ $('#lockMsg').textContent = UI_STRINGS[UI_LANG].loginError; return; }
+  $('#lockRegister').disabled=true; $('#lockRegister').textContent = UI_STRINGS[UI_LANG].register + '...';
   const res = await registerUser(u,p,u);
-  $('#lockRegister').disabled=false; $('#lockRegister').textContent='Register';
+  $('#lockRegister').disabled=false; $('#lockRegister').textContent = UI_STRINGS[UI_LANG].register;
   if(res && res.ok && res.token){
     localStorage.setItem(TOKEN_KEY, res.token);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(res.user.profile||{}));
-    finalizeLogin();
-  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : 'Register failed'; }
+    const user = await whoami();
+    if(user && user.profile){ localStorage.setItem(PROFILE_KEY, JSON.stringify(user.profile)); await showLoginTransition(user.profile); finalizeLogin(); } else finalizeLogin();
+  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : UI_STRINGS[UI_LANG].loginError; }
 });
 
-async function tryAutoLogin(){
-  const who = await whoami();
-  if(who){
-    // populate profile locally then show app
-    try{ const p = JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}'); Object.assign(p, who.profile||{}); localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){}
-    finalizeLogin();
-  } else {
-    $('#lock').style.display='flex';
-    $('#app').style.display='none';
-  }
+async function showLoginTransition(profile){
+  try{
+    if(profile.avatar){ $('#lockAvatarImg').src = profile.avatar; $('#lockAvatarImg').style.display='block'; $('#lockAvatarPlaceholder').style.display='none'; }
+    else { $('#lockAvatarImg').style.display='none'; $('#lockAvatarPlaceholder').textContent = profile.displayName || profile.username || 'User'; }
+  }catch(e){}
+  await new Promise(r=>setTimeout(r,300));
 }
+function finalizeLogin(){ document.getElementById('lock')?.remove(); document.getElementById('app').style.display='block'; document.body.classList.add('fade-in'); initApp(); }
 
-function finalizeLogin(){
-  $('#lock')?.remove();
-  $('#app').style.display='block';
-  document.body.classList.add('fade-in');
-  initApp();
-}
+/* try autologin */
+async function tryAutoLogin(){ const token = localStorage.getItem(TOKEN_KEY); if(!token) return; const user = await whoami(); if(user && user.profile){ localStorage.setItem(PROFILE_KEY, JSON.stringify(user.profile)); await showLoginTransition(user.profile); finalizeLogin(); } }
+tryAutoLogin();
 
-/* ============ App Init ============ */
+/* APP INIT */
 function initApp(){
-  loadProfile();
-  renderGameList();
-  renderColorThumbs();
-  renderThemes();
-  // wire basic UI
-  $all('.tab').forEach(tab=>{
-    tab.addEventListener('click', ()=> {
-      $all('.tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      const target = tab.getAttribute('data-target');
-      $all('.panel').forEach(p=>p.classList.remove('active'));
-      document.getElementById(target).classList.add('active');
-    });
-  });
-  // quick bubbles
-  $all('.bubble').forEach(b=> b.addEventListener('click', e=>{
-    const say = e.currentTarget.dataset.say;
-    const action = e.currentTarget.dataset.action;
-    if(say){ $('#input').value = say; $('#send').click(); }
-    if(action){
-      if(action==='openDraw') showPanel('panel-draw');
-      if(action==='openColor') showPanel('panel-color');
-      if(action==='openGames') showPanel('panel-games');
-    }
-  }));
-  $('#send').addEventListener('click', sendChat);
-  $('#input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
-  $('#assistToggle').addEventListener('click', ()=> { $('#assistToggle').textContent = $('#assistToggle').textContent.includes('Offline') ? '🤖 Assist: API-ready' : '🤖 Assist: Offline'; });
+  loadProfile(); renderGameList(); renderColorThumbs(); renderThemes(); applyLangUI();
+  $all('.tab').forEach(tab=> tab.addEventListener('click', ()=>{ $all('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); const target=tab.getAttribute('data-target'); $all('.panel').forEach(p=>p.classList.remove('active')); document.getElementById(target).classList.add('active'); }));
+  $all('.bubble').forEach(b=> b.addEventListener('click', e=>{ const say=e.currentTarget.dataset.say; const action=e.currentTarget.dataset.action; if(say){ $('#input').value=say; $('#send').click(); } if(action){ if(action==='openDraw') showPanel('panel-draw'); if(action==='openColor') showPanel('panel-color'); if(action==='openGames') showPanel('panel-games'); } }));
+  $('#send').addEventListener('click', ()=>{ handleUserChat($('#input').value.trim()); $('#input').value=''; });
+  $('#input').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#send').click(); });
+  $('#assistToggle').addEventListener('click', ()=>{ $('#assistToggle').textContent = $('#assistToggle').textContent.includes('Offline') ? '🤖 Assist: API-ready' : '🤖 Assist: Offline'; });
   $('#openThemes')?.addEventListener('click', ()=> showPanel('panel-themes'));
   $('#backToAura')?.addEventListener('click', ()=> showPanel('panel-aura'));
   $('#logoutBtn')?.addEventListener('click', ()=> { if(confirm('Log out of AuraOS?')){ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(PROFILE_KEY); location.reload(); }});
   updateShellClock(); setInterval(updateShellClock,1000);
 }
 
-/* ============ Chat ============ */
+/* CHAT: generate reply, then translate (if non-English). Gen Z applied only for English */
 function addMsg(html, who='bot'){ const el=document.createElement('div'); el.className='msg'+(who==='me'?' me':''); el.innerHTML = html; $('#chat').appendChild(el); $('#chat').scrollTop = $('#chat').scrollHeight; }
-function sendChat(){ const v = $('#input').value.trim(); if(!v) return; addMsg(v,'me'); $('#input').value=''; setTimeout(()=> generateReply(v), 260); }
-function generateReply(text){
-  const t = text.toLowerCase();
-  if(/\b(hi|hello|hey|yo)\b/.test(t)) return addMsg("Hey! I'm Aura — I can chat, suggest activities, or open tools.");
-  if(t.includes('draw')){ showPanel('panel-draw'); return addMsg("Opening Draw — freestyle time!"); }
-  if(t.includes('color')){ showPanel('panel-color'); return addMsg("Opening Coloring Book 🎨"); }
-  if(t.includes('music')){ showPanel('panel-music'); return addMsg("Music tab ready — play something nice."); }
-  if(t.includes('journal')){ showPanel('panel-journal'); return addMsg("Journal opened — tell me about your day."); }
-  if(t.includes('breathe')||t.includes('calm')) return addMsg("Try: inhale 4 — hold 4 — exhale 6. Repeat 3 times.");
-  addMsg("Cool. Want to try draw, color, or play a game?");
+function generateReplyText(text){
+  const t=text.toLowerCase();
+  if(/\b(hi|hello|hey|yo)\b/.test(t)) return "Hey! I'm Aura — I can chat, suggest activities, or open tools.";
+  if(t.includes('draw')) return "Opening Draw — freestyle time!";
+  if(t.includes('color')) return "Opening Coloring Book 🎨";
+  if(t.includes('music')) return "Music tab ready — play something nice.";
+  if(t.includes('journal')) return "Journal opened — tell me about your day.";
+  if(t.includes('breathe')||t.includes('calm')) return "Try: inhale 4 — hold 4 — exhale 6. Repeat 3 times.";
+  return "Cool. Want to try draw, color, or play a game?";
+}
+function applyGenZ(s){
+  const map={ 'you':'u','are':'r','really':'rly','okay':'ok','awesome':'awsm','what':'wut','want':'wanna','because':'cuz','please':'plz' };
+  return s.split(/\b/).map(w=>{ const lw=w.toLowerCase(); if(map[lw]) return preserveCase(w,map[lw]) + (/[?.!]$/.test(w)?'':' 🤙'); return w; }).join('');
+}
+function preserveCase(orig,repl){ if(orig[0]===orig[0].toUpperCase()) return repl[0].toUpperCase()+repl.slice(1); return repl; }
+
+async function translateText(q, source='en', target='en'){
+  try{
+    if(source===target) return q;
+    const res = await fetch(TRANSLATE_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ q, source, target, format:'text' }) });
+    if(!res.ok) return null;
+    const j = await res.json();
+    return j.translatedText || null;
+  }catch(e){
+    return null;
+  }
 }
 
-/* ============ DRAW (simple) ============ */
-const doodle = $('#doodle'); const dctx = doodle && doodle.getContext && doodle.getContext('2d');
-if(doodle && dctx){
-  let drawing=false, last=null, drawUndo=[], drawRedo=[];
-  function setCanvasSize(canvas){
-    const ratio = window.devicePixelRatio||1;
-    const w = canvas.clientWidth * ratio, h = canvas.clientHeight * ratio;
-    if(canvas.width !== w || canvas.height !== h){
-      try{ const img = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height); canvas.width = w; canvas.height = h; canvas.getContext('2d').putImageData(img,0,0); }catch(e){ canvas.width=w; canvas.height=h; }
+async function handleUserChat(text){
+  if(!text) return;
+  addMsg(text,'me');
+  const base = generateReplyText(text);
+  let reply = base;
+  // If English UI and Gen Z mode, apply Gen Z
+  if(UI_LANG==='en' && CHAT_MODE==='genz') reply = applyGenZ(base);
+  // If UI language is not English, translate reply to selected language (classic tone)
+  if(UI_LANG !== 'en'){
+    const translated = await translateText(base, 'en', UI_LANG);
+    reply = translated || base;
+  }
+  addMsg(reply,'bot');
+}
+
+/* CANVAS fixes: drawing and coloring (resizing preserved) */
+function setCanvasResolution(canvas){
+  const ratio = window.devicePixelRatio || 1;
+  const w = Math.max(300, Math.floor(canvas.clientWidth * ratio));
+  const h = Math.max(200, Math.floor((canvas.clientHeight || 600) * ratio));
+  if(canvas.width !== w || canvas.height !== h){
+    const ctx = canvas.getContext('2d');
+    let imgData = null;
+    try{ imgData = ctx.getImageData(0,0,canvas.width,canvas.height); }catch(e){}
+    canvas.width = w; canvas.height = h;
+    if(imgData){
+      try{ ctx.putImageData(imgData,0,0); }catch(e){}
     }
   }
-  setCanvasSize(doodle);
-  window.addEventListener('resize', ()=> setCanvasSize(doodle));
-  function pointer(e, canvas){ const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const ratio = canvas.width / rect.width; return { x: (clientX - rect.left) * ratio, y: (clientY - rect.top) * ratio }; }
-  function saveDrawState(){ try{ drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); if(drawUndo.length>60) drawUndo.shift(); drawRedo=[]; }catch(e){} }
-  doodle.addEventListener('pointerdown', e=>{ drawing=true; last = pointer(e,doodle); dctx.lineCap='round'; dctx.lineJoin='round'; dctx.strokeStyle = $('#brushColor').value; dctx.lineWidth = Number($('#brushSize').value) * (doodle.width / doodle.clientWidth); saveDrawState(); });
-  doodle.addEventListener('pointermove', e=>{ if(!drawing) return; const p = pointer(e,doodle); dctx.beginPath(); dctx.moveTo(last.x,last.y); dctx.lineTo(p.x,p.y); dctx.stroke(); last = p; });
-  window.addEventListener('pointerup', ()=> { if(drawing){ drawing=false; }});
-  $('#clearDraw')?.addEventListener('click', ()=> { saveDrawState(); dctx.clearRect(0,0,doodle.width,doodle.height); });
-  $('#undoDraw')?.addEventListener('click', ()=> { if(drawUndo.length>0){ const prev = drawUndo.pop(); drawRedo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); dctx.putImageData(prev,0,0); }});
-  $('#redoDraw')?.addEventListener('click', ()=> { if(drawRedo.length>0){ const next = drawRedo.pop(); drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.clientHeight)); dctx.putImageData(next,0,0); }});
-  $('#saveDraw')?.addEventListener('click', ()=> { const a=document.createElement('a'); a.href = doodle.toDataURL('image/png'); a.download = `draw-${Date.now()}.png`; a.click(); });
 }
 
-/* ============ COLORING (thumbnails + simple bucket) ============ */
-const SVG_PAGES = (function(){
-  const pages=[]; const wrap=(inner,w=800,h=600)=>`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'><rect width='100%' height='100%' fill='white'/><g fill='none' stroke='#000' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'>${inner}</g></svg>`;
-  pages.push({name:'Happy Kitty', svg: wrap("<path d='M240 320 q-60 -180 160 -160 q220 -20 160 160 q-40 100 -160 120 q-120 -20 -160 -120z' /><circle cx='330' cy='260' r='12'/><circle cx='470' cy='260' r='12'/><path d='M380 340 q30 20 60 0'/>")});
-  pages.push({name:'Zoom Car', svg: wrap("<rect x='120' y='300' width='560' height='80' rx='20'/><circle cx='260' cy='420' r='36'/><circle cx='540' cy='420' r='36'/>")});
-  pages.push({name:'Cozy House', svg: wrap("<path d='M140 360 h520 v-180 h-520z' /><path d='M140 360 l260 -200 l260 200' /><rect x='360' y='260' width='80' height='60'/>")});
-  return pages;
-})();
-function renderColorThumbs(){ const root = $('#colorThumbs'); if(!root) return; root.innerHTML=''; SVG_PAGES.forEach((p,i)=>{ const d=document.createElement('div'); d.className='thumb'; d.title=p.name; const img=new Image(); img.src='data:image/svg+xml;utf8,'+encodeURIComponent(p.svg); img.style.maxWidth='100%'; img.style.maxHeight='90px'; d.appendChild(img); d.addEventListener('click', ()=> loadColoring(i)); root.appendChild(d); }); }
-function loadColoring(idx){ const svg = SVG_PAGES[idx].svg; const img = new Image(); img.onload = ()=>{ const canvas = $('#colorCanvas'); const cctx = canvas.getContext('2d'); canvas.width = canvas.clientWidth * (window.devicePixelRatio||1); canvas.height = canvas.clientHeight * (window.devicePixelRatio||1); cctx.fillStyle = '#fff'; cctx.fillRect(0,0,canvas.width,canvas.height); const ratio = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.96; const tw = img.width * ratio, th = img.height * ratio; const dx = (canvas.width - tw)/2, dy = (canvas.height - th)/2; cctx.drawImage(img,0,0,img.width,img.height,dx,dy,tw,th); }; img.src='data:image/svg+xml;utf8,'+encodeURIComponent(svg); }
+/* Drawing */
+const doodle = $('#doodle'); let dctx=null;
+if(doodle){
+  function initDoodle(){ doodle.style.width='100%'; doodle.style.height=''; setCanvasResolution(doodle); dctx = doodle.getContext('2d'); dctx.lineCap='round'; dctx.lineJoin='round'; dctx.fillStyle='#081018'; dctx.fillRect(0,0,doodle.width,doodle.height); }
+  initDoodle(); window.addEventListener('resize', ()=> setCanvasResolution(doodle));
+  let drawing=false, last=null, drawUndo=[], drawRedo=[];
+  function pointer(e,canvas){ const rect=canvas.getBoundingClientRect(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY; const ratio = canvas.width/rect.width; return { x:(clientX-rect.left)*ratio, y:(clientY-rect.top)*ratio }; }
+  function saveDrawState(){ try{ drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); if(drawUndo.length>60) drawUndo.shift(); drawRedo=[]; }catch(e){} }
+  doodle.addEventListener('pointerdown', e=>{ drawing=true; last=pointer(e,doodle); dctx.strokeStyle=$('#brushColor').value; dctx.lineWidth = Number($('#brushSize').value) * (doodle.width / doodle.clientWidth); saveDrawState(); });
+  doodle.addEventListener('pointermove', e=>{ if(!drawing) return; const p=pointer(e,doodle); dctx.beginPath(); dctx.moveTo(last.x,last.y); dctx.lineTo(p.x,p.y); dctx.stroke(); last=p; });
+  window.addEventListener('pointerup', ()=>{ drawing=false; });
+  $('#clearDraw')?.addEventListener('click', ()=>{ saveDrawState(); dctx.clearRect(0,0,doodle.width,doodle.height); dctx.fillStyle='#081018'; dctx.fillRect(0,0,doodle.width,doodle.height); });
+  $('#undoDraw')?.addEventListener('click', ()=>{ if(drawUndo.length>0){ const prev=drawUndo.pop(); drawRedo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); dctx.putImageData(prev,0,0); }});
+  $('#redoDraw')?.addEventListener('click', ()=>{ if(drawRedo.length>0){ const next=drawRedo.pop(); drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); dctx.putImageData(next,0,0); }});
+  $('#saveDraw')?.addEventListener('click', ()=>{ const a=document.createElement('a'); a.href=doodle.toDataURL('image/png'); a.download=`draw-${Date.now()}.png`; a.click(); });
+}
+
+/* Coloring - thumbnails and drawing */
+const SVG_PAGES = (function(){ const pages=[]; const wrap=(inner,w=800,h=600)=>`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'><rect width='100%' height='100%' fill='white'/><g fill='none' stroke='#000' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'>${inner}</g></svg>`; pages.push({name:'Happy Kitty', svg: wrap("<path d='M240 320 q-60 -180 160 -160 q220 -20 160 160 q-40 100 -160 120 q-120 -20 -160 -120z' /><circle cx='330' cy='260' r='12'/><circle cx='470' cy='260' r='12'/><path d='M380 340 q30 20 60 0'/>")}); pages.push({name:'Zoom Car', svg: wrap("<rect x='120' y='300' width='560' height='80' rx='20'/><circle cx='260' cy='420' r='36'/><circle cx='540' cy='420' r='36'/>")}); pages.push({name:'Cozy House', svg: wrap("<path d='M140 360 h520 v-180 h-520z' /><path d='M140 360 l260 -200 l260 200' /><rect x='360' y='260' width='80' height='60'/>")}); return pages; })();
+function renderColorThumbs(){ const root=$('#colorThumbs'); if(!root) return; root.innerHTML=''; SVG_PAGES.forEach((p,i)=>{ const d=document.createElement('div'); d.className='thumb'; d.title=p.name; const img=new Image(); img.src='data:image/svg+xml;utf8,'+encodeURIComponent(p.svg); img.style.maxWidth='100%'; img.style.maxHeight='90px'; d.appendChild(img); d.addEventListener('click', ()=> loadColoring(i)); root.appendChild(d); }); }
 renderColorThumbs();
 
-/* ============ THEMES (simple) ============ */
-const THEMES = [{name:'Default',bg:'#0b0f14'},{name:'Calm',bg:'#0b1420'},{name:'Vintage',bg:'#2b1f1f'}];
-function renderThemes(){ const root = $('#themesRoot'); if(!root) return; root.innerHTML=''; THEMES.forEach(t=>{ const el=document.createElement('div'); el.className='swatch'; el.title=t.name; const preview=document.createElement('div'); preview.style.height='56px'; preview.style.borderRadius='8px'; preview.style.background = `linear-gradient(90deg, ${t.bg}, ${t.bg})`; el.appendChild(preview); const tag=document.createElement('div'); tag.className='tag'; tag.textContent=t.name; el.appendChild(tag); el.addEventListener('click', ()=> { document.body.style.background = `linear-gradient(180deg, ${t.bg}, ${t.bg})`; localStorage.setItem('Aura_Theme', JSON.stringify(t)); }); root.appendChild(el); }); }
+function loadColoring(idx){
+  const svg = SVG_PAGES[idx].svg;
+  const img = new Image();
+  img.onload = ()=>{
+    const canvas = $('#colorCanvas'); const ctx = canvas.getContext('2d');
+    canvas.style.width='100%'; canvas.style.height='';
+    const ratio = window.devicePixelRatio||1;
+    const w = Math.floor(canvas.clientWidth * ratio); const h = Math.floor((canvas.clientHeight||600) * ratio);
+    canvas.width = w; canvas.height = h;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const imgW = img.naturalWidth||img.width, imgH = img.naturalHeight||img.height;
+    const scale = Math.min(canvas.width/imgW, canvas.height/imgH)*0.96;
+    const tw = imgW*scale, th = imgH*scale; const dx=(canvas.width-tw)/2, dy=(canvas.height-th)/2;
+    ctx.drawImage(img,0,0,imgW,imgH,dx,dy,tw,th);
+  };
+  img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+}
 
-/* ============ GAMES (list only) ============ */
-const games = [
-  {id:'bubble', title:'Bubble Pop+', desc:'Pop bubbles', run: ()=>{}},
-  {id:'snake', title:'Snake+', desc:'Classic snake', run: ()=>{}}
-];
-function renderGameList(){ const root = $('#gamesList'); if(!root) return; root.innerHTML=''; games.forEach(g=>{ const card=document.createElement('div'); card.className='game-card'; const h=document.createElement('div'); h.style.fontWeight='700'; h.textContent=g.title; const p=document.createElement('div'); p.style.fontSize='13px'; p.style.color='var(--muted)'; p.textContent=g.desc; const btn=document.createElement('button'); btn.className='btn primary'; btn.textContent='Play'; btn.addEventListener('click', ()=> { alert('Launching '+g.title); }); card.appendChild(h); card.appendChild(p); card.appendChild(btn); root.appendChild(card); }); }
+/* bucket fill */
+async function bucketFillAt(x,y,fill){
+  try{
+    const canvas = $('#colorCanvas'); const ctx = canvas.getContext('2d');
+    const img = ctx.getImageData(0,0,canvas.width,canvas.height); const w=img.width,h=img.height,data=img.data;
+    const idx=(y*w+x)*4; const tr=data[idx],tg=data[idx+1],tb=data[idx+2],ta=data[idx+3];
+    const fr=fill.r,fg=fill.g,fb=fill.b,fa=Math.round((fill.a||1)*255);
+    if(tr===fr && tg===fg && tb===fb && ta===fa) return;
+    const stack=[[x,y]];
+    while(stack.length){
+      const [cx,cy]=stack.pop();
+      if(cx<0||cx>=w||cy<0||cy>=h) continue;
+      const i=(cy*w+cx)*4;
+      if(data[i]===tr && data[i+1]===tg && data[i+2]===tb && data[i+3]===ta){
+        data[i]=fr; data[i+1]=fg; data[i+2]=fb; data[i+3]=fa;
+        stack.push([cx+1,cy]); stack.push([cx-1,cy]); stack.push([cx,cy+1]); stack.push([cx,cy-1]);
+      }
+    }
+    ctx.putImageData(img,0,0);
+  }catch(e){ console.warn('bucket error',e); }
+}
 
-/* ============ PROFILE (local UI + avatar) ============ */
-const localProfileKey = 'Aura_Profile_v1';
-let profile = {name:'Anonymous',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:'',bg:'default'};
-function loadProfile(){ try{ const raw = localStorage.getItem(localProfileKey); if(raw) Object.assign(profile, JSON.parse(raw)); }catch(e){} applyProfileUI(); }
+/* color tools */
+let colorTool='brush', colorSize=16, colorHex='#ff4b6b';
+$('#colorBrush')?.addEventListener('click', ()=> colorTool='brush');
+$('#colorFill')?.addEventListener('click', ()=> colorTool='fill');
+$('#colorEraser')?.addEventListener('click', ()=> colorTool='eraser');
+$('#colorPicker')?.addEventListener('input', e=> colorHex=e.target.value);
+$('#colorSize')?.addEventListener('input', e=> colorSize=Number(e.target.value));
+
+const colorCanvas = $('#colorCanvas');
+if(colorCanvas){
+  function setColorCanvasSize(){ const ratio=window.devicePixelRatio||1; const w=Math.floor(colorCanvas.clientWidth*ratio); const h=Math.floor((colorCanvas.clientHeight||600)*ratio); if(colorCanvas.width!==w||colorCanvas.height!==h){ colorCanvas.width=w;colorCanvas.height=h; } }
+  window.addEventListener('resize', setColorCanvasSize);
+  setColorCanvasSize();
+  let painting=false;
+  colorCanvas.addEventListener('pointerdown', async (e)=>{
+    const p = pointerEventCoords(e,colorCanvas);
+    if(colorTool==='fill'){ const rgba=hexToRgba(colorHex); await bucketFillAt(Math.round(p.x), Math.round(p.y), rgba); return; }
+    painting=true; const ctx=colorCanvas.getContext('2d'); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle = colorTool==='eraser' ? '#ffffff' : colorHex; ctx.lineWidth = colorSize * (colorCanvas.width / colorCanvas.clientWidth); ctx.beginPath(); ctx.moveTo(p.x,p.y);
+  });
+  colorCanvas.addEventListener('pointermove', (e)=>{ if(!painting) return; const p=pointerEventCoords(e,colorCanvas); const ctx=colorCanvas.getContext('2d'); ctx.lineTo(p.x,p.y); ctx.stroke(); });
+  window.addEventListener('pointerup', ()=> { painting=false; });
+}
+function pointerEventCoords(e, canvas){ const rect=canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const ratio = canvas.width / rect.width; return { x: (clientX - rect.left) * ratio, y: (clientY - rect.top) * ratio }; }
+function hexToRgba(hex){ if(hex[0]==='#') hex=hex.slice(1); if(hex.length===3) hex=hex.split('').map(c=>c+c).join(''); const num=parseInt(hex,16); return {r:(num>>16)&255,g:(num>>8)&255,b:num&255,a:1}; }
+
+/* PROFILE local + avatar sync */
+const localProfileKey='Aura_Profile_v1';
+let profile = {name:'Guest',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:''};
+function loadProfile(){ try{ const raw=localStorage.getItem(localProfileKey); if(raw) Object.assign(profile, JSON.parse(raw)); }catch(e){} applyProfileUI(); }
 function saveProfile(){ profile.name = $('#displayName').value || 'Anonymous'; profile.bio = $('#bioInput').value || ''; profile.status = $('#statusSelect').value; localStorage.setItem(localProfileKey, JSON.stringify(profile)); alert('Profile saved locally'); applyProfileUI(); }
-function applyProfileUI(){ $('#displayName').value = profile.name; $('#bioInput').value = profile.bio; $('#statusSelect').value = profile.status; if(profile.avatar){ $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none' } else { $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block' } document.documentElement.style.setProperty('--accent', profile.color); }
+function applyProfileUI(){ $('#displayName').value = profile.name; $('#bioInput').value = profile.bio; $('#statusSelect').value = profile.status; if(profile.avatar){ $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none'; $('#lockAvatarImg').src = profile.avatar; $('#lockAvatarImg').style.display='block'; $('#lockAvatarPlaceholder').style.display='none'; } else { $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block'; } document.documentElement.style.setProperty('--accent', profile.color); }
 $('#saveProfile')?.addEventListener('click', saveProfile);
-$('#resetProfile')?.addEventListener('click', ()=> { localStorage.removeItem(localProfileKey); profile = {name:'Anonymous',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:'',bg:'default'}; applyProfileUI(); });
-$('#exportProfile')?.addEventListener('click', ()=> { const blob=new Blob([JSON.stringify(profile)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='aura_profile.json'; a.click(); URL.revokeObjectURL(url); });
+$('#resetProfile')?.addEventListener('click', ()=>{ localStorage.removeItem(localProfileKey); profile={name:'Guest',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:''}; applyProfileUI(); });
+$('#exportProfile')?.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(profile)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='aura_profile.json'; a.click(); URL.revokeObjectURL(url); });
 $('#importProfile')?.addEventListener('change',(e)=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ profile=JSON.parse(fr.result); localStorage.setItem(localProfileKey, JSON.stringify(profile)); applyProfileUI(); alert('Profile imported'); }catch(err){ alert('Invalid file'); } }; fr.readAsText(f); });
 
-$('#avatarInput')?.addEventListener('change', (e)=> { const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=> { profile.avatar = fr.result; $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); }; fr.readAsDataURL(f); });
-$('#removeAvatar')?.addEventListener('click', ()=> { profile.avatar=''; $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); });
+$('#avatarInput')?.addEventListener('change', (e)=> { const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=> { profile.avatar = fr.result; $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); $('#lockAvatarImg').src = profile.avatar; $('#lockAvatarImg').style.display='block'; $('#lockAvatarPlaceholder').style.display='none'; }; fr.readAsDataURL(f); });
+$('#removeAvatar')?.addEventListener('click', ()=> { profile.avatar=''; $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); $('#lockAvatarImg').style.display='none'; $('#lockAvatarPlaceholder').style.display='block'; });
 
-/* ============ JOURNAL ============ */
+/* JOURNAL */
 const journalKey='Aura_Journal';
 $('#journalText').value = localStorage.getItem(journalKey) || '';
 $('#saveJournal')?.addEventListener('click', ()=> { localStorage.setItem(journalKey, $('#journalText').value); alert('Journal saved.'); });
 $('#downloadJournal')?.addEventListener('click', ()=> { const blob=new Blob([$('#journalText').value], {type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='journal.txt'; a.click(); URL.revokeObjectURL(url); });
 $('#clearJournal')?.addEventListener('click', ()=> { if(confirm('Clear journal?')){ $('#journalText').value=''; localStorage.removeItem(journalKey); } });
 
-/* ============ UTILITIES ============ */
-function updateShellClock(){ const d=new Date(); const c = $('#clock'); if(c) c.textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+/* THEMES simple */
+const THEMES=[{name:'Default',bg:'#0b0f14'},{name:'Calm',bg:'#0b1420'},{name:'Vintage',bg:'#2b1f1f'}];
+function renderThemes(){ const root=$('#themesRoot'); if(!root) return; root.innerHTML=''; THEMES.forEach(t=>{ const el=document.createElement('div'); el.className='swatch'; el.title=t.name; const preview=document.createElement('div'); preview.style.height='56px'; preview.style.borderRadius='8px'; preview.style.background=`linear-gradient(90deg, ${t.bg}, ${t.bg})`; el.appendChild(preview); const tag=document.createElement('div'); tag.className='tag'; tag.textContent=t.name; el.appendChild(tag); el.addEventListener('click', ()=>{ document.body.style.background=`linear-gradient(180deg, ${t.bg}, ${t.bg})`; localStorage.setItem('Aura_Theme', JSON.stringify(t)); }); root.appendChild(el); }); }
+
+/* GAMES: Bubble Pop+ (floating clickable bubbles) and Snake (classic) */
+/* Bubble Pop+ */
+function runBubblePop(container){
+  container.innerHTML=''; const canvas=document.createElement('canvas'); canvas.style.width='100%'; canvas.style.height='100%'; container.appendChild(canvas);
+  const ctx=canvas.getContext('2d'); const ratio=window.devicePixelRatio||1;
+  function resize(){ canvas.width = Math.floor(container.clientWidth*ratio); canvas.height = Math.floor((container.clientHeight-40)*ratio); }
+  resize(); window.addEventListener('resize', resize);
+  let bubbles=[], particles=[], running=true, score=0, level=1;
+  function spawn(){ const r = 18 + Math.random()*50; const x = r + Math.random()*(canvas.width - r*2); const y = -r; const vx = (Math.random()-0.5)*2.4; const vy = 0.8 + Math.random()*2.2; const hue = Math.floor(Math.random()*360); const color = `hsl(${hue} 85% 60%)`; bubbles.push({x,y,r,vx,vy,color,id:Date.now()+Math.random()}); }
+  function step(){
+    if(!running) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(Math.random() < 0.06 + level*0.01) spawn();
+    for(let i=bubbles.length-1;i>=0;i--){
+      const b=bubbles[i];
+      b.x += b.vx * (1 + level*0.03); b.y += b.vy * (1 + level*0.03);
+      const grad = ctx.createRadialGradient(b.x - b.r*0.2, b.y - b.r*0.2, b.r*0.2, b.x, b.y, b.r*1.6);
+      grad.addColorStop(0, 'rgba(255,255,255,0.9)'); grad.addColorStop(0.2, b.color); grad.addColorStop(1, 'rgba(0,0,0,0.0)');
+      ctx.beginPath(); ctx.fillStyle = grad; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth = Math.max(2,b.r*0.06); ctx.stroke();
+      if(b.y - b.r > canvas.height + 200) bubbles.splice(i,1);
+    }
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 1;
+      ctx.beginPath(); ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0,p.life/30); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+      if(p.life<=0) particles.splice(i,1);
+    }
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font = `${24*ratio}px Inter`; ctx.fillText(`Score: ${score}`, 20*ratio, 34*ratio);
+    ctx.fillText(`Level: ${level}`, 220*ratio, 34*ratio);
+    requestAnimationFrame(step);
+  }
+  step();
+  canvas.addEventListener('click',(ev)=>{
+    const rect = canvas.getBoundingClientRect(); const rx = (ev.clientX-rect.left)*(canvas.width/rect.width), ry = (ev.clientY-rect.top)*(canvas.height/rect.height);
+    for(let i=bubbles.length-1;i>=0;i--){
+      const b=bubbles[i]; const dx=b.x-rx, dy=b.y-ry;
+      if(dx*dx+dy*dy <= b.r*b.r){
+        score += Math.round(10 + b.r*0.3);
+        for(let k=0;k<18;k++){ particles.push({x:b.x,y:b.y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:30+Math.random()*20,size:2+Math.random()*3,color:b.color}); }
+        bubbles.splice(i,1);
+        return;
+      }
+    }
+  });
+  return { stop: ()=>{ running=false; } };
+}
+
+/* Snake */
+function runSnake(container){
+  container.innerHTML=''; const canvas=document.createElement('canvas'); canvas.style.width='100%'; canvas.style.height='100%'; container.appendChild(canvas);
+  const ctx=canvas.getContext('2d'); const ratio=window.devicePixelRatio||1;
+  const COLS=20, ROWS=20;
+  function resize(){ canvas.width = Math.floor(container.clientWidth*ratio); canvas.height = Math.floor((container.clientHeight-40)*ratio); cellW = Math.floor(canvas.width/COLS); cellH = Math.floor(canvas.height/ROWS); }
+  let cellW=20, cellH=20;
+  resize(); window.addEventListener('resize', resize);
+  let snake=[{x:10,y:10}], dir={x:0,y:0}, apple={x:15,y:10}, running=true, score=0;
+  function placeApple(){ apple.x = Math.floor(Math.random()*COLS); apple.y = Math.floor(Math.random()*ROWS); }
+  function step(){
+    if(!running) return;
+    const head = { x: (snake[0].x + dir.x + COLS)%COLS, y: (snake[0].y + dir.y + ROWS)%ROWS };
+    // collision with self
+    if(snake.some(s=>s.x===head.x && s.y===head.y)){ // reset
+      snake=[{x:10,y:10}]; dir={x:0,y:0}; score=0; placeApple();
+    } else {
+      snake.unshift(head);
+      if(head.x===apple.x && head.y===apple.y){ score+=10; placeApple(); } else snake.pop();
+    }
+    // draw
+    ctx.fillStyle='#061218'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    // apple
+    ctx.fillStyle='#ff6b6b'; ctx.fillRect(apple.x*cellW, apple.y*cellH, cellW-1, cellH-1);
+    // snake
+    ctx.fillStyle='#7cc6ff'; snake.forEach((s,i)=>{ ctx.fillRect(s.x*cellW, s.y*cellH, cellW-1, cellH-1); });
+    ctx.fillStyle='white'; ctx.font = `${16*ratio}px Inter`; ctx.fillText('Score: '+score, 8*ratio, 20*ratio);
+    setTimeout(step, 120);
+  }
+  step();
+  window.addEventListener('keydown',(e)=>{
+    if(e.key==='ArrowUp' && dir.y!==1) dir={x:0,y:-1};
+    if(e.key==='ArrowDown' && dir.y!==-1) dir={x:0,y:1};
+    if(e.key==='ArrowLeft' && dir.x!==1) dir={x:-1,y:0};
+    if(e.key==='ArrowRight' && dir.x!==-1) dir={x:1,y:0};
+  });
+  return { stop: ()=>{ running=false; } };
+}
+
+/* Render game list and launch real games */
+function renderGameList(){ const root=$('#gamesList'); if(!root) return; root.innerHTML=''; const list=[{id:'bubble',title:'Bubble Pop+',desc:'Pop floating bubbles', run:runBubblePop},{id:'snake',title:'Snake+',desc:'Classic snake', run:runSnake}]; list.forEach(g=>{ const card=document.createElement('div'); card.className='game-card'; const h=document.createElement('div'); h.style.fontWeight='700'; h.textContent=g.title; const p=document.createElement('div'); p.style.fontSize='13px'; p.style.color='var(--muted)'; p.textContent=g.desc; const btn=document.createElement('button'); btn.className='btn primary'; btn.textContent='Play'; btn.addEventListener('click', ()=> { launchGame(g); }); card.appendChild(h); card.appendChild(p); card.appendChild(btn); root.appendChild(card); }); }
+
+let currentGameInstance = null;
+function launchGame(game){
+  const area = $('#gameArea'); area.innerHTML=''; if(currentGameInstance && currentGameInstance.stop) currentGameInstance.stop(); currentGameInstance = game.run(area); $('#gameInfo').textContent = game.title + ' — ' + game.desc;
+}
+
+/* UTIL & BOOT */
+function updateShellClock(){ const d=new Date(); const c=$('#clock'); if(c) c.textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 function showPanel(id){ $all('.panel').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); $all('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-target')===id)); }
 
-/* ============ BOOT ============ */
-tryAutoLogin();
+window.addEventListener('load', ()=>{ loadProfile(); setTimeout(()=>{ $all('.tab,.side-card,.main-card').forEach((el,i)=>{ el.style.opacity=0; setTimeout(()=>{ el.style.transition='opacity .5s ease, transform .45s ease'; el.style.transform='translateY(6px)'; requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform='none'; }); }, i*30); }); },300); });
 
-/* ============ page ready polish ============ */
-window.addEventListener('load', ()=>{
-  // entrance animations
-  setTimeout(()=> {
-    $all('.pane, .tab, .side-card, .main-card').forEach((el,i)=>{ el.style.opacity=0; setTimeout(()=>{ el.style.transition='opacity .5s ease, transform .5s ease'; el.style.transform='translateY(6px)'; requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform='none'; }); }, i*40) });
-  }, 300);
-  tLog('AuraOS ready');
-});
 </script>
 </body>
 </html>
