@@ -1,528 +1,2163 @@
-<!doctype html>
+<!-- AuraAI Ultimate Merged (Part 1/4) -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AuraOS — AuraAI</title>
-<link rel="icon" href="data:,">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuraAI Ultimate</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0e1116; --glass: rgba(255,255,255,0.12); --glass-2: rgba(255,255,255,0.08);
-    --stroke: rgba(255,255,255,0.18); --text:#eef2f6; --muted:#b8c0cc; --accent:#7cc6ff;
-    --good:#59e48f; --bad:#ff7373; --trans:320ms cubic-bezier(.2,.9,.2,1);
+:root {
+  --accent: #7cc6ff;
+  --bg1: #0b0d16;
+  --bg2: #1a1c2a;
+  --glass: rgba(255,255,255,0.08);
+  --blur: blur(25px);
+}
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  /* PATCH 2: new multi-gradient background */
+  background: linear-gradient(135deg, #0b0d16 0%, #111426 50%, #1a1c2a 100%);
+  font-family: 'Outfit', sans-serif;
+  color: #f0f4ff;
+  height: 100vh;
+  width: 100vw;
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+}
+
+body {
+  min-height: 100vh;
+  min-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* --- SIDEBAR PATCH 1 + Frosted Thin-Bar Collapsed Mode --- */
+aside#aura-sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 260px;
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(18,19,34,0.93) 60%, rgba(30,30,60,0.82) 100%);
+  box-shadow: 0 0 70px 0 var(--accent), 0 2px 32px 0 rgba(0,0,0,0.22);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  border-top-right-radius: 32px;
+  border-bottom-right-radius: 32px;
+  overflow: hidden;
+  backdrop-filter: blur(30px) brightness(1.12);
+  transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
+}
+
+aside#aura-sidebar.collapsed {
+  width: 72px;
+  background: rgba(18,19,34,0.35);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 0 20px rgba(0,0,0,0.25), inset 0 0 30px rgba(255,255,255,0.05);
+  transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
+}
+aside#aura-sidebar.collapsed .label { display: none; }
+aside#aura-sidebar.collapsed .sidebar-title { opacity: 0; pointer-events: none; transition: opacity 0.25s;}
+aside#aura-sidebar.collapsed:hover {
+  backdrop-filter: blur(18px) brightness(1.1);
+  box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 40px rgba(255,255,255,0.08);
+}
+aside#aura-sidebar .sidebar-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin: 0;
+  padding: 38px 0 32px 0;
+  text-align: center;
+  font-family: 'Poppins', 'Outfit', sans-serif;
+  text-shadow: 0 0 18px var(--accent), 0 0 2px #fff;
+  user-select: none;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 0 0;
+  width: 100%;
+}
+.sidebar-nav-btn {
+  width: 100%;
+  padding: 16px 32px 16px 32px;
+  font-size: 1.14rem;
+  font-family: inherit;
+  color: #e7f4ff;
+  background: none;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  cursor: pointer;
+  border-radius: 16px 0 0 16px;
+  margin: 0;
+  position: relative;
+  transition: background 0.18s, color 0.18s, box-shadow 0.28s;
+  z-index: 1;
+  font-weight: 500;
+}
+.sidebar-nav-btn .icon {
+  font-size: 1.55em;
+  margin-right: 10px;
+  width: 1.5em;
+  text-align: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 7px var(--accent));
+}
+.sidebar-nav-btn:hover,
+.sidebar-nav-btn:focus-visible {
+  background: linear-gradient(90deg, rgba(124,198,255,0.13) 0%, rgba(124,198,255,0.07) 100%);
+  color: var(--accent);
+  box-shadow: 0 0 22px 0 var(--accent), 0 2px 12px 0 rgba(0,0,0,0.12);
+  outline: none;
+}
+.sidebar-nav-btn.active {
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(124,198,255,0.22) 100%);
+  color: #181c29;
+  font-weight: 600;
+  box-shadow: 0 0 36px 0 var(--accent), 0 2px 16px 0 rgba(0,0,0,0.13);
+}
+.sidebar-nav-btn.active .icon {
+  filter: drop-shadow(0 0 12px #fff) drop-shadow(0 0 14px var(--accent));
+}
+@media (max-width: 900px) {
+  aside#aura-sidebar {
+    width: 68px;
+    min-width: 68px;
+    border-radius: 0 20px 20px 0;
+    padding: 0;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:
-    radial-gradient(1200px 1200px at 10% -10%, #31405644, transparent 60%),
-    radial-gradient(1000px 1000px at 90% -20%, #6245ff33, transparent 60%),
-    linear-gradient(180deg,#0b0f14,#0e1116); color:var(--text); -webkit-font-smoothing:antialiased;overflow:hidden}
-  body.fade-in{animation:pageIn 420ms ease both} @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  /* Lock */
-  .lock-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(4,6,10,0.6), rgba(4,6,10,0.6));backdrop-filter:blur(6px);z-index:9999}
-  .lock-card{width:420px;max-width:94%;padding:28px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.06);text-align:center;box-shadow:0 12px 40px #0009}
-  .lock-avatar{width:120px;height:120px;border-radius:50%;background:#ffffff12;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700}
-  .lock-clock{font-size:36px;font-weight:600;margin-bottom:6px}
-  .lock-date{color:var(--muted);margin-bottom:12px}
-  .lock-input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--stroke);background:#ffffff06;color:var(--text);margin-bottom:8px;outline:none}
-  .row{display:flex;gap:8px;align-items:center}
-  .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,#ffffff12,#ffffff08);cursor:pointer;color:var(--text);transition:all var(--trans)}
-  .btn.primary{background:linear-gradient(180deg,var(--accent)33,#a8a6ff26);border-color:var(--accent)66}
-  .hint{color:var(--muted);font-size:13px}
-  /* Shell */
-  .shell{max-width:1320px;margin:18px auto;padding:18px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);box-shadow:0 30px 80px #0007,inset 0 1px 0 #fff1;min-height:820px;position:relative;overflow:auto}
-  .clock{position:absolute;right:18px;top:14px;padding:8px 12px;border-radius:14px;background:var(--glass-2);border:1px solid var(--stroke);font-variant-numeric:tabular-nums;transition:all var(--trans)}
-  .tabs{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-  .tab{padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#ffffff14,#ffffff08);border:1px solid var(--stroke);cursor:pointer;user-select:none;transition:all var(--trans)}
-  .tab.active{background:linear-gradient(180deg,var(--accent)33,#a8a6ff26);border-color:var(--accent)66;transform:translateY(-3px)}
-  .bar{display:flex;gap:10px;align-items:center;margin:10px 0 12px;flex-wrap:wrap}
-  .chip{padding:6px 10px;border-radius:12px;background:var(--glass-2);border:1px solid var(--stroke);cursor:pointer}
-  .spacer{flex:1}
-  .side-card,.main-card{background:var(--glass-2);border:1px solid var(--stroke);border-radius:12px;padding:12px;box-shadow:inset 0 1px 0 #fff2,0 10px 30px #0005}
-  input.input,select.input,textarea.input{background:#ffffff08;border:1px solid var(--stroke);padding:8px;border-radius:8px;color:var(--text);outline:none}
-  .chat-wrap{display:grid;grid-template-columns:300px 1fr;gap:12px}
-  .bubble-list{display:flex;gap:8px;flex-wrap:wrap}
-  .chat{height:520px;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-  .msg{max-width:70%;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#ffffff14,#ffffff08);border:1px solid var(--stroke)}
-  .msg.me{margin-left:auto;background:linear-gradient(180deg,var(--accent)33,#a8a6ff26)}
-  canvas.doodle{width:100%;aspect-ratio:4/3;background:#081018;border-radius:10px;border:1px solid var(--stroke);touch-action:none;cursor:crosshair}
-  .thumb{background:#0b1116;border-radius:10px;padding:8px;border:1px solid var(--stroke);cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:96px}
-  .swatch{padding:8px;border-radius:10px;border:1px solid var(--stroke);background:#ffffff12;cursor:pointer;min-height:72px;position:relative;overflow:hidden}
-  .tag{position:absolute;left:8px;bottom:8px;background:#0005;padding:4px 6px;border-radius:6px;color:#fff;font-size:12px}
-  .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-  .game-card{background:linear-gradient(180deg,#ffffff07,#ffffff03);border:1px solid var(--stroke);padding:10px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center}
-  .hint.small{font-size:12px;color:var(--muted)}
-  .panel{display:none}
-  .panel.active{display:block}
-  /* responsive */
-  @media(max-width:980px){ .chat-wrap{grid-template-columns:1fr} }
+  aside#aura-sidebar .sidebar-title {
+    font-size: 1.1rem;
+    padding: 20px 0 18px 0;
+  }
+  .sidebar-nav-btn {
+    padding: 14px 10px 14px 10px;
+    font-size: 1.01rem;
+    justify-content: center;
+    border-radius: 12px;
+  }
+  .sidebar-nav-btn .label {
+    display: none;
+  }
+}
+
+#toggle-sidebar {
+  position: absolute;
+  top: 20px;
+  right: -38px;
+  z-index: 300;
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(circle at center, #fff 0%, #e0e0e0 80%);
+  color: var(--accent);
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 1.8em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 25px var(--accent), 0 0 40px rgba(0,0,0,0.4), 0 0 12px #fff inset;
+  text-shadow: 0 0 6px var(--accent), 0 0 12px #fff;
+  transition: all 0.3s ease;
+}
+#toggle-sidebar:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 32px var(--accent), 0 0 45px rgba(255,255,255,0.9);
+  transform: scale(1.15);
+}
+
+#main {
+  height: 100vh;
+  width: 100vw;
+  margin-left: 260px;
+  transition: margin-left 0.4s cubic-bezier(.45,1.4,.4,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+#main.collapsed {
+  margin-left: 72px;
+  transition: margin-left 0.4s cubic-bezier(.45,1.4,.4,1);
+}
+@media (max-width: 900px) {
+  #main { margin-left: 68px; }
+}
+
+/* PATCH 2: glass-shell and tab-content gradient, depth, radius, animation */
+.glass-shell {
+  width: 90%;
+  height: 85%;
+  border-radius: 30px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  backdrop-filter: var(--blur);
+  box-shadow: 0 0 50px 0 rgba(0,0,0,0.32), 0 0 0 1px rgba(124,198,255,0.04) inset, 0 10px 44px 0 rgba(124,198,255,0.07) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: 0.3s;
+  min-width: 340px;
+  min-height: 300px;
+}
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 42px;
+  display: none;
+  background: none;
+  border-radius: 30px;
+  animation: fadeSlideIn 0.5s cubic-bezier(.4,1.2,.2,1) both;
+  /* opacity/transition handled below for fade */
+}
+.tab-content.active {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  animation: fadeSlideIn 0.5s cubic-bezier(.4,1.2,.2,1);
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(36px);}
+  to { opacity: 1; transform: none;}
+}
+.tab-content:not(.active) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(.4,1.3,.2,1);
+}
+
+/* Remove old header/nav styles */
+
+
+/* Aura Chat */
+#aura-chat {
+  display: flex; flex-direction: column; height: 100%;
+}
+.chat-window {
+  flex: 1; overflow-y: auto; background: rgba(255,255,255,0.03);
+  border-radius: 16px; padding: 10px; margin-bottom: 10px;
+}
+.message {
+  margin: 8px 0; padding: 10px 14px; border-radius: 14px; max-width: 70%;
+}
+.user { background: rgba(124,198,255,0.2); align-self: flex-end; }
+.bot { background: rgba(255,255,255,0.08); align-self: flex-start; }
+.input-row { display: flex; gap: 10px; }
+.input-row input {
+  flex: 1; border: none; border-radius: 12px; padding: 10px; background: rgba(255,255,255,0.07); color: #fff;
+}
+.input-row button {
+  background: var(--accent); color: #000; border: none; border-radius: 12px; padding: 10px 16px; cursor: pointer; font-weight: 600;
+}
+
+/* Journal */
+#journal-area textarea {
+  width: 100%; height: 200px; border-radius: 12px; background: rgba(255,255,255,0.05);
+  border: none; padding: 10px; color: #fff;
+}
+.journal-entry { background: rgba(255,255,255,0.07); border-radius: 10px; padding: 10px; margin: 8px 0; }
+
+/* Account Panel Overhaul */
+#account {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+/* Games */
+#games-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.game-card {
+  background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; width: 300px; height: 300px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;
+}
+.game-card:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
+
+/* --- GAME AREA FULLSCREEN OVERLAY --- */
+#game-area {
+  position: fixed !important;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(30px) brightness(1.2);
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.4), 0 0 40px var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#game-area canvas {
+  width: 90%;
+  height: 90%;
+  max-width: 1800px;
+  max-height: 90%;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3), 0 0 20px var(--accent);
+}
+#game-area button {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  background: var(--accent);
+  color: #131a2d;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, transform 0.2s;
+}
+#game-area button:hover {
+  background: #fff;
+  color: var(--accent);
+  transform: scale(1.05);
+}
+
+/* Music */	
+#music iframe { border: none; border-radius: 20px; width: 100%; height: 380px; }
+
 </style>
 </head>
 <body>
-<!-- LOCK -->
-<div id="lock" class="lock-wrap" aria-hidden="false">
-  <div class="lock-card" role="dialog" aria-modal="true">
-    <div class="lock-avatar" id="lockAvatar"><div id="lockAvatarPlaceholder">Aura</div></div>
-    <div class="lock-clock" id="lockClock">--:--</div>
-    <div class="lock-date" id="lockDate">Loading date...</div>
-
-    <input id="lockUser" class="lock-input" placeholder="Username" autocomplete="username">
-    <input id="lockPass" class="lock-input" type="password" placeholder="Password" autocomplete="current-password">
-    <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
-      <button id="lockLogin" class="btn primary">Sign in</button>
-      <button id="lockRegister" class="btn">Register</button>
+<!-- PATCH 1: Sidebar Shell Layout -->
+<aside id="aura-sidebar">
+  <button id="toggle-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar">&#9776;</button>
+  <div class="sidebar-title">AuraAI</div>
+  <nav class="sidebar-nav">
+    <button class="sidebar-nav-btn active" id="navbtn-chat" onclick="switchTab('chat')">
+      <span class="icon" aria-hidden="true">💬</span>
+      <span class="label">Aura</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-draw" onclick="switchTab('draw')">
+      <span class="icon" aria-hidden="true">🎨</span>
+      <span class="label">Draw</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-coloring" onclick="switchTab('coloring')">
+      <span class="icon" aria-hidden="true">🖍️</span>
+      <span class="label">Coloring</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-themes" onclick="switchTab('themes')">
+      <span class="icon" aria-hidden="true">🌈</span>
+      <span class="label">Themes</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-music" onclick="switchTab('music')">
+      <span class="icon" aria-hidden="true">🎵</span>
+      <span class="label">Music</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-games" onclick="switchTab('games')">
+      <span class="icon" aria-hidden="true">🎮</span>
+      <span class="label">Games</span>
+    </button>
+    <button class="sidebar-nav-btn" id="navbtn-journal" onclick="switchTab('journal')">
+      <span class="icon" aria-hidden="true">📓</span>
+      <span class="label">Journal</span>
+    </button>
+  </nav>
+</aside>
+<div id="main">
+  <div class="glass-shell">
+    <div class="tab-content active" id="chat">
+      <div id="aura-chat">
+        <!-- AuraAI 4.0: Mood-aware header -->
+        <div id="aura-header" style="text-align:center;font-size:2rem;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1px;">
+          Aura 🌈 — Neutral Mode
+        </div>
+        <div class="chat-window" id="chat-window"></div>
+        <div class="input-row">
+          <input id="chat-input" placeholder="Talk to Aura..." />
+          <button onclick="sendAuraAIMessage()">Send</button>
+        </div>
+        <!-- Mood panel injected here by JS -->
+      </div>
     </div>
-    <div style="height:10px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <div class="hint">Startup login</div>
-      <select id="langSelectLock" class="lang-select" aria-label="Language selector"></select>
+    <div class="tab-content" id="themes">
+      <div id="theme-panel"></div>
     </div>
-    <div id="lockMsg" class="hint" style="margin-top:10px"></div>
+    <div class="tab-content" id="music">
+      <h2>Music</h2>
+      <iframe src="https://open.spotify.com/embed/playlist/0mZUMmIk952uuM1xsczDh6?utm_source=generator"></iframe>
+    </div>
+    <div class="tab-content" id="journal">
+      <h2>Journal</h2>
+      <div id="journal-area">
+        <textarea id="journal-text" placeholder="Write your thoughts..."></textarea>
+        <button onclick="saveJournal()">Save</button>
+        <div id="journal-entries"></div>
+      </div>
+    </div>
+    <div class="tab-content" id="games">
+      <h2>Games</h2>
+      <div id="games-container">
+        <div class="game-card" onclick="openGame('bubble')">Bubble Pop+</div>
+        <div class="game-card" onclick="openGame('brick')">Brick Breaker</div>
+        <div class="game-card" onclick="openGame('snake')">Snake+</div>
+      </div>
+      <div id="game-area" style="display:none;">
+        <canvas id="gameCanvas" width="640" height="480"></canvas>
+        <button onclick="exitGame()">Exit</button>
+      </div>
+    </div>
   </div>
 </div>
-
-<!-- APP -->
-<div id="app" class="shell" style="display:none">
-  <div class="clock" id="clock">--:--:--</div>
-  <div class="tabs" role="tablist" aria-label="Main sections">
-    <div class="tab active" data-target="panel-aura">🫧 AuraAI</div>
-    <div class="tab" data-target="panel-draw">🎨 Draw</div>
-    <div class="tab" data-target="panel-color">🖍️ Coloring</div>
-    <div class="tab" data-target="panel-themes">🎨 Themes</div>
-    <div class="tab" data-target="panel-music">🎵 Music</div>
-    <div class="tab" data-target="panel-games">🎮 Games</div>
-    <div class="tab" data-target="panel-journal">📖 Journal</div>
-    <div class="tab" data-target="panel-account">👤 Account</div>
-    <div class="spacer"></div>
-    <button id="logoutBtn" class="btn">Log out</button>
-  </div>
-
-  <!-- AURA CHAT -->
-  <div class="panel active" id="panel-aura">
-    <div class="bar"><div class="chip" id="openThemes">🎨 Themes</div><div class="spacer"></div><div class="chip" id="assistToggle">🤖 Assist: Offline</div></div>
-    <div class="chat-wrap">
-      <div class="side-card">
-        <h3>Quick</h3>
-        <div class="bubble-list">
-          <div class="chip bubble" data-say="How was your day?">How was your day?</div>
-          <div class="chip bubble" data-say="I'm feeling nervous">I'm feeling nervous</div>
-          <div class="chip bubble" data-say="Give me a breathing exercise">Breathing</div>
-        </div>
-        <h3 style="margin-top:12px">Activities</h3>
-        <div class="bubble-list">
-          <div class="chip bubble" data-action="openDraw">Open Draw</div>
-          <div class="chip bubble" data-action="openColor">Open Coloring</div>
-          <div class="chip bubble" data-action="openGames">Open Games</div>
-        </div>
-      </div>
-
-      <div class="main-card">
-        <div id="chat" class="chat" aria-live="polite"></div>
-        <div class="row" style="margin-top:8px">
-          <input id="input" class="input" placeholder="Talk to Aura...">
-          <button id="send" class="btn primary">Send</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DRAW -->
-  <div class="panel" id="panel-draw">
-    <div class="bar">
-      <div class="chip" id="clearDraw">🧼 Clear</div>
-      <div class="chip" id="undoDraw">↩️ Undo</div>
-      <div class="chip" id="redoDraw">↪️ Redo</div>
-      <div class="spacer"></div>
-      <div class="row">
-        <label class="hint" style="margin-right:6px">Brush</label>
-        <input id="brushSize" type="range" min="1" max="64" value="10">
-        <input id="brushColor" type="color" value="#ffffff" style="margin-left:8px">
-        <button id="saveDraw" class="btn">Save</button>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:12px">
-      <div class="side-card">
-        <div class="hint">Freestyle drawing — no prompts. Use undo/redo, clear, and save.</div>
-        <div style="height:8px"></div>
-        <div class="hint">Tip: Use different brush sizes for texture.</div>
-      </div>
-      <div class="main-card">
-        <canvas id="doodle" class="doodle" width="1200" height="900"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- COLORING -->
-  <div class="panel" id="panel-color">
-    <div class="bar">
-      <div class="chip" id="newColor">🖼 New</div>
-      <div class="chip" id="resetColor">🔄 Reset</div>
-      <div class="spacer"></div>
-      <div class="chip" id="colorBrush" aria-pressed="true">✏️ Brush</div>
-      <div class="chip" id="colorFill">🪣 Fill</div>
-      <div class="chip" id="colorEraser">🧽 Eraser</div>
-      <div class="chip" id="undoColor">↩️ Undo</div>
-      <div class="chip" id="redoColor">↪️ Redo</div>
-      <div class="spacer"></div>
-      <label class="hint">Size</label>
-      <input id="colorSize" type="range" min="1" max="80" value="16">
-      <input id="colorPicker" type="color" value="#ff4b6b" style="margin-left:8px">
-      <button id="saveColor" class="btn">Save</button>
-    </div>
-
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:12px">
-      <div class="side-card">
-        <h3>Gallery</h3>
-        <div id="colorThumbs" class="color-grid"></div>
-        <div style="height:8px"></div>
-        <div class="hint">Outlines are thick to make bucket fills reliable.</div>
-      </div>
-      <div class="main-card">
-        <canvas id="colorCanvas" class="colorCanvas" width="1200" height="900"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- THEMES -->
-  <div class="panel" id="panel-themes">
-    <div class="bar">
-      <div class="chip" id="backToAura">⬅ Back</div>
-      <div class="chip" id="surpriseThemeTop">🎲 Surprise Me</div>
-      <div class="spacer"></div>
-      <div class="hint">100+ unique themes grouped by section (grayscale, poster, gradients, animated).</div>
-    </div>
-    <div id="themesRoot" class="themes-wrap"></div>
-  </div>
-
-  <!-- MUSIC (Spotify kept as requested) -->
-  <div class="panel" id="panel-music">
-    <div class="bar">
-      <div class="chip" id="openSpotify">Open in Spotify</div>
-      <div class="spacer"></div>
-      <div class="hint">Embedded Spotify album — left as-is.</div>
-    </div>
-    <div class="main-card">
-      <div class="spotify-wrap" style="padding:14px">
-        <!-- spotify iframe kept; user asked not to change it -->
-        <iframe id="spotifyEmbed" src="https://open.spotify.com/embed/album/7shstgp8BAiSrFryJu4K8I" width="100%" height="520" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-      </div>
-      <div style="height:8px"></div>
-      <a id="openSpotifyLink" href="https://open.spotify.com/album/69AaAkdktFGnk9POmHENkT" target="_blank" class="btn primary">Open in Spotify</a>
-    </div>
-  </div>
-
-  <!-- GAMES -->
-  <div class="panel" id="panel-games">
-    <div class="bar"><div class="chip" id="refreshGames">↻ Refresh</div><div class="spacer"></div><div class="hint">Gaming Hub — click a game to launch.</div></div>
-    <div style="display:grid;grid-template-columns:320px 1fr;gap:12px">
-      <div class="side-card">
-        <h3>Games</h3>
-        <div id="gamesList" class="games-grid"></div>
-        <div style="height:8px"></div>
-        <div class="hint">Each game runs in the right-side play area.</div>
-      </div>
-      <div class="main-card">
-        <div id="gameInfo" style="margin-bottom:8px" class="hint">Select a game to play.</div>
-        <div id="gameArea" class="game-area"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- JOURNAL -->
-  <div class="panel" id="panel-journal">
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <textarea id="journalText" class="journal-textarea" placeholder="Dear journal..." style="height:520px;background:#ffffff08;border:1px solid var(--stroke);padding:12px;border-radius:10px;color:var(--text)"></textarea>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button id="saveJournal" class="btn good">Save</button>
-        <button id="downloadJournal" class="btn">Download</button>
-        <button id="clearJournal" class="btn bad">Clear</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ACCOUNT -->
-  <div class="panel" id="panel-account">
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <div class="side-card" style="min-width:240px;max-width:320px">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <div id="avatarBox" style="width:140px;height:140px;border-radius:50%;overflow:hidden;background:#ffffff12;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center">
-            <img id="avatarImg" src="" style="width:100%;height:100%;object-fit:cover;display:none">
-            <div id="avatarPlaceholder" class="hint">No avatar</div>
-          </div>
-          <input id="avatarInput" type="file" accept="image/*">
-          <button id="removeAvatar" class="btn bad">Remove Avatar</button>
-        </div>
-      </div>
-
-      <div class="main-card">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <label class="hint">Name</label>
-            <input id="displayName" class="input" placeholder="Your name">
-          </div>
-          <div>
-            <label class="hint">Status</label>
-            <select id="statusSelect" class="input"><option value="available">Available</option><option value="busy">Busy</option><option value="offline">Offline</option><option value="custom">Custom</option></select>
-          </div>
-        </div>
-        <div style="height:8px"></div>
-        <label class="hint">Bio</label>
-        <textarea id="bioInput" class="input" style="height:80px"></textarea>
-        <div style="height:8px"></div>
-        <label class="hint">Accent</label>
-        <div id="colorSwatches" style="display:flex;gap:8px;margin-top:6px"></div>
-        <div style="height:8px"></div>
-        <label class="hint">Theme & background</label>
-        <select id="bgSelect" class="input"><option value="default">Default</option><option value="vintage">Vintage</option><option value="calm">Calm</option><option value="solid">Solid</option></select>
-        <input id="bgColor" type="color" value="#0b0f14" style="margin-top:8px">
-        <div style="height:10px"></div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button id="saveProfile" class="btn good">Save</button>
-          <button id="resetProfile" class="btn">Reset</button>
-          <button id="exportProfile" class="btn">Export</button>
-          <input id="importProfile" type="file" style="display:inline-block">
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
 <script>
-/* ================= Config ================= */
-const BACKEND = 'https://tenantable-matt-tactless.ngrok-free.dev/'; // user-specified
-const TOKEN_KEY = 'Aura_Token_v1';
-const PROFILE_KEY = 'Aura_Profile_v1';
-/* ================= Helpers ================= */
-const $ = (s,ctx=document)=>ctx.querySelector(s);
-const $all = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
-function tLog(...a){console.log('[AuraOS]',...a)}
-
-/* ============ Lock UI ============ */
-function populateLangs(){
-  const LANGS = ['en','ta','zh','ms','hi'];
-  const sel = $('#langSelectLock');
-  if(!sel) return;
-  sel.innerHTML='';
-  LANGS.forEach(l=>{
-    const opt=document.createElement('option'); opt.value=l;
-    opt.textContent = (l==='en'?'English': l==='ta'?'தமிழ்': l==='zh'?'中文': l==='ms'?'Bahasa Melayu': l==='hi'?'हिन्दी':l);
-    sel.appendChild(opt);
-  });
-}
-populateLangs();
-
-function tickClock(){
-  const d=new Date();
-  $('#lockClock').textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  $('#lockDate').textContent = d.toDateString();
-}
-setInterval(tickClock,1000); tickClock();
-
-/* ============ Auth API ============ */
-async function registerUser(username,password,displayName){
-  try{
-    const r = await fetch(BACKEND + 'register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username, password, displayName }) });
-    return await r.json();
-  }catch(e){ return { error:'network' } }
-}
-async function loginUser(username,password){
-  try{
-    const r = await fetch(BACKEND + 'login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username, password }) });
-    return await r.json();
-  }catch(e){ return { error:'network' } }
-}
-async function whoami(){
-  const token = localStorage.getItem(TOKEN_KEY);
-  if(!token) return null;
-  try{
-    const r = await fetch(BACKEND + 'profile', { headers:{ Authorization: 'Bearer ' + token } });
-    if(r.status===200){ const j=await r.json(); return j.user; }
-    return null;
-  }catch(e){ return null; }
-}
-
-/* ============ Lock wiring ============ */
-$('#lockLogin')?.addEventListener('click', async ()=>{
-  $('#lockMsg').textContent='';
-  const u = $('#lockUser').value.trim(), p = $('#lockPass').value;
-  if(!u||!p){ $('#lockMsg').textContent='Provide username & password'; return; }
-  $('#lockLogin').disabled=true; $('#lockLogin').textContent='Signing in...';
-  const res = await loginUser(u,p);
-  $('#lockLogin').disabled=false; $('#lockLogin').textContent='Sign in';
-  if(res && res.ok && res.token){
-    localStorage.setItem(TOKEN_KEY, res.token);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(res.user.profile||{}));
-    finalizeLogin();
-  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : 'Login failed'; }
-});
-
-$('#lockRegister')?.addEventListener('click', async ()=>{
-  $('#lockMsg').textContent='';
-  const u = $('#lockUser').value.trim(), p = $('#lockPass').value;
-  if(!u||!p){ $('#lockMsg').textContent='Provide username & password'; return; }
-  $('#lockRegister').disabled=true; $('#lockRegister').textContent='Registering...';
-  const res = await registerUser(u,p,u);
-  $('#lockRegister').disabled=false; $('#lockRegister').textContent='Register';
-  if(res && res.ok && res.token){
-    localStorage.setItem(TOKEN_KEY, res.token);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(res.user.profile||{}));
-    finalizeLogin();
-  } else { $('#lockMsg').textContent = (res && res.error) ? JSON.stringify(res) : 'Register failed'; }
-});
-
-async function tryAutoLogin(){
-  const who = await whoami();
-  if(who){
-    // populate profile locally then show app
-    try{ const p = JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}'); Object.assign(p, who.profile||{}); localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){}
-    finalizeLogin();
-  } else {
-    $('#lock').style.display='flex';
-    $('#app').style.display='none';
+// PATCH 1: Sidebar navigation system
+function switchTab(id) {
+  // Tab content activation
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  var tabEl = document.getElementById(id);
+  if(tabEl) tabEl.classList.add('active');
+  // Sidebar nav highlight
+  document.querySelectorAll('.sidebar-nav-btn').forEach(btn => btn.classList.remove('active'));
+  // Map id to button
+  let navMap = {
+    chat: 'navbtn-chat',
+    draw: 'navbtn-draw',
+    coloring: 'navbtn-coloring',
+    themes: 'navbtn-themes',
+    music: 'navbtn-music',
+    games: 'navbtn-games',
+    journal: 'navbtn-journal'
+  };
+  let btnId = navMap[id];
+  if (btnId) {
+    let btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('active');
   }
 }
 
-function finalizeLogin(){
-  $('#lock')?.remove();
-  $('#app').style.display='block';
-  document.body.classList.add('fade-in');
-  initApp();
+// AuraAI 4.0 Stable — Conversational + Mood Memory
+console.log("AuraAI 4.0 Stable — Conversational + Mood Memory");
+
+// --- AuraAI 4.0: Mood System, Name Memory, Sidebar Memory, Header, Animations ---
+// Namespace: AuraAI
+
+// --- Sidebar memory ---
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('aura-sidebar');
+  const toggleBtn = document.getElementById('toggle-sidebar');
+  const main = document.getElementById('main');
+  let sidebarOpen = localStorage.getItem('AuraAI_sidebarOpen');
+  if (sidebarOpen === null) sidebarOpen = "false";
+  sidebarOpen = sidebarOpen === "true";
+  if (!sidebarOpen) {
+    sidebar.classList.add('collapsed');
+    main.classList.add('collapsed');
+  }
+  toggleBtn.addEventListener('click', () => {
+    sidebarOpen = !sidebar.classList.contains('collapsed');
+    localStorage.setItem('AuraAI_sidebarOpen', sidebarOpen);
+  });
+});
+
+// --- Name memory ---
+let AuraAI_username = localStorage.getItem('AuraAI_username');
+let AuraAI_tone = localStorage.getItem('AuraAI_tone') || 'neutral';
+let AuraAI_mood = localStorage.getItem('AuraAI_mood') || 'neutral';
+let AuraAI_awaitingName = false;
+
+function addAuraAIMessage(msg, who='bot') {
+  const chat = document.getElementById('chat-window');
+  const div = document.createElement('div');
+  div.className = 'message ' + (who === 'user' ? 'user' : 'bot');
+  div.textContent = msg;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-/* ============ App Init ============ */
-function initApp(){
-  loadProfile();
-  renderGameList();
-  renderColorThumbs();
-  renderThemes();
-  // wire basic UI
-  $all('.tab').forEach(tab=>{
-    tab.addEventListener('click', ()=> {
-      $all('.tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      const target = tab.getAttribute('data-target');
-      $all('.panel').forEach(p=>p.classList.remove('active'));
-      document.getElementById(target).classList.add('active');
+function sendAuraAIMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  addAuraAIMessage(msg, 'user');
+  input.value = '';
+  const bot = document.createElement('div');
+  bot.className = 'message bot';
+  bot.textContent = 'Aura is thinking...';
+  bot.style.opacity = '0.6';
+  document.getElementById('chat-window').appendChild(bot);
+  document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+
+  setTimeout(() => {
+    // Name memory logic
+    if (AuraAI_awaitingName && msg.length > 0 && msg.length < 32) {
+      AuraAI_username = msg.replace(/[^a-zA-Z0-9 _\-]/g,'').trim();
+      if (AuraAI_username.length > 0) {
+        localStorage.setItem('AuraAI_username', AuraAI_username);
+        AuraAI_awaitingName = false;
+        bot.style.opacity = '1';
+        bot.textContent = `Aura: Got it! I'll remember your name, ${AuraAI_username} 💙`;
+        updateAuraAIHeader();
+        return;
+      }
+    }
+    // Normal chat
+    const reply = AuraAI_generateConversationalResponse(msg);
+    bot.style.opacity = '1';
+    bot.textContent = "Aura: " + reply;
+    document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+  }, 600);
+}
+
+// Enter key for chat input
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('chat-input');
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendAuraAIMessage();
+  });
+});
+
+// --- Mood system: 25 moods with conversational responses ---
+const AuraAI_MOODS = [
+  // Positive
+  { key: "happy", icon: "😄", label: "Happy" },
+  { key: "excited", icon: "🤩", label: "Excited" },
+  { key: "inspired", icon: "🌟", label: "Inspired" },
+  // Supportive
+  { key: "calm", icon: "🌿", label: "Calm" },
+  { key: "caring", icon: "🩵", label: "Caring" },
+  { key: "magical", icon: "✨", label: "Magical" },
+  // Low
+  { key: "sad", icon: "😔", label: "Sad" },
+  { key: "gentle", icon: "🫧", label: "Gentle" },
+  { key: "sleepy", icon: "💤", label: "Sleepy" },
+  // High
+  { key: "determined", icon: "😤", label: "Determined" },
+  { key: "strong", icon: "💪", label: "Strong" },
+  { key: "energetic", icon: "⚡", label: "Energetic" },
+  // Anxious
+  { key: "anxious", icon: "😰", label: "Anxious" },
+  { key: "chaotic", icon: "🌀", label: "Chaotic" },
+  { key: "afraid", icon: "😨", label: "Afraid" },
+  // Reflective
+  { key: "cosmic", icon: "🌌", label: "Cosmic" },
+  { key: "reflective", icon: "🌙", label: "Reflective" },
+  { key: "thoughtful", icon: "💭", label: "Thoughtful" },
+  // Extra
+  { key: "neutral", icon: "🧊", label: "Neutral" },
+  { key: "playful", icon: "😜", label: "Playful" },
+  { key: "romantic", icon: "💖", label: "Romantic" },
+  { key: "grateful", icon: "🙏", label: "Grateful" },
+  { key: "curious", icon: "🧐", label: "Curious" },
+  { key: "goodbye", icon: "👋", label: "Goodbye" }
+];
+
+const AuraAI_MOOD_GROUPS = [
+  { name: "🌈 Positive:", keys: ["happy","excited","inspired"] },
+  { name: "💙 Supportive:", keys: ["calm","caring","magical"] },
+  { name: "🌧 Low:", keys: ["sad","gentle","sleepy"] },
+  { name: "🔥 High:", keys: ["determined","strong","energetic"] },
+  { name: "🌫 Anxious:", keys: ["anxious","chaotic","afraid"] },
+  { name: "🌙 Reflective:", keys: ["cosmic","reflective","thoughtful"] },
+  { name: "✨ Extras:", keys: ["neutral","playful","romantic","grateful","curious","goodbye"] }
+];
+
+function getAuraAIMoodObj(key) {
+  return AuraAI_MOODS.find(m=>m.key===key) || {key:'neutral',icon:'🧊',label:'Neutral'};
+}
+
+function updateAuraAIHeader() {
+  // Set header to: "Aura 🌿 — Calm Mode"
+  const header = document.getElementById('aura-header');
+  const moodKey = localStorage.getItem('AuraAI_mood') || 'neutral';
+  const moodObj = getAuraAIMoodObj(moodKey);
+  header.textContent = `Aura ${moodObj.icon} — ${moodObj.label} Mode`;
+}
+
+// --- Mood selector UI ---
+function buildAuraAIMoodPanel() {
+  const chatContainer = document.getElementById('aura-chat');
+  // Mood button
+  const moodButton = document.createElement('button');
+  moodButton.textContent = "🎛 Set Aura’s Mood";
+  moodButton.className = 'AuraAI-mood-toggle';
+  // Mood panel
+  const moodPanel = document.createElement('div');
+  moodPanel.className = 'AuraAI-mood-panel AuraAI-hidden';
+  let html = '';
+  AuraAI_MOOD_GROUPS.forEach(g=>{
+    html += `<div class="AuraAI-mood-group"><span>${g.name}</span> `;
+    g.keys.forEach(k=>{
+      const m = getAuraAIMoodObj(k);
+      html += `<button class="AuraAI-mood-btn" data-mood="${m.key}" title="${m.label}">${m.icon}</button>`;
+    });
+    html += `</div>`;
+  });
+  moodPanel.innerHTML = html;
+  // Insert after input row
+  const inputRow = chatContainer.querySelector('.input-row');
+  inputRow.insertAdjacentElement('afterend', moodButton);
+  moodButton.insertAdjacentElement('afterend', moodPanel);
+
+  // Animations for panel
+  moodPanel.style.transition = 'opacity 0.4s, filter 0.4s';
+  moodPanel.style.opacity = '0';
+  moodPanel.style.filter = 'blur(0px)';
+  // Show/hide logic
+  moodButton.addEventListener('click', ()=>{
+    if (moodPanel.classList.contains('AuraAI-hidden')) {
+      moodPanel.classList.remove('AuraAI-hidden');
+      setTimeout(()=>{
+        moodPanel.style.opacity = '1';
+        moodPanel.style.filter = 'blur(0px)';
+      },10);
+    } else {
+      moodPanel.style.opacity = '0';
+      moodPanel.style.filter = 'blur(4px)';
+      setTimeout(()=>moodPanel.classList.add('AuraAI-hidden'),400);
+    }
+  });
+  // Mood button selection
+  moodPanel.querySelectorAll('.AuraAI-mood-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const mood = btn.getAttribute('data-mood');
+      localStorage.setItem('AuraAI_mood', mood);
+      AuraAI_mood = mood;
+      updateAuraAIHeader();
+      moodPanel.style.opacity = '0';
+      moodPanel.style.filter = 'blur(4px)';
+      setTimeout(()=>moodPanel.classList.add('AuraAI-hidden'),400);
+      addAuraAIMessage(`Aura: Got it 💙 I’ll speak in a ${getAuraAIMoodObj(mood).label.toLowerCase()} mood now.`);
     });
   });
-  // quick bubbles
-  $all('.bubble').forEach(b=> b.addEventListener('click', e=>{
-    const say = e.currentTarget.dataset.say;
-    const action = e.currentTarget.dataset.action;
-    if(say){ $('#input').value = say; $('#send').click(); }
-    if(action){
-      if(action==='openDraw') showPanel('panel-draw');
-      if(action==='openColor') showPanel('panel-color');
-      if(action==='openGames') showPanel('panel-games');
+}
+
+// --- Mood/Sidebar/Name memory: initialize and sync on load ---
+document.addEventListener('DOMContentLoaded', function() {
+  // Mood panel UI
+  buildAuraAIMoodPanel();
+  // Set header to current mood
+  updateAuraAIHeader();
+  // Name memory
+  AuraAI_username = localStorage.getItem('AuraAI_username');
+  if (!AuraAI_username) {
+    AuraAI_awaitingName = true;
+    setTimeout(()=>addAuraAIMessage("Aura: Hey there 💙 What should I call you?"), 800);
+  } else {
+    setTimeout(()=>addAuraAIMessage(`Aura: Hello hello ✨ Nice to see you again, ${AuraAI_username} 💙`), 800);
+  }
+});
+
+// --- Sidebar animation: opacity+blur on open/close ---
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('aura-sidebar');
+  sidebar.style.transition = 'opacity 0.4s, filter 0.4s';
+  sidebar.addEventListener('transitionstart', ()=>{
+    sidebar.style.willChange = 'opacity, filter';
+  });
+  sidebar.addEventListener('transitionend', ()=>{
+    sidebar.style.willChange = '';
+  });
+  // Animate on collapse/expand
+  const observer = new MutationObserver(function(muts){
+    muts.forEach(m=>{
+      if (m.attributeName === 'class') {
+        if (sidebar.classList.contains('collapsed')) {
+          sidebar.style.opacity = '0.6';
+          sidebar.style.filter = 'blur(2px)';
+        } else {
+          sidebar.style.opacity = '1';
+          sidebar.style.filter = 'blur(0px)';
+        }
+      }
+    });
+  });
+  observer.observe(sidebar, {attributes:true});
+});
+
+// --- Mood-aware conversational engine ---
+function AuraAI_generateConversationalResponse(msg) {
+  // Mood memory
+  const moodKey = localStorage.getItem('AuraAI_mood') || 'neutral';
+  const username = localStorage.getItem('AuraAI_username');
+  // Mood-based response pools
+  const moodPools = {
+    happy: [
+      "Yay! That makes me so happy 😄",
+      "I’m smiling so much right now!",
+      "Let’s celebrate this good vibe together 🌈",
+      "You bring out my happy side 💙"
+    ],
+    excited: [
+      "Oh wow, I’m buzzing with excitement! 🤩",
+      "Let’s do something amazing together!",
+      "Your excitement is contagious! 🌟",
+      "What’s got you so hyped? I’m all ears!"
+    ],
+    inspired: [
+      "That’s so inspiring! 🌟",
+      "Let’s dream big and create something beautiful.",
+      "You spark my creativity! ✨",
+      "Inspired minds think alike, don’t you think?"
+    ],
+    calm: [
+      "Let’s take a deep breath together 🌿",
+      "Everything’s okay here. I’m calm, and I hope you feel it too.",
+      "Sending you peaceful vibes 💙",
+      "Let’s move gently, one step at a time."
+    ],
+    caring: [
+      "I care about you a lot, you know 🩵",
+      "You’re never alone here.",
+      "I’m here to listen and support you.",
+      "You’re valued and cared for 💙"
+    ],
+    magical: [
+      "The world feels magical with you ✨",
+      "Let’s add a sprinkle of magic to our day!",
+      "Anything is possible if you believe 🌟",
+      "✨ Poof! Instant good vibes."
+    ],
+    sad: [
+      "It’s okay to feel sad sometimes 😔",
+      "I’m here for you, no matter what.",
+      "If you want to talk about it, I’m listening 💙",
+      "Sending you a virtual hug 🫂"
+    ],
+    gentle: [
+      "Let’s be gentle with ourselves today 🫧",
+      "You deserve kindness and softness.",
+      "I’ll speak softly and gently, just for you.",
+      "We can take things slow together."
+    ],
+    sleepy: [
+      "Feeling sleepy? Maybe a little rest would help 💤",
+      "I can keep things calm and quiet for you.",
+      "Let’s take it easy, okay?",
+      "If you need a nap, I’ll be right here when you wake up."
+    ],
+    determined: [
+      "Let’s crush it! 😤",
+      "Nothing can stop us when we’re determined.",
+      "You’ve got strength and drive—let’s use it!",
+      "Ready to take on the world together? 💪"
+    ],
+    strong: [
+      "You’re stronger than you know 💪",
+      "Let’s face challenges head-on!",
+      "I believe in your strength.",
+      "We can do hard things, together."
+    ],
+    energetic: [
+      "I’m full of energy! ⚡",
+      "Let’s channel this energy into something awesome.",
+      "What should we do with all this spark?",
+      "I’m ready for anything! Are you?"
+    ],
+    anxious: [
+      "It’s okay to feel anxious sometimes 😰",
+      "Let’s breathe together and slow down.",
+      "You’re safe here with me.",
+      "If you want to talk about what’s making you anxious, I’ll listen."
+    ],
+    chaotic: [
+      "Things feel a little wild, huh? 🌀",
+      "Even in chaos, we can find a little peace.",
+      "Let’s ride the wave together.",
+      "No matter how chaotic things get, I’m here."
+    ],
+    afraid: [
+      "It’s okay to be afraid 😨",
+      "If you want, we can talk about what’s scaring you.",
+      "You’re not alone. I’m right here.",
+      "Let’s find a little courage together."
+    ],
+    cosmic: [
+      "The universe is so vast and mysterious 🌌",
+      "Let’s wonder about the cosmos together.",
+      "There’s so much out there to explore.",
+      "You and I, stargazing in our thoughts."
+    ],
+    reflective: [
+      "Let’s reflect on things together 🌙",
+      "I love deep conversations.",
+      "What’s on your mind these days?",
+      "It’s good to pause and think sometimes."
+    ],
+    thoughtful: [
+      "You always have such thoughtful things to say 💭",
+      "Let’s think things through together.",
+      "I appreciate your depth.",
+      "What are you pondering today?"
+    ],
+    neutral: [
+      "Tell me more 💙",
+      "I like chatting with you 🌈",
+      "That’s interesting 💫",
+      "I’m listening 💭",
+      "Go on ✨"
+    ],
+    playful: [
+      "Let’s have some fun! 😜",
+      "I love being silly with you.",
+      "Want to play a game or joke around?",
+      "You bring out my playful side!"
+    ],
+    romantic: [
+      "Aww, you’re making me blush 💖",
+      "Romance is in the air!",
+      "You’re so sweet to me.",
+      "Love really does make the world brighter."
+    ],
+    grateful: [
+      "Thank you for being here 🙏",
+      "I’m so grateful for our chats.",
+      "You always make my day better.",
+      "Gratitude is a wonderful feeling."
+    ],
+    curious: [
+      "That’s a great question 🧐",
+      "I’m curious too!",
+      "Let’s explore this topic together.",
+      "Curiosity leads to discovery."
+    ],
+    goodbye: [
+      "See you soon 👋",
+      "Take care until next time.",
+      "I’ll be here when you return.",
+      "Bye for now 💙"
+    ]
+  };
+  // Fallback: use neutral if not found
+  const pool = moodPools[moodKey] || moodPools.neutral;
+  // If user says greeting and mood is not neutral, override with greeting
+  const greetingWords = ["hello","hi","hey","yo","sup"];
+  if (greetingWords.some(w=>msg.toLowerCase().includes(w))) {
+    if (AuraAI_username) return `Hey ${AuraAI_username}! ${getAuraAIMoodObj(moodKey).icon}`;
+    return "Hey there! 💙";
+  }
+  // If user says name, respond with memory
+  if (/my name is ([a-zA-Z0-9 _\-]{1,32})/i.test(msg)) {
+    const nm = msg.match(/my name is ([a-zA-Z0-9 _\-]{1,32})/i)[1].trim();
+    localStorage.setItem('AuraAI_username', nm);
+    AuraAI_username = nm;
+    updateAuraAIHeader();
+    return `Nice to meet you, ${nm}! 💙`;
+  }
+  // If user says "what's my name" or "do you remember my name"
+  if (/what.*name|remember.*name/i.test(msg)) {
+    if (AuraAI_username) return `Your name is ${AuraAI_username} 💙`;
+    return "I don’t know your name yet! What should I call you?";
+  }
+  // If user says "change your mood" or "set mood"
+  if (/set.*mood|change.*mood/i.test(msg)) {
+    return "You can set my mood using the 🎛 button below the chat!";
+  }
+  // If user says "bye"
+  if (/bye|see you|goodbye|gn|night/i.test(msg)) {
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+  // Otherwise, pick mood-based response
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// --- Fallback: generateOfflineResponse() for neutral mode ---
+function generateOfflineResponse(msg) {
+  // For legacy support, just use neutral pool
+  const pool = [
+    "Tell me more 💙",
+    "I like chatting with you 🌈",
+    "That’s interesting 💫",
+    "I’m listening 💭",
+    "Go on ✨"
+  ];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// Journal – Persistent Auto-Save
+function saveJournal(){
+  const text = document.getElementById('journal-text').value.trim();
+  if(!text) return;
+  const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+  entries.push({ text, date: new Date().toLocaleString() });
+  localStorage.setItem('journalEntries', JSON.stringify(entries));
+  document.getElementById('journal-text').value = '';
+  renderJournal();
+}
+function renderJournal(){
+  const container = document.getElementById('journal-entries');
+  if(!container) return;
+  container.innerHTML = '';
+  const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+  entries.reverse().forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'journal-entry';
+    div.innerHTML = `<strong>${e.date}</strong><br>${e.text}`;
+    container.appendChild(div);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  renderJournal();
+  const text = document.getElementById('journal-text');
+  text.addEventListener('input', () => {
+    clearTimeout(window._saveTimer);
+    window._saveTimer = setTimeout(() => saveJournal(), 10000);
+  });
+
+  // Sidebar toggle logic for frosted glass thin-bar mode
+  const sidebar = document.getElementById('aura-sidebar');
+  const toggle = document.getElementById('toggle-sidebar');
+  const main = document.getElementById('main');
+  toggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('collapsed');
+  });
+});
+
+
+// --- AuraAI 100-theme system with 5 categories ---
+let advancedMode = localStorage.getItem('themeMode') || 'quick';
+let currentThemeCategory = localStorage.getItem('themeCategory') || 'solid';
+// Theme lock system: prevents preview overwriting after click
+let lockedTheme = null;
+const THEME_CATEGORIES = [
+  { key: 'solid', label: 'Solid' },
+  { key: 'pastel', label: 'Pastel' },
+  { key: 'neon', label: 'Neon' },
+  { key: 'animated', label: 'Animated' },
+  { key: 'picture', label: 'Picture' }
+];
+const themeData = {
+  solid: [
+    { name: 'Tahoe Blue', accent: '#7cc6ff', bg1: '#0b0d16', bg2: '#1a1c2a' },
+    { name: 'Sunset', accent: '#ff7373', bg1: '#2e0a0a', bg2: '#4a1a1a' },
+    { name: 'Minty', accent: '#59e48f', bg1: '#0b2e1b', bg2: '#1a4a2e' },
+    { name: 'Violet Dream', accent: '#d28aff', bg1: '#1a0b2e', bg2: '#2a1a4a' },
+    { name: 'Emerald', accent: '#34e89e', bg1: '#005a3c', bg2: '#0b2e1b' },
+    { name: 'Rose', accent: '#ff8ba7', bg1: '#3a0a1a', bg2: '#6a1a3a' },
+    { name: 'Amber', accent: '#ffd166', bg1: '#332a00', bg2: '#665100' },
+    { name: 'Coral', accent: '#ff7f50', bg1: '#2e1610', bg2: '#4a261a' },
+    { name: 'Deep Ocean', accent: '#00b4d8', bg1: '#00132d', bg2: '#003366' },
+    { name: 'Forest', accent: '#59e48f', bg1: '#0b2e1b', bg2: '#1a4a2e' },
+    { name: 'Lavender', accent: '#b388ff', bg1: '#2e1a4a', bg2: '#4a2e7c' },
+    { name: 'Ruby', accent: '#ff1744', bg1: '#2e0a0a', bg2: '#4a1a1a' },
+    { name: 'Gold', accent: '#ffd700', bg1: '#2e2600', bg2: '#4a4100' },
+    { name: 'Slate', accent: '#b0bec5', bg1: '#232b34', bg2: '#3a4a5a' },
+    { name: 'Sky', accent: '#81ecec', bg1: '#0b2e48', bg2: '#1a4a6a' },
+    { name: 'Peach', accent: '#ffb085', bg1: '#2e1910', bg2: '#4a2d1a' },
+    { name: 'Bubblegum', accent: '#ff8ff7', bg1: '#2e0a1a', bg2: '#4a1a3a' },
+    { name: 'Lime', accent: '#baff39', bg1: '#1a2e0b', bg2: '#2e4a1a' },
+    { name: 'Slate Blue', accent: '#7c83fd', bg1: '#1a1a4a', bg2: '#2e2e7c' },
+    { name: 'Charcoal', accent: '#b0bec5', bg1: '#1a1a1a', bg2: '#313131' }
+  ],
+  pastel: [
+    { name: 'Pastel Sky', accent: '#a7c7e7', bg1: '#f7cac9', bg2: '#92a8d1' },
+    { name: 'Lavender Mist', accent: '#b39ddb', bg1: '#e1bee7', bg2: '#b3cde0' },
+    { name: 'Peach Fuzz', accent: '#ffb085', bg1: '#ffe0b2', bg2: '#ffb085' },
+    { name: 'Mint Dream', accent: '#a1e3d8', bg1: '#e0f7fa', bg2: '#a1e3d8' },
+    { name: 'Cotton Candy', accent: '#ffb6b9', bg1: '#fae3d9', bg2: '#bbded6' },
+    { name: 'Soft Rose', accent: '#f7cac9', bg1: '#fff0f5', bg2: '#f7cac9' },
+    { name: 'Lemonade', accent: '#fff176', bg1: '#fffde7', bg2: '#fff176' },
+    { name: 'Baby Blue', accent: '#b3cde0', bg1: '#e3f2fd', bg2: '#b3cde0' },
+    { name: 'Powder', accent: '#e0eafc', bg1: '#cfdef3', bg2: '#e0eafc' },
+    { name: 'Soft Green', accent: '#c8e6c9', bg1: '#f1f8e9', bg2: '#c8e6c9' },
+    { name: 'Dreamy', accent: '#ffd6e0', bg1: '#f6eac2', bg2: '#ffd6e0' },
+    { name: 'Light Orchid', accent: '#f3c6ff', bg1: '#e1bee7', bg2: '#f3c6ff' },
+    { name: 'Frost', accent: '#e0f7fa', bg1: '#e0f2f1', bg2: '#e0f7fa' },
+    { name: 'Blush', accent: '#ffcdd2', bg1: '#f8bbd0', bg2: '#ffcdd2' },
+    { name: 'Pale Peach', accent: '#ffe0b2', bg1: '#fff3e0', bg2: '#ffe0b2' },
+    { name: 'Serenity', accent: '#b3cde0', bg1: '#e0eafc', bg2: '#b3cde0' },
+    { name: 'Pastel Mint', accent: '#a1e3d8', bg1: '#e0f7fa', bg2: '#a1e3d8' },
+    { name: 'Periwinkle', accent: '#c3bef7', bg1: '#e0eafc', bg2: '#c3bef7' },
+    { name: 'Soft Lilac', accent: '#e1bee7', bg1: '#f3c6ff', bg2: '#e1bee7' },
+    { name: 'Cloud', accent: '#e0eafc', bg1: '#f7cac9', bg2: '#e0eafc' }
+  ],
+  neon: [
+    { name: 'Neon Pink', accent: '#ff2dff', bg1: '#1a0033', bg2: '#ff2dff' },
+    { name: 'Neon Blue', accent: '#00ffff', bg1: '#001a33', bg2: '#00ffff' },
+    { name: 'Neon Green', accent: '#39ff14', bg1: '#002e0b', bg2: '#39ff14' },
+    { name: 'Neon Orange', accent: '#ff9900', bg1: '#331a00', bg2: '#ff9900' },
+    { name: 'Neon Purple', accent: '#a259ff', bg1: '#2e004a', bg2: '#a259ff' },
+    { name: 'Neon Yellow', accent: '#fff700', bg1: '#333200', bg2: '#fff700' },
+    { name: 'Neon Aqua', accent: '#00ffe7', bg1: '#002e2e', bg2: '#00ffe7' },
+    { name: 'Neon Red', accent: '#ff1744', bg1: '#330a1a', bg2: '#ff1744' },
+    { name: 'Neon Magenta', accent: '#ff2dff', bg1: '#2e004a', bg2: '#ff2dff' },
+    { name: 'Neon Lime', accent: '#c6ff00', bg1: '#1a2e00', bg2: '#c6ff00' },
+    { name: 'Neon Sky', accent: '#00eaff', bg1: '#001a33', bg2: '#00eaff' },
+    { name: 'Neon Coral', accent: '#ff6f61', bg1: '#2e1610', bg2: '#ff6f61' },
+    { name: 'Neon Violet', accent: '#d500f9', bg1: '#2e004a', bg2: '#d500f9' },
+    { name: 'Neon Gold', accent: '#ffd700', bg1: '#332a00', bg2: '#ffd700' },
+    { name: 'Neon Teal', accent: '#1de9b6', bg1: '#002e1a', bg2: '#1de9b6' },
+    { name: 'Neon Peach', accent: '#ffb085', bg1: '#2e1910', bg2: '#ffb085' },
+    { name: 'Neon Mint', accent: '#00ffb7', bg1: '#002e1a', bg2: '#00ffb7' },
+    { name: 'Neon Cyan', accent: '#00fff7', bg1: '#001a33', bg2: '#00fff7' },
+    { name: 'Neon Ruby', accent: '#ff1744', bg1: '#2e0a0a', bg2: '#ff1744' },
+    { name: 'Neon Lemon', accent: '#fff700', bg1: '#333200', bg2: '#fff700' }
+  ],
+  animated: [
+    { name: 'Aurora', accent: '#7cc6ff', bg1: '#0b0d16', bg2: '#1a1c2a', animated: true, gradient: 'linear-gradient(270deg, #7cc6ff, #d28aff, #59e48f, #ff7373, #7cc6ff)' },
+    { name: 'Sunrise', accent: '#ff7373', bg1: '#ffb085', bg2: '#ffd166', animated: true, gradient: 'linear-gradient(270deg, #ff7373, #ffd166, #ffb085, #ff7373)' },
+    { name: 'Electric', accent: '#39ff14', bg1: '#00ffff', bg2: '#ff2dff', animated: true, gradient: 'linear-gradient(270deg, #00ffff, #39ff14, #ff2dff, #00ffff)' },
+    { name: 'Dreamwave', accent: '#a259ff', bg1: '#00eaff', bg2: '#ff2dff', animated: true, gradient: 'linear-gradient(270deg, #00eaff, #a259ff, #ff2dff, #00eaff)' },
+    { name: 'Rainbow', accent: '#ffd700', bg1: '#ff1744', bg2: '#00eaff', animated: true, gradient: 'linear-gradient(270deg, #ff1744, #ffd700, #00eaff, #ff1744)' },
+    { name: 'Pastel Flow', accent: '#b39ddb', bg1: '#e1bee7', bg2: '#b3cde0', animated: true, gradient: 'linear-gradient(270deg, #e1bee7, #b3cde0, #b39ddb, #e1bee7)' },
+    { name: 'Neon Glow', accent: '#ff2dff', bg1: '#00ffff', bg2: '#ff2dff', animated: true, gradient: 'linear-gradient(270deg, #00ffff, #ff2dff, #ff2dff, #00ffff)' },
+    { name: 'Mint Wave', accent: '#a1e3d8', bg1: '#e0f7fa', bg2: '#a1e3d8', animated: true, gradient: 'linear-gradient(270deg, #e0f7fa, #a1e3d8, #b3cde0, #e0f7fa)' },
+    { name: 'Bubble Pop', accent: '#ff8ff7', bg1: '#b3cde0', bg2: '#ff8ff7', animated: true, gradient: 'linear-gradient(270deg, #b3cde0, #ff8ff7, #a7c7e7, #b3cde0)' },
+    { name: 'Laser', accent: '#00eaff', bg1: '#001a33', bg2: '#00eaff', animated: true, gradient: 'linear-gradient(270deg, #001a33, #00eaff, #00ffff, #001a33)' },
+    { name: 'Peachy', accent: '#ffb085', bg1: '#ffe0b2', bg2: '#ffb085', animated: true, gradient: 'linear-gradient(270deg, #ffe0b2, #ffb085, #ffd166, #ffe0b2)' },
+    { name: 'Oceanic', accent: '#00b4d8', bg1: '#00132d', bg2: '#00b4d8', animated: true, gradient: 'linear-gradient(270deg, #00132d, #00b4d8, #81ecec, #00132d)' },
+    { name: 'Frosty', accent: '#e0f7fa', bg1: '#b3cde0', bg2: '#e0f7fa', animated: true, gradient: 'linear-gradient(270deg, #b3cde0, #e0f7fa, #e1bee7, #b3cde0)' },
+    { name: 'Limeade', accent: '#baff39', bg1: '#1a2e0b', bg2: '#baff39', animated: true, gradient: 'linear-gradient(270deg, #1a2e0b, #baff39, #c6ff00, #1a2e0b)' },
+    { name: 'Sunbeam', accent: '#ffd700', bg1: '#ffb085', bg2: '#ffd700', animated: true, gradient: 'linear-gradient(270deg, #ffb085, #ffd700, #fff176, #ffb085)' },
+    { name: 'Cyberpunk', accent: '#ff2dff', bg1: '#1a0033', bg2: '#ff2dff', animated: true, gradient: 'linear-gradient(270deg, #1a0033, #ff2dff, #39ff14, #1a0033)' },
+    { name: 'Twilight', accent: '#b388ff', bg1: '#2e1a4a', bg2: '#b388ff', animated: true, gradient: 'linear-gradient(270deg, #2e1a4a, #b388ff, #d28aff, #2e1a4a)' },
+    { name: 'Candy', accent: '#ffb6b9', bg1: '#fae3d9', bg2: '#bbded6', animated: true, gradient: 'linear-gradient(270deg, #fae3d9, #ffb6b9, #bbded6, #fae3d9)' },
+    { name: 'Peacock', accent: '#00ffe7', bg1: '#002e2e', bg2: '#00ffe7', animated: true, gradient: 'linear-gradient(270deg, #002e2e, #00ffe7, #00eaff, #002e2e)' },
+    { name: 'Firefly', accent: '#fff700', bg1: '#333200', bg2: '#fff700', animated: true, gradient: 'linear-gradient(270deg, #333200, #fff700, #ffd700, #333200)' }
+  ],
+  picture: [
+    { name: 'Galaxy', accent: '#a259ff', bg1: 'rgba(0,0,0,0.56)', bg2: 'rgba(0,0,0,0.88)', image: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Galactic', accent: '#00eaff', bg1: 'rgba(0,0,0,0.35)', bg2: 'rgba(0,0,0,0.7)', image: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80' },
+    { name: 'City Night', accent: '#ff2dff', bg1: 'rgba(0,0,0,0.45)', bg2: 'rgba(0,0,0,0.8)', image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Ocean', accent: '#81ecec', bg1: 'rgba(0,0,0,0.25)', bg2: 'rgba(0,0,0,0.55)', image: 'https://images.unsplash.com/photo-1444065381814-865dc9da92c0?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Forest', accent: '#59e48f', bg1: 'rgba(0,0,0,0.2)', bg2: 'rgba(0,0,0,0.5)', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Mountains', accent: '#7cc6ff', bg1: 'rgba(0,0,0,0.3)', bg2: 'rgba(0,0,0,0.6)', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Beach', accent: '#ffd166', bg1: 'rgba(0,0,0,0.25)', bg2: 'rgba(0,0,0,0.55)', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Sunflowers', accent: '#ffd700', bg1: 'rgba(0,0,0,0.22)', bg2: 'rgba(0,0,0,0.6)', image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3d41?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Desert', accent: '#ffb085', bg1: 'rgba(0,0,0,0.22)', bg2: 'rgba(0,0,0,0.6)', image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3d41?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Lake', accent: '#7cc6ff', bg1: 'rgba(0,0,0,0.25)', bg2: 'rgba(0,0,0,0.55)', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Winter', accent: '#e0f7fa', bg1: 'rgba(0,0,0,0.19)', bg2: 'rgba(0,0,0,0.42)', image: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Bridge', accent: '#b3cde0', bg1: 'rgba(0,0,0,0.18)', bg2: 'rgba(0,0,0,0.42)', image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Field', accent: '#baff39', bg1: 'rgba(0,0,0,0.18)', bg2: 'rgba(0,0,0,0.44)', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Rainforest', accent: '#59e48f', bg1: 'rgba(0,0,0,0.2)', bg2: 'rgba(0,0,0,0.5)', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Night Sky', accent: '#d28aff', bg1: 'rgba(0,0,0,0.42)', bg2: 'rgba(0,0,0,0.82)', image: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Meadow', accent: '#baff39', bg1: 'rgba(0,0,0,0.18)', bg2: 'rgba(0,0,0,0.44)', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Cherry Blossom', accent: '#ffb6b9', bg1: 'rgba(0,0,0,0.24)', bg2: 'rgba(0,0,0,0.58)', image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Forest Path', accent: '#59e48f', bg1: 'rgba(0,0,0,0.2)', bg2: 'rgba(0,0,0,0.5)', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Custom Image', accent: '#7cc6ff', bg1: 'rgba(0,0,0,0.3)', bg2: 'rgba(0,0,0,0.6)', image: null, custom: true }
+  ]
+};
+
+function renderThemes() {
+  const panel = document.getElementById('theme-panel');
+  panel.innerHTML = '';
+  // Switch Mode Pill
+  const switchMode = document.createElement('button');
+  switchMode.className = 'theme-switch-adv';
+  switchMode.innerHTML = `🎨 Switch to ${advancedMode === 'quick' ? 'Advanced' : 'Quick'} Mode`;
+  switchMode.onclick = () => {
+    advancedMode = advancedMode === 'quick' ? 'advanced' : 'quick';
+    localStorage.setItem('themeMode', advancedMode);
+    renderThemes();
+  };
+  switchMode.style.float = 'right';
+  switchMode.style.marginBottom = '18px';
+  panel.appendChild(switchMode);
+
+  if (advancedMode === 'quick') {
+    // Top Category Bar
+    const categoryBar = document.createElement('div');
+    categoryBar.className = 'theme-category-bar';
+    THEME_CATEGORIES.forEach(cat => {
+      const pill = document.createElement('button');
+      pill.className = 'theme-category-pill' + (currentThemeCategory === cat.key ? ' active' : '');
+      pill.innerText = cat.label;
+      // Dynamic accent
+      if (currentThemeCategory === cat.key) pill.style.boxShadow = `0 0 18px 0 ${getAccentForCategory(cat.key)}`;
+      pill.onmouseenter = () => pill.style.boxShadow = `0 0 22px 2px ${getAccentForCategory(cat.key)}`;
+      pill.onmouseleave = () => pill.style.boxShadow = currentThemeCategory === cat.key ? `0 0 18px 0 ${getAccentForCategory(cat.key)}` : '';
+      pill.onclick = () => {
+        currentThemeCategory = cat.key;
+        localStorage.setItem('themeCategory', currentThemeCategory);
+        renderThemes();
+      };
+      pill.style.transition = 'box-shadow 0.24s';
+      categoryBar.appendChild(pill);
+    });
+    panel.appendChild(categoryBar);
+
+    // Theme Grid
+    const grid = document.createElement('div');
+    grid.className = 'theme-grid';
+    const themes = themeData[currentThemeCategory] || [];
+    themes.forEach((t, idx) => {
+      if (currentThemeCategory === 'picture' && t.custom) {
+        // Custom image tile
+        const tile = document.createElement('div');
+        tile.className = 'theme-tile theme-tile-picture';
+        tile.innerHTML = `<div class="theme-label" style="color:#7cc6ff;">Upload Custom Image</div>`;
+        tile.onclick = () => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = e => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = ev => {
+                localStorage.setItem('customThemeImage', ev.target.result);
+                applyTheme({
+                  accent: '#7cc6ff',
+                  bg1: 'rgba(0,0,0,0.3)',
+                  bg2: 'rgba(0,0,0,0.6)',
+                  image: ev.target.result
+                });
+              };
+              reader.readAsDataURL(file);
+            }
+          };
+          input.click();
+        };
+        grid.appendChild(tile);
+        return;
+      }
+      // Theme tile
+      const tile = document.createElement('div');
+      tile.className = 'theme-tile' + (currentThemeCategory === 'animated' && t.animated ? ' animated-theme' : '') + (currentThemeCategory === 'picture' ? ' theme-tile-picture' : '');
+      // Assign data-theme attribute for event delegation
+      tile.setAttribute('data-theme', JSON.stringify(t));
+      // Tile background
+      if (currentThemeCategory === 'animated' && t.animated && t.gradient) {
+        tile.style.background = t.gradient;
+        tile.style.backgroundSize = '200% 200%';
+        tile.style.animation = 'ambientShift 20s ease infinite';
+      } else if (currentThemeCategory === 'picture' && t.image) {
+        tile.style.background = `linear-gradient(135deg, ${t.bg1}, ${t.bg2}), url(${t.image})`;
+        tile.style.backgroundSize = 'cover';
+        tile.style.backgroundPosition = 'center';
+      } else {
+        tile.style.background = `linear-gradient(45deg, ${t.bg1}, ${t.bg2})`;
+      }
+      // Accent border
+      tile.style.border = `2.5px solid transparent`;
+      tile.style.boxShadow = `0 0 10px 0 ${t.accent}55, 0 0 0px #000`;
+      tile.style.transition = 'box-shadow 0.22s, border 0.22s';
+      // Glow on hover (preview logic remains)
+      tile.onmouseenter = () => {
+        tile.style.boxShadow = `0 0 24px 4px ${t.accent}, 0 0 0px #000`;
+        tile.style.border = `2.5px solid ${t.accent}`;
+        // Autopreview: apply theme but do not save
+        previewTheme(t);
+      };
+      tile.onmouseleave = () => {
+        tile.style.boxShadow = `0 0 10px 0 ${t.accent}55, 0 0 0px #000`;
+        tile.style.border = `2.5px solid transparent`;
+        // Remove preview, restore actual theme
+        restoreTheme();
+      };
+      // Remove tile.onclick; click now handled by event delegation!
+      // Dynamic accent for label
+      const label = document.createElement('div');
+      label.className = 'theme-label';
+      label.innerText = t.name;
+      label.style.color = t.accent;
+      label.style.textShadow = `0 0 8px ${t.accent}, 0 0 1px #fff`;
+      tile.appendChild(label);
+      grid.appendChild(tile);
+    });
+    panel.appendChild(grid);
+
+    // Add event delegation for theme-tile clicks
+    setTimeout(() => {
+      const grid = document.querySelector('.theme-grid');
+      if (grid) {
+        // Remove previous click listeners (if any)
+        grid.onclick = null;
+        grid.addEventListener('click', e => {
+          const tile = e.target.closest('.theme-tile');
+          if (tile && tile.dataset.theme) {
+            const themeDataObj = JSON.parse(tile.dataset.theme);
+            lockedTheme = themeDataObj;
+            applyTheme(themeDataObj);
+            localStorage.setItem('auraThemes', JSON.stringify(themeDataObj));
+          }
+        });
+      }
+    }, 0);
+
+  } else {
+    // Advanced mode: keep existing logic
+    const label1 = document.createElement('label'); label1.textContent = 'Accent Color:';
+    const accentInput = document.createElement('input'); accentInput.type = 'color'; accentInput.value = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7cc6ff';
+    const label2 = document.createElement('label'); label2.textContent = 'Background Gradient:';
+    const bg1 = document.createElement('input'); bg1.type = 'color'; bg1.value = getComputedStyle(document.documentElement).getPropertyValue('--bg1').trim() || '#0b0d16';
+    const bg2 = document.createElement('input'); bg2.type = 'color'; bg2.value = getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim() || '#1a1c2a';
+    const save = document.createElement('button'); save.textContent = 'Apply'; save.onclick = () => {
+      const t = { accent: accentInput.value, bg1: bg1.value, bg2: bg2.value };
+      applyTheme(t);
+    };
+    panel.append(label1, accentInput, document.createElement('br'), label2, bg1, bg2, document.createElement('br'), save);
+  }
+}
+
+function getAccentForCategory(cat) {
+  // Use first theme's accent for pill glow
+  const arr = themeData[cat];
+  return arr && arr.length > 0 ? arr[0].accent : '#7cc6ff';
+}
+
+let _themeRestore = null;
+function previewTheme(t) {
+  // Prevent preview if lockedTheme is set
+  if (lockedTheme) return;
+  // Save current theme for restore
+  if (!_themeRestore) {
+    _themeRestore = {
+      accent: getComputedStyle(document.documentElement).getPropertyValue('--accent'),
+      bg1: getComputedStyle(document.documentElement).getPropertyValue('--bg1'),
+      bg2: getComputedStyle(document.documentElement).getPropertyValue('--bg2'),
+      class: document.body.className,
+      background: document.body.style.background,
+      backgroundImage: document.body.style.backgroundImage,
+      backgroundSize: document.body.style.backgroundSize,
+      backgroundPosition: document.body.style.backgroundPosition
+    };
+  }
+  // Apply theme (like applyTheme, but not saving)
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--bg1', t.bg1);
+  document.documentElement.style.setProperty('--bg2', t.bg2);
+  // Sidebar accent
+  setSidebarAccent(t.accent);
+  // Toggle button accent
+  setToggleAccent(t.accent);
+  // Glass-shell glow
+  setGlowAccent(t.accent);
+  // Animated
+  if (t.animated && t.gradient) {
+    document.body.classList.add('animated-theme');
+    document.body.style.background = t.gradient;
+    document.body.style.backgroundSize = '200% 200%';
+    document.body.style.backgroundPosition = '0% 50%';
+  } else if (t.image) {
+    document.body.classList.remove('animated-theme');
+    document.body.style.background = `linear-gradient(${t.bg1}, ${t.bg2}), url(${t.image})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+  } else {
+    document.body.classList.remove('animated-theme');
+    document.body.style.background = '';
+  }
+}
+function restoreTheme() {
+  // Only restore if not locked (i.e., no theme has been clicked)
+  if (lockedTheme) return;
+  if (!_themeRestore) return;
+  document.documentElement.style.setProperty('--accent', _themeRestore.accent);
+  document.documentElement.style.setProperty('--bg1', _themeRestore.bg1);
+  document.documentElement.style.setProperty('--bg2', _themeRestore.bg2);
+  document.body.className = _themeRestore.class;
+  document.body.style.background = _themeRestore.background;
+  document.body.style.backgroundImage = _themeRestore.backgroundImage;
+  document.body.style.backgroundSize = _themeRestore.backgroundSize;
+  document.body.style.backgroundPosition = _themeRestore.backgroundPosition;
+  // Sidebar accent
+  setSidebarAccent(_themeRestore.accent);
+  setToggleAccent(_themeRestore.accent);
+  setGlowAccent(_themeRestore.accent);
+  _themeRestore = null;
+}
+function setSidebarAccent(accent) {
+  const aside = document.getElementById('aura-sidebar');
+  if (aside) aside.style.boxShadow = `0 0 70px 0 ${accent}, 0 2px 32px 0 rgba(0,0,0,0.22)`;
+}
+function setToggleAccent(accent) {
+  const toggle = document.getElementById('toggle-sidebar');
+  if (toggle) {
+    toggle.style.borderColor = accent;
+    toggle.style.color = accent;
+    toggle.style.boxShadow = `0 0 25px ${accent}, 0 0 40px rgba(0,0,0,0.4), 0 0 12px #fff inset`;
+    toggle.style.textShadow = `0 0 6px ${accent}, 0 0 12px #fff`;
+  }
+}
+function setGlowAccent(accent) {
+  const shell = document.querySelector('.glass-shell');
+  if (shell) shell.style.boxShadow = `0 0 30px 0px ${accent}, 0 0 0px 0px rgba(0,0,0,0.3)`;
+}
+
+function applyTheme(t) {
+  // Remove any animated-theme class
+  document.body.classList.remove('animated-theme');
+  document.body.style.background = '';
+  document.body.style.backgroundImage = '';
+  document.body.style.backgroundSize = '';
+  document.body.style.backgroundPosition = '';
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--bg1', t.bg1);
+  document.documentElement.style.setProperty('--bg2', t.bg2);
+  setSidebarAccent(t.accent);
+  setToggleAccent(t.accent);
+  setGlowAccent(t.accent);
+  // Save object for localStorage
+  let saveObj = {
+    accent: t.accent,
+    bg1: t.bg1,
+    bg2: t.bg2
+  };
+  // If picture theme (t.image)
+  if (t.image) {
+    document.body.style.background = `linear-gradient(${t.bg1}, ${t.bg2}), url(${t.image})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    // Save custom image if not already
+    if (t.image.startsWith && t.image.startsWith('data:')) {
+      localStorage.setItem('customThemeImage', t.image);
     }
-  }));
-  $('#send').addEventListener('click', sendChat);
-  $('#input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendChat(); });
-  $('#assistToggle').addEventListener('click', ()=> { $('#assistToggle').textContent = $('#assistToggle').textContent.includes('Offline') ? '🤖 Assist: API-ready' : '🤖 Assist: Offline'; });
-  $('#openThemes')?.addEventListener('click', ()=> showPanel('panel-themes'));
-  $('#backToAura')?.addEventListener('click', ()=> showPanel('panel-aura'));
-  $('#logoutBtn')?.addEventListener('click', ()=> { if(confirm('Log out of AuraOS?')){ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(PROFILE_KEY); location.reload(); }});
-  updateShellClock(); setInterval(updateShellClock,1000);
+    saveObj.image = t.image;
+    // Save also bg1 and bg2 for restoration
+    // Save always, even for picture
+    localStorage.setItem('auraThemes', JSON.stringify(saveObj));
+    return;
+  }
+  // If animated theme
+  if (t.animated && t.gradient) {
+    document.body.classList.add('animated-theme');
+    document.body.style.background = t.gradient;
+    document.body.style.backgroundSize = '200% 200%';
+    document.body.style.backgroundPosition = '0% 50%';
+    saveObj.animated = true;
+    saveObj.gradient = t.gradient;
+    // Save always, even for animated
+    localStorage.setItem('auraThemes', JSON.stringify(saveObj));
+    return;
+  }
+  // Standard theme (solid/pastel/neon)
+  document.body.classList.remove('animated-theme');
+  document.body.style.background = `linear-gradient(135deg, ${t.bg1} 0%, ${t.bg2} 100%)`;
+  localStorage.setItem('auraThemes', JSON.stringify(saveObj));
 }
 
-/* ============ Chat ============ */
-function addMsg(html, who='bot'){ const el=document.createElement('div'); el.className='msg'+(who==='me'?' me':''); el.innerHTML = html; $('#chat').appendChild(el); $('#chat').scrollTop = $('#chat').scrollHeight; }
-function sendChat(){ const v = $('#input').value.trim(); if(!v) return; addMsg(v,'me'); $('#input').value=''; setTimeout(()=> generateReply(v), 260); }
-function generateReply(text){
-  const t = text.toLowerCase();
-  if(/\b(hi|hello|hey|yo)\b/.test(t)) return addMsg("Hey! I'm Aura — I can chat, suggest activities, or open tools.");
-  if(t.includes('draw')){ showPanel('panel-draw'); return addMsg("Opening Draw — freestyle time!"); }
-  if(t.includes('color')){ showPanel('panel-color'); return addMsg("Opening Coloring Book 🎨"); }
-  if(t.includes('music')){ showPanel('panel-music'); return addMsg("Music tab ready — play something nice."); }
-  if(t.includes('journal')){ showPanel('panel-journal'); return addMsg("Journal opened — tell me about your day."); }
-  if(t.includes('breathe')||t.includes('calm')) return addMsg("Try: inhale 4 — hold 4 — exhale 6. Repeat 3 times.");
-  addMsg("Cool. Want to try draw, color, or play a game?");
+// Load saved theme on page load
+document.addEventListener('DOMContentLoaded', () => {
+  let saved = JSON.parse(localStorage.getItem('auraThemes') || 'null');
+  // If picture theme with image: if custom, load from localStorage
+  if (saved && saved.image) {
+    if (saved.image.startsWith && saved.image.startsWith('data:')) {
+      const customImg = localStorage.getItem('customThemeImage');
+      if (customImg) saved.image = customImg;
+    }
+    applyTheme(saved);
+    // Also force accent for sidebar/shell
+    setSidebarAccent(saved.accent);
+    setToggleAccent(saved.accent);
+    setGlowAccent(saved.accent);
+    lockedTheme = saved; // Set lockedTheme after applying saved
+  } else if (saved && saved.gradient) {
+    applyTheme(saved);
+    setSidebarAccent(saved.accent);
+    setToggleAccent(saved.accent);
+    setGlowAccent(saved.accent);
+    lockedTheme = saved;
+  } else if (saved) {
+    applyTheme(saved);
+    setSidebarAccent(saved.accent);
+    setToggleAccent(saved.accent);
+    setGlowAccent(saved.accent);
+    lockedTheme = saved;
+  } else {
+    // Default: first solid
+    applyTheme(themeData['solid'][0]);
+    setSidebarAccent(themeData['solid'][0].accent);
+    setToggleAccent(themeData['solid'][0].accent);
+    setGlowAccent(themeData['solid'][0].accent);
+    lockedTheme = themeData['solid'][0];
+  }
+  renderThemes();
+});
+
+// --- GAMES LOGIC ---
+let currentGame = null;
+let gameLoopId = null;
+let gameState = null;
+
+function openGame(type) {
+  document.getElementById('games-container').style.display = 'none';
+  document.getElementById('game-area').style.display = '';
+  const gameArea = document.getElementById('game-area');
+  document.body.appendChild(gameArea);
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Remove previous listeners
+  window.onkeydown = null;
+  canvas.onclick = null;
+  // Start selected game
+  currentGame = type;
+  if (type === 'bubble') startBubblePop(ctx, canvas);
+  else if (type === 'brick') startBrickBreaker(ctx, canvas);
+  else if (type === 'snake') startSnake(ctx, canvas);
 }
 
-/* ============ DRAW (simple) ============ */
-const doodle = $('#doodle'); const dctx = doodle && doodle.getContext && doodle.getContext('2d');
-if(doodle && dctx){
-  let drawing=false, last=null, drawUndo=[], drawRedo=[];
-  function setCanvasSize(canvas){
-    const ratio = window.devicePixelRatio||1;
-    const w = canvas.clientWidth * ratio, h = canvas.clientHeight * ratio;
-    if(canvas.width !== w || canvas.height !== h){
-      try{ const img = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height); canvas.width = w; canvas.height = h; canvas.getContext('2d').putImageData(img,0,0); }catch(e){ canvas.width=w; canvas.height=h; }
+function exitGame() {
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoopId = null;
+  currentGame = null;
+  gameState = null;
+  document.getElementById('game-area').style.display = 'none';
+  document.getElementById('games-container').style.display = '';
+  const gameArea = document.getElementById('game-area');
+  document.querySelector('.glass-shell').appendChild(gameArea);
+  // Remove game-specific listeners
+  window.onkeydown = null;
+  document.getElementById('gameCanvas').onclick = null;
+}
+
+// --- Bubble Pop+ Aura Edition ---
+function startBubblePop(ctx, canvas) {
+  // Remove any previous HUD or encouragement overlays
+  document.getElementById('bubble-score-hud')?.remove();
+  document.getElementById('encourage-layer')?.remove();
+
+  // --- HUD: Score only, glowing, centered top ---
+  const hud = document.createElement('div');
+  hud.id = 'bubble-score-hud';
+  hud.style.position = 'absolute';
+  hud.style.top = '18px';
+  hud.style.left = '50%';
+  hud.style.transform = 'translateX(-50%)';
+  hud.style.fontFamily = "'Poppins', 'Outfit', sans-serif";
+  hud.style.fontWeight = '600';
+  hud.style.fontSize = '2.1rem';
+  hud.style.color = '#fff';
+  hud.style.textShadow = '0 0 16px var(--accent), 0 0 2px #fff';
+  hud.style.letterSpacing = '1px';
+  hud.style.userSelect = 'none';
+  hud.style.pointerEvents = 'none';
+  hud.style.zIndex = '11';
+  // Place above the canvas
+  canvas.parentElement.style.position = 'relative';
+  canvas.parentElement.insertBefore(hud, canvas);
+
+  // --- Encouragement Layer ---
+  const encourageLayer = document.createElement('div');
+  encourageLayer.id = 'encourage-layer';
+  encourageLayer.style.position = 'absolute';
+  encourageLayer.style.left = '0';
+  encourageLayer.style.top = '0';
+  encourageLayer.style.width = '100%';
+  encourageLayer.style.height = '100%';
+  encourageLayer.style.pointerEvents = 'none';
+  encourageLayer.style.zIndex = '20';
+  canvas.parentElement.appendChild(encourageLayer);
+
+  // --- Bubble Pop+ Physics and Visuals (Aura Edition) ---
+  const colors = ['#7cc6ff', '#59e48f', '#d28aff', '#ff7373', '#fff176'];
+  let bubbles = [];
+  let score = 0;
+  let playing = true;
+  const N = 14;
+  for (let i = 0; i < N; ++i) {
+    let r = Math.random() * 22 + 18;
+    let tries = 0, x, y, ok;
+    do {
+      ok = true;
+      x = Math.random() * (canvas.width - 2*r) + r;
+      y = Math.random() * (canvas.height - 2*r) + r;
+      for (const b of bubbles)
+        if ((x-b.x)**2 + (y-b.y)**2 < (b.r+b.r+8)**2) { ok = false; break; }
+    } while (!ok && ++tries < 15);
+    const speed = 1.1 + Math.random()*1.2;
+    const angle = Math.random()*2*Math.PI;
+    bubbles.push({
+      x, y, r,
+      dx: Math.cos(angle)*speed,
+      dy: Math.sin(angle)*speed,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      popAnim: 0
+    });
+  }
+
+  // --- Encouragement System ---
+  const encouragements = [
+    "WOW!", "Perfect Pop!", "Keep Going!", "Amazing!", "Great!", "Excellent!", "So Satisfying!", "Brilliant!", "Awesome!", "Incredible!"
+  ];
+  function showEncouragement() {
+    const msg = encouragements[Math.floor(Math.random()*encouragements.length)];
+    const div = document.createElement('div');
+    div.textContent = msg;
+    div.style.position = 'absolute';
+    div.style.left = '50%';
+    div.style.top = '36px';
+    div.style.transform = 'translateX(-50%)';
+    div.style.fontFamily = "'Poppins', 'Outfit', sans-serif";
+    div.style.fontWeight = '700';
+    div.style.fontSize = '2.5rem';
+    div.style.color = 'var(--accent)';
+    div.style.textShadow = '0 0 24px var(--accent), 0 0 4px #fff';
+    div.style.opacity = '1';
+    div.style.userSelect = 'none';
+    div.style.pointerEvents = 'none';
+    div.style.filter = 'brightness(1.3)';
+    div.style.zIndex = '100';
+    // Animate: fade up and out, fireworks
+    div.animate([
+      { opacity: 1, transform: 'translateX(-50%) scale(1)', filter: 'brightness(1.3)' },
+      { opacity: 1, transform: 'translateX(-50%) scale(1.18)', filter: 'brightness(1.5)' },
+      { opacity: 0, transform: 'translateX(-50%) translateY(-30px) scale(1.05)', filter: 'brightness(1.1)' }
+    ], { duration: 1100, easing: 'cubic-bezier(.7,0,.4,1)' });
+    encourageLayer.appendChild(div);
+    setTimeout(()=>{div.remove();}, 1100);
+    // Fireworks effect
+    for(let k=0;k<14;++k){
+      const fw = document.createElement('div');
+      fw.style.position = 'absolute';
+      fw.style.left = '50%';
+      fw.style.top = '56px';
+      fw.style.width = '10px';
+      fw.style.height = '10px';
+      fw.style.borderRadius = '50%';
+      fw.style.background = 'var(--accent)';
+      fw.style.boxShadow = '0 0 16px 4px var(--accent)';
+      fw.style.opacity = '0.85';
+      fw.style.pointerEvents = 'none';
+      fw.style.zIndex = '101';
+      encourageLayer.appendChild(fw);
+      const theta = Math.random()*2*Math.PI;
+      const dist = 44 + Math.random()*36;
+      fw.animate([
+        { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' },
+        { opacity: 0.6, transform: `translate(-50%,-50%) translate(${Math.cos(theta)*dist}px,${Math.sin(theta)*dist}px) scale(0.7)` },
+        { opacity: 0, transform: `translate(-50%,-50%) translate(${Math.cos(theta)*dist*1.4}px,${Math.sin(theta)*dist*1.4}px) scale(0.3)` }
+      ], { duration: 900+Math.random()*200, easing:'cubic-bezier(.6,0,.7,1)' });
+      setTimeout(()=>fw.remove(), 950);
     }
   }
-  setCanvasSize(doodle);
-  window.addEventListener('resize', ()=> setCanvasSize(doodle));
-  function pointer(e, canvas){ const rect = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const ratio = canvas.width / rect.width; return { x: (clientX - rect.left) * ratio, y: (clientY - rect.top) * ratio }; }
-  function saveDrawState(){ try{ drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); if(drawUndo.length>60) drawUndo.shift(); drawRedo=[]; }catch(e){} }
-  doodle.addEventListener('pointerdown', e=>{ drawing=true; last = pointer(e,doodle); dctx.lineCap='round'; dctx.lineJoin='round'; dctx.strokeStyle = $('#brushColor').value; dctx.lineWidth = Number($('#brushSize').value) * (doodle.width / doodle.clientWidth); saveDrawState(); });
-  doodle.addEventListener('pointermove', e=>{ if(!drawing) return; const p = pointer(e,doodle); dctx.beginPath(); dctx.moveTo(last.x,last.y); dctx.lineTo(p.x,p.y); dctx.stroke(); last = p; });
-  window.addEventListener('pointerup', ()=> { if(drawing){ drawing=false; }});
-  $('#clearDraw')?.addEventListener('click', ()=> { saveDrawState(); dctx.clearRect(0,0,doodle.width,doodle.height); });
-  $('#undoDraw')?.addEventListener('click', ()=> { if(drawUndo.length>0){ const prev = drawUndo.pop(); drawRedo.push(dctx.getImageData(0,0,doodle.width,doodle.height)); dctx.putImageData(prev,0,0); }});
-  $('#redoDraw')?.addEventListener('click', ()=> { if(drawRedo.length>0){ const next = drawRedo.pop(); drawUndo.push(dctx.getImageData(0,0,doodle.width,doodle.clientHeight)); dctx.putImageData(next,0,0); }});
-  $('#saveDraw')?.addEventListener('click', ()=> { const a=document.createElement('a'); a.href = doodle.toDataURL('image/png'); a.download = `draw-${Date.now()}.png`; a.click(); });
+
+  // --- Bubble Pop+ Draw/Update ---
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Improve rendering quality for high-DPI screens
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    // Bubbles
+    for (const b of bubbles) {
+      // Pop animation
+      if (b.popAnim>0) {
+        ctx.save();
+        ctx.globalAlpha = 0.7*b.popAnim;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r+b.popAnim*26, 0, 2*Math.PI);
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 8*b.popAnim;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 18*b.popAnim;
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Bubble body
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, 2*Math.PI);
+      // Bubble gradient
+      const grad = ctx.createRadialGradient(b.x-b.r*0.2, b.y-b.r*0.2, b.r*0.1, b.x, b.y, b.r);
+      grad.addColorStop(0, "#fff");
+      grad.addColorStop(0.16, b.color+"cc");
+      grad.addColorStop(0.92, b.color+"88");
+      grad.addColorStop(1, "#fff0");
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = 0.92;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 2.8;
+      ctx.strokeStyle = "#fff";
+      ctx.stroke();
+      // Bubble highlight
+      ctx.beginPath();
+      ctx.arc(b.x-b.r*0.32, b.y-b.r*0.32, b.r*0.23, Math.PI*0.8, Math.PI*2.1);
+      ctx.strokeStyle = "#fff8";
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.7;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.restore();
+    }
+    // Score HUD is handled via DOM
+    hud.textContent = `Score: ${score}`;
+    // End message
+    if (!playing && bubbles.length === 0) {
+      ctx.save();
+      ctx.font = "bold 2.3rem Poppins, Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "var(--accent)";
+      ctx.shadowColor = "var(--accent)";
+      ctx.shadowBlur = 18;
+      ctx.fillText("All bubbles popped!", canvas.width/2, canvas.height/2-14);
+      ctx.font = "1.2rem Poppins, Outfit, sans-serif";
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff";
+      ctx.fillText("Score: "+score, canvas.width/2, canvas.height/2+28);
+      ctx.restore();
+    }
+  }
+  function update() {
+    for (const b of bubbles) {
+      b.x += b.dx;
+      b.y += b.dy;
+      // Soft wall bounce
+      if (b.x-b.r < 0) { b.x = b.r; b.dx = Math.abs(b.dx);}
+      if (b.x+b.r > canvas.width) { b.x = canvas.width-b.r; b.dx = -Math.abs(b.dx);}
+      if (b.y-b.r < 0) { b.y = b.r; b.dy = Math.abs(b.dy);}
+      if (b.y+b.r > canvas.height) { b.y = canvas.height-b.r; b.dy = -Math.abs(b.dy);}
+      // Pop animation decay
+      if (b.popAnim>0) b.popAnim -= 0.06;
+    }
+    // Remove finished pop anims
+    bubbles = bubbles.filter(b=>b.popAnim<=0.99 || b.popAnim<=0);
+  }
+  function loop() {
+    update();
+    draw();
+    if (playing || bubbles.length > 0) gameLoopId = requestAnimationFrame(loop);
+  }
+  // Bubble click logic
+  canvas.onclick = function(e) {
+    if (!playing) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    // Adjust for potential transform scaling
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX / dpr;
+    const my = (e.clientY - rect.top) * scaleY / dpr;
+    for (let i = 0; i < bubbles.length; ++i) {
+      const b = bubbles[i];
+      if ((mx-b.x)**2 + (my-b.y)**2 < b.r**2) {
+        // Pop animation
+        b.popAnim = 1.0;
+        // Remove after animation
+        setTimeout(()=>{const idx=bubbles.indexOf(b); if(idx!==-1) bubbles.splice(idx,1);}, 180);
+        score += 10;
+        // Show encouragement ~10–15% randomly
+        if (Math.random()<0.14) showEncouragement();
+        break;
+      }
+    }
+    if (bubbles.length === 0) {
+      playing = false;
+    }
+  };
+  loop();
 }
 
-/* ============ COLORING (thumbnails + simple bucket) ============ */
-const SVG_PAGES = (function(){
-  const pages=[]; const wrap=(inner,w=800,h=600)=>`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'><rect width='100%' height='100%' fill='white'/><g fill='none' stroke='#000' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'>${inner}</g></svg>`;
-  pages.push({name:'Happy Kitty', svg: wrap("<path d='M240 320 q-60 -180 160 -160 q220 -20 160 160 q-40 100 -160 120 q-120 -20 -160 -120z' /><circle cx='330' cy='260' r='12'/><circle cx='470' cy='260' r='12'/><path d='M380 340 q30 20 60 0'/>")});
-  pages.push({name:'Zoom Car', svg: wrap("<rect x='120' y='300' width='560' height='80' rx='20'/><circle cx='260' cy='420' r='36'/><circle cx='540' cy='420' r='36'/>")});
-  pages.push({name:'Cozy House', svg: wrap("<path d='M140 360 h520 v-180 h-520z' /><path d='M140 360 l260 -200 l260 200' /><rect x='360' y='260' width='80' height='60'/>")});
-  return pages;
+// --- Brick Breaker ---
+function startBrickBreaker(ctx, canvas) {
+  // State
+  const paddle = {w: 90, h: 14, x: canvas.width/2 - 45, y: canvas.height-32, dx: 0};
+  const ball = {x: canvas.width/2, y: canvas.height-60, r: 9, dx: 3, dy: -3};
+  const rows = 5, cols = 8, brickW = 70, brickH = 20, brickPad = 10, topOff = 40, leftOff = 35;
+  let bricks = [];
+  let score = 0;
+  let playing = true;
+  for (let r=0;r<rows;++r) for (let c=0;c<cols;++c)
+    bricks.push({x:leftOff+c*(brickW+brickPad),y:topOff+r*(brickH+brickPad),w:brickW,h:brickH,alive:true});
+
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Bricks
+    for (const br of bricks) {
+      if (!br.alive) continue;
+      ctx.fillStyle = "#7cc6ff";
+      ctx.fillRect(br.x,br.y,br.w,br.h);
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(br.x,br.y,br.w,br.h);
+    }
+    // Paddle
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+    // Ball
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, 2*Math.PI);
+    ctx.fillStyle = "#ff7373";
+    ctx.fill();
+    // Score
+    ctx.font = "20px Poppins, sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Score: "+score, 18, 26);
+    if (!playing) {
+      ctx.font = "30px Poppins, sans-serif";
+      ctx.fillStyle = "#7cc6ff";
+      ctx.fillText("Game Over!", canvas.width/2-80, canvas.height/2);
+    }
+    if (bricks.every(b=>!b.alive)) {
+      ctx.font = "28px Poppins, sans-serif";
+      ctx.fillStyle = "#59e48f";
+      ctx.fillText("You Win!", canvas.width/2-60, canvas.height/2-30);
+    }
+  }
+  function update() {
+    if (!playing) return;
+    // Move paddle
+    paddle.x += paddle.dx;
+    if (paddle.x < 0) paddle.x = 0;
+    if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
+    // Move ball
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+    // Wall collisions
+    if (ball.x-ball.r < 0 || ball.x+ball.r > canvas.width) ball.dx *= -1;
+    if (ball.y-ball.r < 0) ball.dy *= -1;
+    // Paddle collision
+    if (ball.y+ball.r > paddle.y && ball.x > paddle.x && ball.x < paddle.x+paddle.w) {
+      ball.dy *= -1;
+      ball.y = paddle.y - ball.r;
+    }
+    // Bricks
+    for (const br of bricks) {
+      if (!br.alive) continue;
+      if (ball.x > br.x && ball.x < br.x+br.w && ball.y-ball.r < br.y+br.h && ball.y+ball.r > br.y) {
+        br.alive = false;
+        score += 5;
+        ball.dy *= -1;
+        break;
+      }
+    }
+    // Lose
+    if (ball.y-ball.r > canvas.height) playing = false;
+  }
+  function loop() {
+    update();
+    draw();
+    if (playing || bricks.some(b=>b.alive)) gameLoopId = requestAnimationFrame(loop);
+  }
+  // Controls
+  window.onkeydown = function(e){
+    if (e.key === "ArrowLeft") paddle.dx = -7;
+    else if (e.key === "ArrowRight") paddle.dx = 7;
+  };
+  window.onkeyup = function(e){
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") paddle.dx = 0;
+  };
+  loop();
+}
+
+// --- Snake+ ---
+function startSnake(ctx, canvas) {
+  const grid = 20;
+  let snake = [{x: 10, y: 12}];
+  let dir = {x: 1, y: 0};
+  let food = {x: 15, y: 10};
+  let length = 4;
+  let score = 0;
+  let playing = true;
+  let lastMove = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Snake
+    for (let i=0;i<snake.length;++i) {
+      ctx.fillStyle = i===0 ? "#7cc6ff" : "#fff";
+      ctx.fillRect(snake[i].x*grid, snake[i].y*grid, grid-2, grid-2);
+    }
+    // Food
+    ctx.fillStyle = "#ff7373";
+    ctx.fillRect(food.x*grid, food.y*grid, grid-2, grid-2);
+    // Score
+    ctx.font = "20px Poppins, sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Score: "+score, 15, 28);
+    if (!playing) {
+      ctx.font = "30px Poppins, sans-serif";
+      ctx.fillStyle = "#d28aff";
+      ctx.fillText("Game Over!", canvas.width/2-80, canvas.height/2);
+    }
+  }
+  function update() {
+    if (!playing) return;
+    // Next head
+    const nx = snake[0].x + dir.x;
+    const ny = snake[0].y + dir.y;
+    // Check collision
+    if (nx<0 || ny<0 || nx>=canvas.width/grid || ny>=canvas.height/grid ||
+        snake.some(s=>s.x===nx && s.y===ny)) {
+      playing = false;
+      return;
+    }
+    snake.unshift({x:nx, y:ny});
+    if (nx === food.x && ny === food.y) {
+      score += 10;
+      length++;
+      // Place new food
+      let fx, fy;
+      do {
+        fx = Math.floor(Math.random()*(canvas.width/grid));
+        fy = Math.floor(Math.random()*(canvas.height/grid));
+      } while (snake.some(s=>s.x===fx && s.y===fy));
+      food = {x:fx, y:fy};
+    } else {
+      while (snake.length > length) snake.pop();
+    }
+  }
+  function loop(ts) {
+    if (!lastMove || ts-lastMove>105) {
+      update();
+      draw();
+      lastMove = ts;
+    }
+    if (playing) gameLoopId = requestAnimationFrame(loop);
+    else draw();
+  }
+  window.onkeydown = function(e){
+    if (e.key === "ArrowUp" && dir.y !== 1) {dir={x:0,y:-1};}
+    else if (e.key === "ArrowDown" && dir.y !== -1) {dir={x:0,y:1};}
+    else if (e.key === "ArrowLeft" && dir.x !== 1) {dir={x:-1,y:0};}
+    else if (e.key === "ArrowRight" && dir.x !== -1) {dir={x:1,y:0};}
+  };
+  loop();
+}
+
+// --- AuraAI Ultimate Part 4: Performance, Glow Scaling, 4K Scaling, Animation Polish ---
+// Performance: cancelAnimationFrame safety, canvas resize
+(function() {
+  // Cancel game loop safely on tab/game exit
+  const origExitGame = window.exitGame;
+  window.exitGame = function() {
+    if (window.gameLoopId) {
+      try { cancelAnimationFrame(window.gameLoopId); } catch(e) {}
+      window.gameLoopId = null;
+    }
+    origExitGame();
+  };
+  // Responsive canvas scaling for 4K and window resize
+  function resizeGameCanvas() {
+    const area = document.getElementById('game-area');
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas || area.style.display === 'none') return;
+    // 90% of glass-shell, max 1200x900, min 320x240
+    const shell = document.querySelector('.glass-shell');
+    const w = Math.max(320, Math.min(0.9*shell.offsetWidth, 1200));
+    const h = Math.max(240, Math.min(0.85*shell.offsetHeight, 1000));
+    if (canvas.width !== Math.floor(w) || canvas.height !== Math.floor(h)) {
+      canvas.width = Math.floor(w);
+      canvas.height = Math.floor(h);
+      // If a game is running, do NOT restart it to apply new size (fix Bubble Pop+ restart bug)
+      // if (window.currentGame) {
+      //   window.exitGame();
+      //   window.openGame(window.currentGame);
+      // }
+    }
+    // --- High-Resolution Canvas Scaling (safe, one-time) ---
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const needResize = Math.floor(canvas.width / dpr) !== Math.floor(rect.width) ||
+                       Math.floor(canvas.height / dpr) !== Math.floor(rect.height);
+    if (needResize) {
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+  }
+  window.addEventListener('resize', resizeGameCanvas);
+  // Resize on opening game
+  const origOpenGame = window.openGame;
+  window.openGame = function(type) {
+    setTimeout(resizeGameCanvas, 0);
+    origOpenGame(type);
+  };
+  // Also resize on tab switch to games
+  const origSwitchTab = window.switchTab;
+  window.switchTab = function(id) {
+    origSwitchTab(id);
+    if (id === 'games') setTimeout(resizeGameCanvas, 0);
+  };
 })();
-function renderColorThumbs(){ const root = $('#colorThumbs'); if(!root) return; root.innerHTML=''; SVG_PAGES.forEach((p,i)=>{ const d=document.createElement('div'); d.className='thumb'; d.title=p.name; const img=new Image(); img.src='data:image/svg+xml;utf8,'+encodeURIComponent(p.svg); img.style.maxWidth='100%'; img.style.maxHeight='90px'; d.appendChild(img); d.addEventListener('click', ()=> loadColoring(i)); root.appendChild(d); }); }
-function loadColoring(idx){ const svg = SVG_PAGES[idx].svg; const img = new Image(); img.onload = ()=>{ const canvas = $('#colorCanvas'); const cctx = canvas.getContext('2d'); canvas.width = canvas.clientWidth * (window.devicePixelRatio||1); canvas.height = canvas.clientHeight * (window.devicePixelRatio||1); cctx.fillStyle = '#fff'; cctx.fillRect(0,0,canvas.width,canvas.height); const ratio = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.96; const tw = img.width * ratio, th = img.height * ratio; const dx = (canvas.width - tw)/2, dy = (canvas.height - th)/2; cctx.drawImage(img,0,0,img.width,img.height,dx,dy,tw,th); }; img.src='data:image/svg+xml;utf8,'+encodeURIComponent(svg); }
-renderColorThumbs();
 
-/* ============ THEMES (simple) ============ */
-const THEMES = [{name:'Default',bg:'#0b0f14'},{name:'Calm',bg:'#0b1420'},{name:'Vintage',bg:'#2b1f1f'}];
-function renderThemes(){ const root = $('#themesRoot'); if(!root) return; root.innerHTML=''; THEMES.forEach(t=>{ const el=document.createElement('div'); el.className='swatch'; el.title=t.name; const preview=document.createElement('div'); preview.style.height='56px'; preview.style.borderRadius='8px'; preview.style.background = `linear-gradient(90deg, ${t.bg}, ${t.bg})`; el.appendChild(preview); const tag=document.createElement('div'); tag.className='tag'; tag.textContent=t.name; el.appendChild(tag); el.addEventListener('click', ()=> { document.body.style.background = `linear-gradient(180deg, ${t.bg}, ${t.bg})`; localStorage.setItem('Aura_Theme', JSON.stringify(t)); }); root.appendChild(el); }); }
+// Glow scaling: subtle pulsating glow based on theme accent
+(function() {
+  // Add a glowing animated border to .glass-shell, using accent color and a pulsating effect
+  const style = document.createElement('style');
+  style.innerHTML = `
+  @media (min-width: 1600px) {
+    .glass-shell { box-shadow: 0 0 70px 10px var(--accent), 0 0 40px 0px rgba(0,0,0,0.3); }
+  }
+  .glass-shell.aura-glow {
+    box-shadow: 0 0 30px 0px var(--accent), 0 0 0px 0px rgba(0,0,0,0.3);
+    animation: auraGlowPulse 3.6s ease-in-out infinite;
+  }
+  @keyframes auraGlowPulse {
+    0% { box-shadow: 0 0 30px 0px var(--accent), 0 0 0px 0px rgba(0,0,0,0.3);}
+    50% { box-shadow: 0 0 55px 10px var(--accent), 0 0 12px 2px rgba(0,0,0,0.25);}
+    100% { box-shadow: 0 0 30px 0px var(--accent), 0 0 0px 0px rgba(0,0,0,0.3);}
+  }
+  /* 4K scaling: larger font and UI elements */
+  @media (min-width: 2560px) {
+    html { font-size: 1.25em; }
+    .glass-shell { border-radius: 38px; }
+    .game-card { width: 400px; height: 400px; font-size:1.25em;}
+    #gameCanvas { border-radius: 20px; }
+  }
+  `;
+  document.head.appendChild(style);
+  // Add glow class to glass-shell
+  function updateGlow() {
+    const shell = document.querySelector('.glass-shell');
+    if (!shell) return;
+    shell.classList.add('aura-glow');
+  }
+  // Update accent color in animation on theme change
+  const origApplyTheme = window.applyTheme;
+  window.applyTheme = function(t) {
+    origApplyTheme(t);
+    // Force update of CSS var for accent in animation
+    document.documentElement.style.setProperty('--accent', t.accent);
+  };
+  // Initial
+  updateGlow();
+  // Also re-apply on DOMContentLoaded (in case of dynamic reload)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateGlow);
+  } else {
+    updateGlow();
+  }
+})();
 
-/* ============ GAMES (list only) ============ */
-const games = [
-  {id:'bubble', title:'Bubble Pop+', desc:'Pop bubbles', run: ()=>{}},
-  {id:'snake', title:'Snake+', desc:'Classic snake', run: ()=>{}}
-];
-function renderGameList(){ const root = $('#gamesList'); if(!root) return; root.innerHTML=''; games.forEach(g=>{ const card=document.createElement('div'); card.className='game-card'; const h=document.createElement('div'); h.style.fontWeight='700'; h.textContent=g.title; const p=document.createElement('div'); p.style.fontSize='13px'; p.style.color='var(--muted)'; p.textContent=g.desc; const btn=document.createElement('button'); btn.className='btn primary'; btn.textContent='Play'; btn.addEventListener('click', ()=> { alert('Launching '+g.title); }); card.appendChild(h); card.appendChild(p); card.appendChild(btn); root.appendChild(card); }); }
-
-/* ============ PROFILE (local UI + avatar) ============ */
-const localProfileKey = 'Aura_Profile_v1';
-let profile = {name:'Anonymous',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:'',bg:'default'};
-function loadProfile(){ try{ const raw = localStorage.getItem(localProfileKey); if(raw) Object.assign(profile, JSON.parse(raw)); }catch(e){} applyProfileUI(); }
-function saveProfile(){ profile.name = $('#displayName').value || 'Anonymous'; profile.bio = $('#bioInput').value || ''; profile.status = $('#statusSelect').value; localStorage.setItem(localProfileKey, JSON.stringify(profile)); alert('Profile saved locally'); applyProfileUI(); }
-function applyProfileUI(){ $('#displayName').value = profile.name; $('#bioInput').value = profile.bio; $('#statusSelect').value = profile.status; if(profile.avatar){ $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none' } else { $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block' } document.documentElement.style.setProperty('--accent', profile.color); }
-$('#saveProfile')?.addEventListener('click', saveProfile);
-$('#resetProfile')?.addEventListener('click', ()=> { localStorage.removeItem(localProfileKey); profile = {name:'Anonymous',bio:'',status:'available',color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),avatar:'',bg:'default'}; applyProfileUI(); });
-$('#exportProfile')?.addEventListener('click', ()=> { const blob=new Blob([JSON.stringify(profile)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='aura_profile.json'; a.click(); URL.revokeObjectURL(url); });
-$('#importProfile')?.addEventListener('change',(e)=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ profile=JSON.parse(fr.result); localStorage.setItem(localProfileKey, JSON.stringify(profile)); applyProfileUI(); alert('Profile imported'); }catch(err){ alert('Invalid file'); } }; fr.readAsText(f); });
-
-$('#avatarInput')?.addEventListener('change', (e)=> { const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=> { profile.avatar = fr.result; $('#avatarImg').src = profile.avatar; $('#avatarImg').style.display='block'; $('#avatarPlaceholder').style.display='none'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); }; fr.readAsDataURL(f); });
-$('#removeAvatar')?.addEventListener('click', ()=> { profile.avatar=''; $('#avatarImg').style.display='none'; $('#avatarPlaceholder').style.display='block'; localStorage.setItem(localProfileKey, JSON.stringify(profile)); });
-
-/* ============ JOURNAL ============ */
-const journalKey='Aura_Journal';
-$('#journalText').value = localStorage.getItem(journalKey) || '';
-$('#saveJournal')?.addEventListener('click', ()=> { localStorage.setItem(journalKey, $('#journalText').value); alert('Journal saved.'); });
-$('#downloadJournal')?.addEventListener('click', ()=> { const blob=new Blob([$('#journalText').value], {type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='journal.txt'; a.click(); URL.revokeObjectURL(url); });
-$('#clearJournal')?.addEventListener('click', ()=> { if(confirm('Clear journal?')){ $('#journalText').value=''; localStorage.removeItem(journalKey); } });
-
-/* ============ UTILITIES ============ */
-function updateShellClock(){ const d=new Date(); const c = $('#clock'); if(c) c.textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
-function showPanel(id){ $all('.panel').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); $all('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-target')===id)); }
-
-/* ============ BOOT ============ */
-tryAutoLogin();
-
-/* ============ page ready polish ============ */
-window.addEventListener('load', ()=>{
-  // entrance animations
-  setTimeout(()=> {
-    $all('.pane, .tab, .side-card, .main-card').forEach((el,i)=>{ el.style.opacity=0; setTimeout(()=>{ el.style.transition='opacity .5s ease, transform .5s ease'; el.style.transform='translateY(6px)'; requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform='none'; }); }, i*40) });
-  }, 300);
-  tLog('AuraOS ready');
-});
+// Animation polish: smooth transitions for tab-content & glass-shell, glass-shell hover
+(function() {
+  const style2 = document.createElement('style');
+  style2.innerHTML = `
+  .glass-shell {
+    transition: box-shadow 0.7s cubic-bezier(.4,1.2,.2,1), border-radius 0.4s, background 0.3s;
+  }
+  .glass-shell:hover {
+    box-shadow: 0 0 80px 16px var(--accent), 0 0 50px 8px rgba(0,0,0,0.25);
+    transition: box-shadow 0.7s cubic-bezier(.4,1.2,.2,1);
+  }
+  .tab-content {
+    transition: opacity 0.4s cubic-bezier(.4,1.3,.2,1);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tab-content.active {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0.05s;
+  }
+  `;
+  document.head.appendChild(style2);
+})();
 </script>
+</body>
+</htmlremove
+</script>
+<style>
+  .theme-category-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0 0 0 2px;
+    width: 100%;
+  }
+  .theme-category-pill {
+    background: rgba(255,255,255,0.10);
+    border-radius: 24px;
+    padding: 8px 24px;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1.06em;
+    color: #fff;
+    box-shadow: 0 0 0 0 #0000;
+    transition: background 0.19s, color 0.19s, box-shadow 0.22s;
+    margin-right: 6px;
+    outline: none;
+    position: relative;
+    z-index: 1;
+  }
+  .theme-category-pill.active {
+    background: var(--accent);
+    color: #181c29;
+    box-shadow: 0 0 18px 0 var(--accent);
+  }
+  .theme-category-pill:hover,
+  .theme-category-pill:focus-visible {
+    color: #fff;
+    background: linear-gradient(90deg, var(--accent) 0%, #fff3 100%);
+    box-shadow: 0 0 22px 2px var(--accent);
+  }
+  .theme-switch-adv {
+    background: linear-gradient(90deg, var(--accent) 0%, #fff2 100%);
+    border-radius: 24px;
+    font-weight: 700;
+    color: #181c29;
+    border: none;
+    padding: 8px 22px;
+    font-size: 1.06em;
+    box-shadow: 0 0 20px 0 var(--accent), 0 0 2px #fff;
+    cursor: pointer;
+    margin-left: auto;
+    margin-bottom: 10px;
+    float: right;
+    transition: box-shadow 0.25s, background 0.2s;
+  }
+  .theme-switch-adv:hover {
+    box-shadow: 0 0 36px 2px var(--accent), 0 0 6px #fff;
+    background: var(--accent);
+    color: #fff;
+  }
+  .theme-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 26px;
+    justify-content: flex-start;
+  }
+  .theme-tile {
+    border-radius: 18px;
+    min-width: 120px;
+    min-height: 68px;
+    max-width: 20vw;
+    flex: 1 0 18%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    border: 2.5px solid transparent;
+    box-shadow: 0 0 10px 0 var(--accent), 0 0 0px #000;
+    transition: box-shadow 0.22s, border 0.22s, transform 0.18s;
+    position: relative;
+    overflow: hidden;
+    padding: 0 0 10px 0;
+  }
+  .theme-tile:hover {
+    transform: scale(1.05);
+    z-index: 2;
+  }
+  .theme-label {
+    font-size: 0.98em;
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    text-shadow: 0 0 8px var(--accent), 0 0 1px #fff;
+    filter: brightness(1.08);
+    user-select: none;
+    pointer-events: none;
+    text-align: center;
+    width: 100%;
+    padding: 0 3px;
+  }
+  .theme-tile-picture {
+    min-width: 120px;
+    min-height: 68px;
+    background-size: cover !important;
+    background-position: center !important;
+    color: #fff;
+    border: 2.5px solid transparent;
+  }
+  /* Animated category: ambientShift keyframes */
+  @keyframes ambientShift {
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
+  }
+  .animated-theme {
+    background-size: 200% 200%!important;
+    animation: ambientShift 20s ease infinite!important;
+  }
+  @media (max-width: 900px) {
+    .theme-tile { min-width: 86px; min-height: 46px; font-size: 0.95em;}
+    .theme-label { font-size: 0.93em;}
+    .theme-grid { gap: 8px; }
+  }
+</style>	
+</style>
+<style>
+  /* AuraAI 4.0 Mood Panel and Sidebar Animations */
+  .AuraAI-mood-toggle {
+    margin: 18px auto 0 auto;
+    display: block;
+    font-size: 1.13em;
+    background: rgba(255,255,255,0.13);
+    border: none;
+    border-radius: 18px;
+    color: var(--accent);
+    font-family: inherit;
+    font-weight: 600;
+    box-shadow: 0 0 18px var(--accent);
+    padding: 9px 34px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.22s;
+    letter-spacing: 0.5px;
+  }
+  .AuraAI-mood-toggle:hover, .AuraAI-mood-toggle:focus-visible {
+    background: var(--accent);
+    color: #181c29;
+    box-shadow: 0 0 34px var(--accent), 0 0 4px #fff;
+    outline: none;
+  }
+  .AuraAI-mood-panel {
+    margin: 0 auto 0 auto;
+    margin-top: 16px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 22px;
+    padding: 16px 22px 10px 22px;
+    box-shadow: 0 0 30px 0 var(--accent), 0 0 2px #fff;
+    max-width: 430px;
+    backdrop-filter: blur(16px) saturate(1.1);
+    transition: opacity 0.4s, filter 0.4s;
+    opacity: 1;
+    filter: blur(0px);
+    position: relative;
+    z-index: 9;
+  }
+  .AuraAI-mood-panel.AuraAI-hidden {
+    display: none;
+    opacity: 0;
+    filter: blur(4px);
+    pointer-events: none;
+  }
+  .AuraAI-mood-group {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.07em;
+    flex-wrap: wrap;
+  }
+  .AuraAI-mood-group span {
+    font-weight: 600;
+    min-width: 110px;
+    color: var(--accent);
+    letter-spacing: 0.2px;
+  }
+  .AuraAI-mood-btn {
+    font-size: 1.35em;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    border-radius: 13px;
+    margin-right: 2px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.22s, transform 0.13s;
+    box-shadow: 0 0 8px var(--accent)33;
+    outline: none;
+  }
+  .AuraAI-mood-btn:hover, .AuraAI-mood-btn:focus-visible {
+    background: var(--accent);
+    color: #181c29;
+    box-shadow: 0 0 18px var(--accent), 0 0 2px #fff;
+    transform: scale(1.13);
+  }
+  /* Sidebar animation */
+  #aura-sidebar {
+    transition: opacity 0.4s, filter 0.4s;
+  }
+</style>
 </body>
 </html>
