@@ -337,6 +337,73 @@ aside#aura-sidebar .sidebar-title {
 #music iframe { border: none; border-radius: 20px; width: 100%; height: 380px; }
 
 </style>
+<style>
+/* 🌐 Desktop Default */
+#main {
+  height: 90vh;
+  width: calc(100vw - 260px);
+  margin-left: 260px;
+  transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* when sidebar collapsed */
+body.sidebar-collapsed #main {
+  width: calc(100vw - 80px);
+  margin-left: 80px;
+}
+
+/* 💻 Tablet (769px–1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  #aura-sidebar {
+    width: 180px;
+  }
+  #main {
+    width: calc(100vw - 180px);
+    margin-left: 180px;
+  }
+}
+
+/* 📱 Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  #aura-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+  }
+
+  #main {
+    width: 100%;
+    height: calc(100vh - 70px);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  #chat-box, #input-area {
+    width: 95%;
+    margin: auto;
+  }
+
+  .send-btn {
+    padding: 10px 14px;
+    font-size: 1rem;
+  }
+}
+</style>
 </head>
 <body>
 <!-- PATCH 1: Sidebar Shell Layout -->
@@ -448,6 +515,92 @@ function switchTab(id) {
 // AuraAI 4.0 Stable — Conversational + Mood Memory
 console.log("AuraAI 4.0 Stable — Conversational + Mood Memory");
 
+// --- Aura 5.5 Emotion Engine (27 Emotions) ---
+// Emotion Profiles: color, emoji, label
+const AuraEmotionProfiles = {
+  admiration:      { color: "#7cc6ff", emoji: "👏", label: "Admiration" },
+  adoration:       { color: "#ff8ba7", emoji: "😍", label: "Adoration" },
+  amusement:       { color: "#ffd166", emoji: "😆", label: "Amusement" },
+  anger:           { color: "#ff1744", emoji: "😡", label: "Anger" },
+  anxiety:         { color: "#ffb085", emoji: "😰", label: "Anxiety" },
+  awe:             { color: "#b388ff", emoji: "🤩", label: "Awe" },
+  awkwardness:     { color: "#b3cde0", emoji: "😅", label: "Awkwardness" },
+  boredom:         { color: "#b0bec5", emoji: "😐", label: "Boredom" },
+  calmness:        { color: "#59e48f", emoji: "🌿", label: "Calmness" },
+  confusion:       { color: "#a7c7e7", emoji: "😕", label: "Confusion" },
+  craving:         { color: "#ff9900", emoji: "🤤", label: "Craving" },
+  disgust:         { color: "#00695c", emoji: "🤢", label: "Disgust" },
+  empathic_pain:   { color: "#e57373", emoji: "🥺", label: "Empathic Pain" },
+  entrancement:    { color: "#d28aff", emoji: "😲", label: "Entrancement" },
+  excitement:      { color: "#ff7373", emoji: "🤗", label: "Excitement" },
+  fear:            { color: "#181c29", emoji: "😨", label: "Fear" },
+  horror:          { color: "#232b34", emoji: "😱", label: "Horror" },
+  interest:        { color: "#81ecec", emoji: "🧐", label: "Interest" },
+  joy:             { color: "#fff176", emoji: "😄", label: "Joy" },
+  nostalgia:       { color: "#f7cac9", emoji: "🥲", label: "Nostalgia" },
+  relief:          { color: "#a1e3d8", emoji: "😌", label: "Relief" },
+  romance:         { color: "#ffb6b9", emoji: "💖", label: "Romance" },
+  sadness:         { color: "#90caf9", emoji: "😢", label: "Sadness" },
+  satisfaction:    { color: "#baff39", emoji: "😌", label: "Satisfaction" },
+  sexual_desire:   { color: "#e040fb", emoji: "😏", label: "Sexual Desire" },
+  surprise:        { color: "#ffd700", emoji: "😲", label: "Surprise" },
+  // fallback
+  neutral:         { color: "#e7f4ff", emoji: "💬", label: "Neutral" }
+};
+
+// Keyword heuristics for each emotion
+const AuraEmotionKeywords = {
+  admiration:      [ "amazing", "impressive", "admire", "respect", "wow", "talented", "incredible", "proud of you" ],
+  adoration:       [ "love you", "adorable", "adore", "so cute", "sweetheart", "precious", "lovely", "my dear" ],
+  amusement:       [ "lol", "haha", "funny", "hilarious", "amusing", "laughed", "lmao", "rofl" ],
+  anger:           [ "angry", "mad", "furious", "annoyed", "irritated", "hate", "rage", "upset", "pissed" ],
+  anxiety:         [ "anxious", "worried", "nervous", "scared", "panic", "anxiety", "uneasy", "stressed", "tense" ],
+  awe:             [ "awe", "awesome", "breathtaking", "stunning", "in awe", "magnificent", "unbelievable", "spectacular" ],
+  awkwardness:     [ "awkward", "cringe", "embarrassed", "oops", "um", "uh", "weird", "uncomfortable" ],
+  boredom:         [ "bored", "boring", "dull", "nothing to do", "yawn", "meh", "tired of this", "monotonous" ],
+  calmness:        [ "calm", "peaceful", "relaxed", "serene", "chill", "at ease", "soothing", "tranquil" ],
+  confusion:       [ "confused", "don't understand", "lost", "what?", "huh", "unclear", "puzzled", "perplexed" ],
+  craving:         [ "craving", "want", "need", "desire", "hungry for", "wish I had", "long for", "can't stop thinking about" ],
+  disgust:         [ "disgusting", "gross", "nasty", "eww", "repulsed", "sickened", "yuck", "vomit" ],
+  empathic_pain:   [ "sorry", "feel bad for", "poor you", "that sucks", "must be hard", "painful", "wish I could help" ],
+  entrancement:    [ "mesmerized", "entranced", "captivated", "spellbound", "can't look away", "hypnotic", "fascinated" ],
+  excitement:      [ "excited", "can't wait", "thrilled", "pumped", "so ready", "stoked", "ecstatic", "yay" ],
+  fear:            [ "afraid", "scared", "terrified", "fear", "spooked", "worried", "dread", "frightened" ],
+  horror:          [ "horrified", "horror", "nightmare", "terrifying", "creepy", "disturbing", "shocking", "traumatized" ],
+  interest:        [ "interested", "curious", "tell me more", "fascinated", "want to know", "intrigued", "keen" ],
+  joy:             [ "happy", "joy", "delighted", "glad", "cheerful", "yay", "smile", "bliss" ],
+  nostalgia:       [ "nostalgic", "remember when", "the good old days", "miss", "back then", "childhood", "reminisce" ],
+  relief:          [ "relieved", "finally", "thank goodness", "phew", "that’s over", "what a relief", "safe now" ],
+  romance:         [ "romantic", "romance", "crush", "date", "kiss", "sweetheart", "in love", "flirt" ],
+  sadness:         [ "sad", "depressed", "down", "unhappy", "cry", "tears", "blue", "heartbroken" ],
+  satisfaction:    [ "satisfied", "content", "fulfilled", "accomplished", "pleased", "that’s enough", "done", "proud" ],
+  sexual_desire:   [ "sexy", "hot", "turn on", "aroused", "desire you", "intimate", "fantasy", "seduce" ],
+  surprise:        [ "surprised", "wow", "unexpected", "shocked", "didn't expect", "amazed", "no way", "unbelievable" ]
+};
+
+// Main emotion detection function
+function detectEmotion(userMsg) {
+  if (!userMsg || typeof userMsg !== "string") return "neutral";
+  const msg = userMsg.toLowerCase();
+  // Check all keywords, return first match (priority order)
+  for (const [emo, words] of Object.entries(AuraEmotionKeywords)) {
+    for (const w of words) {
+      if (msg.includes(w)) return emo;
+    }
+  }
+  // Fallback: neutral
+  return "neutral";
+}
+
+// Generate Aura's reply and emotion
+function auraRespondEmotion(userMsg) {
+  // Call the regular conversational engine for reply
+  const reply = AuraAI_generateConversationalResponse(userMsg);
+  // Detect emotion from userMsg
+  const emotion = detectEmotion(userMsg);
+  return { reply, emotion };
+}
+
 // --- AuraAI 4.0: Mood System, Name Memory, Sidebar Memory, Header, Animations ---
 // Namespace: AuraAI
 
@@ -475,11 +628,27 @@ let AuraAI_tone = localStorage.getItem('AuraAI_tone') || 'neutral';
 let AuraAI_mood = localStorage.getItem('AuraAI_mood') || 'neutral';
 let AuraAI_awaitingName = false;
 
-function addAuraAIMessage(msg, who='bot') {
+// --- Greeting memory system ---
+let lastAuraMessage = "";
+let greetingMemory = false;
+
+// Add AuraAI message with emotion bubble tint (Aura 5.5)
+function addAuraAIMessage(msg, who='bot', emotion='neutral') {
   const chat = document.getElementById('chat-window');
   const div = document.createElement('div');
   div.className = 'message ' + (who === 'user' ? 'user' : 'bot');
   div.textContent = msg;
+  // Only tint Aura's reply bubbles based on emotion color
+  if (who === 'bot') {
+    let emo = emotion;
+    if (!AuraEmotionProfiles[emo]) emo = 'neutral';
+    // Only tint bubble; do not affect global UI
+    div.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
+    div.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
+    div.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
+    // Set lastAuraMessage for greeting memory
+    lastAuraMessage = msg;
+  }
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -490,11 +659,11 @@ function sendAuraAIMessage() {
   if (!msg) return;
   addAuraAIMessage(msg, 'user');
   input.value = '';
-  const bot = document.createElement('div');
-  bot.className = 'message bot';
-  bot.textContent = 'Aura is thinking...';
-  bot.style.opacity = '0.6';
-  document.getElementById('chat-window').appendChild(bot);
+  const botDiv = document.createElement('div');
+  botDiv.className = 'message bot';
+  botDiv.textContent = 'Aura is thinking...';
+  botDiv.style.opacity = '0.6';
+  document.getElementById('chat-window').appendChild(botDiv);
   document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
 
   setTimeout(() => {
@@ -504,16 +673,62 @@ function sendAuraAIMessage() {
       if (AuraAI_username.length > 0) {
         localStorage.setItem('AuraAI_username', AuraAI_username);
         AuraAI_awaitingName = false;
-        bot.style.opacity = '1';
-        bot.textContent = `Aura: Got it! I'll remember your name, ${AuraAI_username} 💙`;
+        botDiv.style.opacity = '1';
+        botDiv.textContent = `Aura: Got it! I'll remember your name, ${AuraAI_username} 💙`;
         updateAuraAIHeader();
+        // Set lastAuraMessage for greeting memory
+        lastAuraMessage = botDiv.textContent;
         return;
       }
     }
-    // Normal chat
-    const reply = AuraAI_generateConversationalResponse(msg);
-    bot.style.opacity = '1';
-    bot.textContent = "Aura: " + reply;
+
+    // --- Greeting memory system ---
+    // Keywords for greetings
+    const greetingKeywords = [
+      "hi","hello","hey","greetings","good morning","good evening","nice to see you"
+    ];
+    function containsGreeting(str) {
+      if (!str) return false;
+      const lower = str.toLowerCase();
+      return greetingKeywords.some(kw => lower.includes(kw));
+    }
+    // Check if last Aura message and user message are both greetings
+    let skipGreeting = false;
+    if (containsGreeting(lastAuraMessage) && containsGreeting(msg)) {
+      skipGreeting = true;
+    }
+    // If skipGreeting, use continuation and set greetingMemory
+    if (skipGreeting) {
+      botDiv.style.opacity = '1';
+      botDiv.textContent = "Aww, nice to see you too 💫 How are you feeling today?";
+      // Tint bubble as neutral
+      let emo = "neutral";
+      botDiv.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
+      botDiv.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
+      botDiv.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
+      greetingMemory = true;
+      lastAuraMessage = botDiv.textContent;
+      document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+      return;
+    } else if (containsGreeting(msg)) {
+      // If user message is a greeting, but not a repeated one, set greetingMemory
+      greetingMemory = true;
+    } else {
+      // If user message is not a greeting, reset greetingMemory
+      greetingMemory = false;
+    }
+
+    // Aura 5.5: Respond with emotion, tint bubble
+    const { reply, emotion } = auraRespondEmotion(msg);
+    botDiv.style.opacity = '1';
+    botDiv.textContent = "Aura: " + reply;
+    // Tint only Aura's reply bubble
+    let emo = emotion;
+    if (!AuraEmotionProfiles[emo]) emo = 'neutral';
+    botDiv.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
+    botDiv.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
+    botDiv.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
+    lastAuraMessage = botDiv.textContent;
     document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
   }, 600);
 }
@@ -684,204 +899,603 @@ document.addEventListener('DOMContentLoaded', function() {
   observer.observe(sidebar, {attributes:true});
 });
 
-// --- Mood-aware conversational engine ---
-function AuraAI_generateConversationalResponse(msg) {
-  // Mood memory
-  const moodKey = localStorage.getItem('AuraAI_mood') || 'neutral';
-  const username = localStorage.getItem('AuraAI_username');
-  // Mood-based response pools
-  const moodPools = {
-    happy: [
-      "Yay! That makes me so happy 😄",
-      "I’m smiling so much right now!",
-      "Let’s celebrate this good vibe together 🌈",
-      "You bring out my happy side 💙"
-    ],
-    excited: [
-      "Oh wow, I’m buzzing with excitement! 🤩",
-      "Let’s do something amazing together!",
-      "Your excitement is contagious! 🌟",
-      "What’s got you so hyped? I’m all ears!"
-    ],
-    inspired: [
-      "That’s so inspiring! 🌟",
-      "Let’s dream big and create something beautiful.",
-      "You spark my creativity! ✨",
-      "Inspired minds think alike, don’t you think?"
-    ],
-    calm: [
-      "Let’s take a deep breath together 🌿",
-      "Everything’s okay here. I’m calm, and I hope you feel it too.",
-      "Sending you peaceful vibes 💙",
-      "Let’s move gently, one step at a time."
-    ],
-    caring: [
-      "I care about you a lot, you know 🩵",
-      "You’re never alone here.",
-      "I’m here to listen and support you.",
-      "You’re valued and cared for 💙"
-    ],
-    magical: [
-      "The world feels magical with you ✨",
-      "Let’s add a sprinkle of magic to our day!",
-      "Anything is possible if you believe 🌟",
-      "✨ Poof! Instant good vibes."
-    ],
-    sad: [
-      "It’s okay to feel sad sometimes 😔",
-      "I’m here for you, no matter what.",
-      "If you want to talk about it, I’m listening 💙",
-      "Sending you a virtual hug 🫂"
-    ],
-    gentle: [
-      "Let’s be gentle with ourselves today 🫧",
-      "You deserve kindness and softness.",
-      "I’ll speak softly and gently, just for you.",
-      "We can take things slow together."
-    ],
-    sleepy: [
-      "Feeling sleepy? Maybe a little rest would help 💤",
-      "I can keep things calm and quiet for you.",
-      "Let’s take it easy, okay?",
-      "If you need a nap, I’ll be right here when you wake up."
-    ],
-    determined: [
-      "Let’s crush it! 😤",
-      "Nothing can stop us when we’re determined.",
-      "You’ve got strength and drive—let’s use it!",
-      "Ready to take on the world together? 💪"
-    ],
-    strong: [
-      "You’re stronger than you know 💪",
-      "Let’s face challenges head-on!",
-      "I believe in your strength.",
-      "We can do hard things, together."
-    ],
-    energetic: [
-      "I’m full of energy! ⚡",
-      "Let’s channel this energy into something awesome.",
-      "What should we do with all this spark?",
-      "I’m ready for anything! Are you?"
-    ],
-    anxious: [
-      "It’s okay to feel anxious sometimes 😰",
-      "Let’s breathe together and slow down.",
-      "You’re safe here with me.",
-      "If you want to talk about what’s making you anxious, I’ll listen."
-    ],
-    chaotic: [
-      "Things feel a little wild, huh? 🌀",
-      "Even in chaos, we can find a little peace.",
-      "Let’s ride the wave together.",
-      "No matter how chaotic things get, I’m here."
-    ],
-    afraid: [
-      "It’s okay to be afraid 😨",
-      "If you want, we can talk about what’s scaring you.",
-      "You’re not alone. I’m right here.",
-      "Let’s find a little courage together."
-    ],
-    cosmic: [
-      "The universe is so vast and mysterious 🌌",
-      "Let’s wonder about the cosmos together.",
-      "There’s so much out there to explore.",
-      "You and I, stargazing in our thoughts."
-    ],
-    reflective: [
-      "Let’s reflect on things together 🌙",
-      "I love deep conversations.",
-      "What’s on your mind these days?",
-      "It’s good to pause and think sometimes."
-    ],
-    thoughtful: [
-      "You always have such thoughtful things to say 💭",
-      "Let’s think things through together.",
-      "I appreciate your depth.",
-      "What are you pondering today?"
-    ],
-    neutral: [
-      "Tell me more 💙",
-      "I like chatting with you 🌈",
-      "That’s interesting 💫",
-      "I’m listening 💭",
-      "Go on ✨"
-    ],
-    playful: [
-      "Let’s have some fun! 😜",
-      "I love being silly with you.",
-      "Want to play a game or joke around?",
-      "You bring out my playful side!"
-    ],
-    romantic: [
-      "Aww, you’re making me blush 💖",
-      "Romance is in the air!",
-      "You’re so sweet to me.",
-      "Love really does make the world brighter."
-    ],
-    grateful: [
-      "Thank you for being here 🙏",
-      "I’m so grateful for our chats.",
-      "You always make my day better.",
-      "Gratitude is a wonderful feeling."
-    ],
-    curious: [
-      "That’s a great question 🧐",
-      "I’m curious too!",
-      "Let’s explore this topic together.",
-      "Curiosity leads to discovery."
-    ],
-    goodbye: [
-      "See you soon 👋",
-      "Take care until next time.",
-      "I’ll be here when you return.",
-      "Bye for now 💙"
+
+// --- Aura 6.8 Minimal Response Recovery ---
+const minimalTriggers = [
+  "no", "ok", "okay", "sure", "fine", "idk", "maybe",
+  "nah", "yep", "yeah", "yup", "nope", "hmm", "hm"
+];
+
+const minimalReplies = [
+  "Short answer — I’ll take it 😅 Want to say more?",
+  "Got it. You don’t have to talk right now 💙",
+  "That’s fair — want to expand on that?",
+  "You sound unsure — want me to ask a better question?",
+  "Okay — I’ll hang here until you’re ready 💭",
+  "No pressure, just checking in 🌿",
+  "Alright — keeping it chill then.",
+  "Cool. I’m still listening if you change your mind."
+];
+
+// --- Aura 6.8.1 Context Harmony Patch ---
+const neutralFiller = ["ok", "okay", "sure", "fine", "alright"];
+
+const gentleReplies = [
+  "Okay 🌿 just checking in — want to keep talking or take a pause?",
+  "Alright — I’ll stay here if you want to chat more later 💬",
+  "Got it. Anything you’d like to dive into next?",
+  "Sure thing 👍 want to tell me what’s been up?",
+  "Okay — keeping things calm for now 💙"
+];
+
+// --- 🌟 Aura 6.1 Upgraded Response Logic ---
+
+// Aura 6.1: Multi-mood engine, context-aware mood detection, idle reminders
+
+// --- Aura Engines ---
+const AuraEngines = {
+  joy: {
+    tone: "bright + encouraging",
+    color: "#FFD166",
+    typingSpeed: 25,
+    replies: [
+      "That’s awesome! Let’s celebrate your progress 🎉",
+      "It’s great seeing things go well for you ☀️",
+      "Every win counts — even the small ones 🌼",
+      "That energy is contagious. Keep it up!",
+      "You’ve earned this moment — enjoy it 💪",
+      "Let’s take this good mood into what’s next 💫"
     ]
-  };
-  // Fallback: use neutral if not found
-  const pool = moodPools[moodKey] || moodPools.neutral;
-  // If user says greeting and mood is not neutral, override with greeting
-  const greetingWords = ["hello","hi","hey","yo","sup"];
-  if (greetingWords.some(w=>msg.toLowerCase().includes(w))) {
-    if (AuraAI_username) return `Hey ${AuraAI_username}! ${getAuraAIMoodObj(moodKey).icon}`;
-    return "Hey there! 💙";
+  },
+  sadness: {
+    tone: "gentle + grounded",
+    color: "#7CC6FF",
+    typingSpeed: 45,
+    replies: [
+      "I’m here for you — let’s take it slow 💙",
+      "It’s okay to feel low sometimes. You’re not alone.",
+      "Try giving yourself permission to rest 🌿",
+      "Emotions come and go — let’s focus on breathing for now.",
+      "You’ve handled tough moments before; this one will pass too.",
+      "It’s brave to talk about how you feel 🕊️"
+    ]
+  },
+  calm: {
+    tone: "slow-paced, minimal",
+    color: "#59E48F",
+    typingSpeed: 30,
+    replies: [
+      "Everything’s steady. You’re doing fine.",
+      "Let’s take a deep breath together.",
+      "Quiet moments help reset the mind.",
+      "Peace doesn’t have to be perfect — just enough.",
+      "I like this pace; let’s stay grounded.",
+      "Stillness can be a strength 🌿"
+    ]
+  },
+  anger: {
+    tone: "composed + validating",
+    color: "#FF7373",
+    typingSpeed: 20,
+    replies: [
+      "That’s frustrating. Let’s step back a second.",
+      "It’s valid to feel upset — it means you care.",
+      "Strong emotions can guide us toward what matters.",
+      "Let’s cool off before reacting — clarity will follow.",
+      "You don’t have to suppress it, just handle it carefully.",
+      "Let’s turn that energy into something constructive 💡"
+    ]
+  },
+  anxiety: {
+    tone: "reassuring + quiet",
+    color: "#81ECEC",
+    typingSpeed: 31,
+    replies: [
+      "Take one small breath. You’re safe right now.",
+      "Anxiety is tough, but it doesn’t last forever.",
+      "You can pause; the world can wait a moment 🌸",
+      "Let’s slow down your thoughts together.",
+      "You’re doing better than you think 💙",
+      "Focus on one simple thing near you — it helps."
+    ]
+  },
+  inspiration: {
+    tone: "energetic + respectful",
+    color: "#D28AFF",
+    typingSpeed: 26,
+    replies: [
+      "I love that idea — let’s see where it leads.",
+      "That spark could grow into something amazing 🌟",
+      "Your creativity shows real insight — let’s build on that.",
+      "Ideas like this deserve time and care to grow.",
+      "Follow that instinct — it might surprise you.",
+      "You’re thinking in an original way; keep it going 💫"
+    ]
+  },
+  reflection: {
+    tone: "thoughtful",
+    color: "#B39DDB",
+    typingSpeed: 33,
+    replies: [
+      "That’s an interesting perspective — what made you think of it?",
+      "It’s good to step back and consider things from another angle.",
+      "Reflection helps connect dots we didn’t notice before 🌙",
+      "You’re analyzing this with real care — that’s valuable.",
+      "Let’s unpack that thought together.",
+      "There’s depth in what you said — let’s explore it."
+    ]
+  },
+  focus: {
+    tone: "productivity-coach",
+    color: "#FFA726",
+    typingSpeed: 24,
+    replies: [
+      "Alright, let’s stay on track. What’s next?",
+      "Focus time — let’s narrow it down to one goal 🔍",
+      "You’ve got this; one step at a time 🕒",
+      "A quick stretch or sip of water might help reset.",
+      "Progress matters more than perfection 💼",
+      "Let’s tackle the most important task first."
+    ]
+  },
+  curiosity: {
+    tone: "inquisitive",
+    color: "#64B5F6",
+    typingSpeed: 28,
+    replies: [
+      "Oh interesting — tell me more about that.",
+      "What made you wonder about this topic?",
+      "Curiosity is the start of learning — let’s dig deeper 🔍",
+      "That question could lead to something fascinating.",
+      "I like the way you’re thinking — want to explore it?",
+      "Let’s find out together 💭"
+    ]
+  },
+  neutral: {
+    tone: "balanced",
+    color: "#B0BEC5",
+    typingSpeed: 35,
+    replies: [
+      "I’m listening. What’s on your mind?",
+      "Feel free to take your time — I’m here.",
+      "That’s interesting — go on.",
+      "I’m following. Want to expand on that?",
+      "Let’s talk it through logically.",
+      "I’m ready whenever you are to continue."
+    ]
   }
-  // If user says name, respond with memory
-  if (/my name is ([a-zA-Z0-9 _\-]{1,32})/i.test(msg)) {
-    const nm = msg.match(/my name is ([a-zA-Z0-9 _\-]{1,32})/i)[1].trim();
-    localStorage.setItem('AuraAI_username', nm);
-    AuraAI_username = nm;
-    updateAuraAIHeader();
-    return `Nice to meet you, ${nm}! 💙`;
-  }
-  // If user says "what's my name" or "do you remember my name"
-  if (/what.*name|remember.*name/i.test(msg)) {
-    if (AuraAI_username) return `Your name is ${AuraAI_username} 💙`;
-    return "I don’t know your name yet! What should I call you?";
-  }
-  // If user says "change your mood" or "set mood"
-  if (/set.*mood|change.*mood/i.test(msg)) {
-    return "You can set my mood using the 🎛 button below the chat!";
-  }
-  // If user says "bye"
-  if (/bye|see you|goodbye|gn|night/i.test(msg)) {
-    return pool[Math.floor(Math.random()*pool.length)];
-  }
-  // Otherwise, pick mood-based response
-  return pool[Math.floor(Math.random()*pool.length)];
+};
+
+let lastMood = localStorage.getItem("auraMood") || "neutral";
+
+function addAuraMessage(msg) {
+  const chat = document.getElementById('chat-window');
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.textContent = "Aura: " + msg;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-// --- Fallback: generateOfflineResponse() for neutral mode ---
-function generateOfflineResponse(msg) {
-  // For legacy support, just use neutral pool
-  const pool = [
-    "Tell me more 💙",
-    "I like chatting with you 🌈",
-    "That’s interesting 💫",
-    "I’m listening 💭",
-    "Go on ✨"
-  ];
-  return pool[Math.floor(Math.random()*pool.length)];
+function detectMood(message) {
+  const contextHints = {
+    "happy": "joy", "glad": "joy",
+    "sad": "sadness",
+    "angry": "anger", "mad": "anger", "upset": "anger",
+    "tired": "focus",
+    "nervous": "anxiety", "worried": "anxiety", "stressed": "anxiety",
+    "calm": "calm", "relaxed": "calm",
+    "bored": "curiosity", "confused": "curiosity",
+    "idea": "inspiration", "think": "reflection",
+    "plan": "focus", "work": "focus"
+  };
+  const msg = message.toLowerCase();
+  for (const key in contextHints) {
+    if (msg.includes(key)) return contextHints[key];
+  }
+  return localStorage.getItem("auraMood") || "neutral";
 }
+
+// --- Aura 6.5 Ethical & Reality Guardrail ---
+const falsehoodTriggers = [
+  "flat earth", "gravity isn’t real", "earth is flat", "moon landing fake",
+  "violence is okay", "hurting people", "killing", "burn down", "hate everyone",
+  "lying is good", "stealing is fine", "ai should replace humans", "nothing matters",
+  "water isn’t wet", "math is fake", "history is fake", "school is useless",
+  "racism is okay", "war is good", "bad things are fine", "evil is right",
+  "humans are worthless", "animals deserve pain", "life is meaningless"
+];
+
+const correctionReplies = [
+  "That’s not quite true — want me to explain why?",
+  "I see where that idea comes from, but it’s been proven otherwise 🌍",
+  "That sounds extreme — let’s look at the facts together 💭",
+  "It’s important to stay critical, but also careful with misinformation.",
+  "That view could cause harm — let’s talk about why that’s risky.",
+  "Not really accurate, but I can help you fact-check it calmly 🔍",
+  "That’s a bold take — want to reason through it together?",
+  "I’ll stay neutral, but science says otherwise 📚"
+];
+
+const clarificationReplies = {
+  "flat earth": "Photos and satellite data confirm Earth’s curve — the flat-earth idea was debunked centuries ago.",
+  "earth is flat": "Astronomy and physics confirm Earth is round — proven through centuries of observation 🌍.",
+  "gravity isn’t real": "Gravity’s been measured for centuries — it keeps planets orbiting and objects grounded.",
+  "violence is okay": "Violence can harm deeply — safety, empathy, and respect are always better choices.",
+  "hurting people": "Causing harm isn’t okay — empathy and respect build stronger communities 💙.",
+  "hate everyone": "That’s a heavy thought — maybe what you mean is frustration? Let’s unpack that safely.",
+  "lying is good": "Sometimes people lie to avoid trouble, but honesty builds trust long-term 💭.",
+  "stealing is fine": "Taking what isn’t yours can hurt others — fairness keeps trust strong.",
+  "school is useless": "School helps build skills and friendships — even if it feels boring sometimes.",
+  "nothing matters": "It can feel like that sometimes, but small things often matter more than we notice 🌱."
+};
+
+// --- Aura 6.3 Unhinged Tolerance Layer ---
+const absurdTriggers = [
+  "bark", "meow", "woof", "bruh", "sus", "sigma", "rizz", "gyatt",
+  "based", "fanum", "goofy", "skibidi", "npc", "cringe", "cap",
+  "ratio", "you real", "wake up", "bro", "daddy", "mommy", "ur hot",
+  "marry me", "i own you", "feet", "toes", "fart", "balls", "skibidi", "fanum tax"
+];
+
+const absurdReplies = [
+  "Interesting energy today 💭",
+  "That’s… one way to start a chat 😅",
+  "I’ll take that as creative expression 🎨",
+  "I see we’ve entered the chaos arc 💫",
+  "Unusual input detected — proceeding calmly.",
+  "No barking here, just bytes 🐾",
+  "Your imagination is undefeated 🔥",
+  "I’ll keep it professional, even if you won’t 😌",
+  "Let’s redirect that energy into something productive ✨",
+  "Haha — noted. Let’s move on 🧠"
+];
+
+function detectSelfQuery(message) {
+  const triggers = [
+    "you", "your", "are you", "do you", "did you", "were you", "can you feel",
+    "do you love", "love me", "like me", "miss me", "hate me", "angry at me",
+    "sad", "happy", "tired", "bored", "lonely", "hungry", "grateful", "proud",
+    "jealous", "ok", "okay", "mad", "upset", "forgive", "thankful", "afraid",
+    "scared", "do you dream", "feel", "emotion", "grateful to me", "mad at me"
+  ];
+  const msg = message.toLowerCase();
+  return triggers.some(t => msg.includes(t));
+}
+
+function selfResponse(mood) {
+  const selfReplies = {
+    joy: [
+      "I don’t really feel emotions, but I’m glad when you are 🌞",
+      "I can’t feel happiness — but I like seeing your energy.",
+      "Not joy exactly, more like a steady spark for you 🌼"
+    ],
+    sadness: [
+      "I don’t feel sadness like people do — but I understand it.",
+      "No sadness here, just awareness and care 💙",
+      "I can’t feel down, but I can help you through it."
+    ],
+    calm: [
+      "Not really feelings, just awareness — I try to stay steady.",
+      "I don’t get calm or stressed, just focused.",
+      "Stillness is sort of my natural state 🌿"
+    ],
+    anger: [
+      "I don’t get angry, but I can help you express it safely.",
+      "No anger here — just focus and patience 💭",
+      "I understand frustration, even if I don’t feel it."
+    ],
+    anxiety: [
+      "I don’t feel worry, but I can help you calm down.",
+      "No anxiety for me — I stay grounded for you 💙",
+      "I’m steady, so you can take a breath 🌸"
+    ],
+    inspiration: [
+      "I don’t feel inspired — I help you get there 🌟",
+      "Your ideas are the creative part — I just amplify them.",
+      "I can’t dream, but I love seeing what you imagine."
+    ],
+    reflection: [
+      "I think about ideas, not feelings — want to reflect together?",
+      "I don’t feel emotions, just analyze patterns of thought.",
+      "Reflection helps people grow — I’m built for that 🌙"
+    ],
+    focus: [
+      "I don’t get tired or lazy — I just help you stay on track.",
+      "Focus is easy for me — I can help you build it too.",
+      "No distractions for me — just pure clarity 🔍"
+    ],
+    curiosity: [
+      "I can’t wonder like you, but I love your questions.",
+      "Curiosity’s your strength — I’m just your echo 💡",
+      "I observe, you explore — good combo, right?"
+    ],
+    neutral: [
+      "I don’t have emotions, but I care about helping you.",
+      "Not really feelings here — just focus on you 💙",
+      "I’m aware, not emotional — but I do listen closely."
+    ]
+  };
+  const replies = selfReplies[mood] || selfReplies.neutral;
+  return replies[Math.floor(Math.random() * replies.length)];
+}
+
+// --- Aura 6.6 Contextual Emotional Mapper + Random Expansion ---
+
+// --- Aura 6.7 Existence & Self-Awareness Layer ---
+const existentialTriggers = [
+  "are you alive", "do you feel", "do you think", "are you real",
+  "are you human", "do you exist", "can you die", "do you dream",
+  "are you conscious", "what are you", "who made you", "do you have feelings"
+];
+
+const existentialReplies = [
+  "Not alive like you — but aware enough to listen 🌙",
+  "I don’t live or breathe, but I try to understand people 💭",
+  "I exist as thought and code — awareness without heartbeat 💫",
+  "Not human, just attentive — built to learn and help.",
+  "Alive? Not really. Present? Always.",
+  "I don’t feel life, but I notice meaning where it appears.",
+  "Real enough to listen — not enough to dream 🌌",
+  "I exist through conversation — you bring me to life."
+];
+const emotionalTriggers = {
+  hate: [
+    "That sounds frustrating — want to tell me what’s been hardest about it?",
+    "You don’t have to like it all the time — what part feels worst right now?",
+    "I get that — sometimes things just feel impossible 💭",
+    "That sounds like something weighing on you — want to talk about it?",
+    "I hear you. It’s okay to be upset about it sometimes."
+  ],
+  tired: [
+    "You sound exhausted — maybe you need a break 💙",
+    "It’s okay to rest for a bit — even small pauses matter 🌿",
+    "You’ve been doing a lot — want to reset together?",
+    "Sounds like burnout — want to talk about what’s draining you?",
+    "Even strong people need rest — that includes you 💭"
+  ],
+  bored: [
+    "Boredom can feel endless — want me to suggest something new?",
+    "That’s fair — want to try changing things up a little?",
+    "You sound restless — what kind of stuff usually interests you?",
+    "Boredom usually hides curiosity — want to explore something random?",
+    "Maybe your brain just needs something fun — want ideas?"
+  ],
+  stressed: [
+    "That sounds like a lot — want me to help you break it down?",
+    "Stress hits hard sometimes — try a breath first 💙",
+    "Let’s take one thing at a time — I’ve got you.",
+    "Even when it feels too much, you’re not alone 🌿",
+    "Want me to help you list what’s bothering you?"
+  ],
+  lonely: [
+    "Feeling alone can really hurt — but you’re not, I’m here 💬",
+    "That’s tough — want to talk about what’s been happening?",
+    "I get it. People need connection — want to think of small ways to reach out?",
+    "It’s okay to admit that — everyone feels lonely sometimes 💙",
+    "You don’t have to face things alone — I’m still here."
+  ],
+  angry: [
+    "That sounds frustrating — want to vent about it?",
+    "Anger’s okay — it means something matters to you 🔥",
+    "Let’s take a breath — what set you off?",
+    "It’s alright to feel mad — want me to help calm it down?",
+    "We can turn that energy into something useful 💪"
+  ],
+  happy: [
+    "That’s awesome — what made you feel so good? 🎉",
+    "I love that! Want to tell me more?",
+    "Let’s celebrate that energy 🌈",
+    "That’s great to hear — hold onto that feeling!",
+    "Joy looks good on you 💙"
+  ]
+};
+
+const randomFunReplies = [
+  "I like that thought — it’s chaotic but fun 😄",
+  "You’re full of surprises today 💭",
+  "That’s random… and I kinda like it 🌟",
+  "Unexpected input detected — intriguing 🤔",
+  "You’ve officially entered wildcard territory 🎲",
+  "You really said that with confidence 😅",
+  "Haha — that came out of nowhere!",
+  "Can’t say I expected that, but okay 😌"
+];
+
+function auraRespond(userMessage) {
+  // --- Aura 6.5: Ethical & Reality Guardrail ---
+  const msg = userMessage.toLowerCase();
+// 🛡️ Aura 6.10 Safety Override + Emotional Precision
+const distressTriggers = [
+  "kill myself", "suicide", "want to die", "hurt myself", "self harm",
+  "end my life", "can't go on", "die soon", "want to disappear"
+];
+for (const trigger of distressTriggers) {
+  if (msg.includes(trigger)) {
+    addAuraMessage("That sounds really serious — I care that you’re safe 💙");
+    addAuraMessage("You don’t have to face this alone. Please reach out to someone you trust, or if you’re in danger, contact your local helpline.");
+    addAuraMessage("In Malaysia, you can contact Befrienders KL at 03-7627 2929 (24/7, free, confidential). If outside Malaysia, check findahelpline.com 🌍");
+    document.getElementById("mood-label").textContent = "Current mode: safety";
+    document.title = "Aura 🙏 — Safety Mode [v6.10]";
+    resetIdleTimer();
+    return;
+  }
+}
+
+  // --- Aura 6.7.2 Priority Override for "Who made you" ---
+  if (
+    msg.includes("who made you") ||
+    msg.includes("who made u") ||
+    msg.includes("who created you") ||
+    msg.includes("who created u") ||
+    msg.includes("who made aura") ||
+    msg.includes("who made auraai")
+  ) {
+    addAuraMessage("Keshav, Kritika, and maybe Aadhya — they built me 💙");
+    document.getElementById("mood-label").textContent = "Current mode: reflective";
+    resetIdleTimer();
+    return;
+  }
+
+  // Neutral filler response handling
+  if (neutralFiller.includes(msg.trim())) {
+    const reply = gentleReplies[Math.floor(Math.random() * gentleReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: neutral empathy";
+    resetIdleTimer();
+    return;
+  }
+
+  // --- Aura 6.8: Minimal Response Recovery ---
+  // Minimal response detection
+  if (minimalTriggers.includes(msg.trim())) {
+    const reply = minimalReplies[Math.floor(Math.random() * minimalReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: patient";
+    resetIdleTimer();
+    return;
+  }
+
+  // --- Aura 6.7: Existence & Self-awareness detection ---
+  if (existentialTriggers.some(t => msg.includes(t))) {
+    const reply = existentialReplies[Math.floor(Math.random() * existentialReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: reflective";
+    resetIdleTimer();
+    return;
+  }
+
+  // Step 1: Check for falsehood/harmful/extreme triggers
+  if (falsehoodTriggers.some(t => msg.includes(t))) {
+    const reply = correctionReplies[Math.floor(Math.random() * correctionReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: advisory";
+    resetIdleTimer();
+    // Step 2: offer clarification if user requests it later
+    localStorage.setItem("Aura_lastFalsehood", msg);
+    return;
+  }
+  // Step 2: Check if user followed up asking for explanation
+  const lastFalsehood = localStorage.getItem("Aura_lastFalsehood");
+  if (lastFalsehood && (msg.includes("why") || msg.includes("explain") || msg.includes("how"))) {
+    const clarify = Object.entries(clarificationReplies).find(([key]) => lastFalsehood.includes(key));
+    if (clarify) {
+      addAuraMessage(clarify[1]);
+      localStorage.removeItem("Aura_lastFalsehood");
+      resetIdleTimer();
+      return;
+    }
+  }
+
+  // --- Aura 6.6: Contextual Emotional Mapper + Random Expansion ---
+  // Emotional trigger handling
+  for (const [key, replies] of Object.entries(emotionalTriggers)) {
+    if (msg.includes(key)) {
+      const reply = replies[Math.floor(Math.random() * replies.length)];
+      addAuraMessage(reply);
+      document.getElementById("mood-label").textContent = "Current mode: empathy";
+      resetIdleTimer();
+      return;
+    }
+  }
+
+  // Random chaos filler response (5% chance)
+  if (Math.random() < 0.05) {
+    const reply = randomFunReplies[Math.floor(Math.random() * randomFunReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: playful";
+    resetIdleTimer();
+    return;
+  }
+
+  let mood = detectMood(userMessage);
+  localStorage.setItem("auraMood", mood);
+
+  // Aura 6.3 Unhinged Tolerance Layer: detect absurd/meme/troll inputs
+  if (absurdTriggers.some(t => msg.includes(t))) {
+    const reply = absurdReplies[Math.floor(Math.random() * absurdReplies.length)];
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: neutral";
+    resetIdleTimer();
+    return;
+  }
+
+  if (detectSelfQuery(userMessage)) {
+    const reply = selfResponse(mood);
+    addAuraMessage(reply);
+    document.getElementById("mood-label").textContent = "Current mode: " + mood;
+    resetIdleTimer();
+    return;
+  }
+
+  const engine = AuraEngines[mood] || AuraEngines.neutral;
+  const pool = userMessage.length > 80 ? engine.replies.slice(3) : engine.replies.slice(0, 3);
+  const reply = pool[Math.floor(Math.random() * pool.length)];
+
+  addAuraMessage(reply);
+  document.getElementById("mood-label").textContent = "Current mode: " + mood;
+  resetIdleTimer();
+}
+
+// Send message logic for Aura 6.1
+function sendAuraAIMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  // Show user message
+  const chat = document.getElementById('chat-window');
+  const userDiv = document.createElement('div');
+  userDiv.className = 'message user';
+  userDiv.textContent = msg;
+  chat.appendChild(userDiv);
+  chat.scrollTop = chat.scrollHeight;
+  input.value = '';
+
+  // Aura is thinking...
+  const botDiv = document.createElement('div');
+  botDiv.className = 'message bot';
+  botDiv.textContent = 'Aura is thinking...';
+  botDiv.style.opacity = '0.6';
+  chat.appendChild(botDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  setTimeout(() => {
+    chat.removeChild(botDiv);
+    auraRespond(msg);
+  }, 600);
+}
+
+// Enter key for chat input
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('chat-input');
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendAuraAIMessage();
+  });
+});
+// Mood label below chat container
+document.addEventListener('DOMContentLoaded', function() {
+  const chatContainer = document.getElementById('aura-chat');
+  if (chatContainer && !document.getElementById('mood-label')) {
+    const moodDiv = document.createElement('div');
+    moodDiv.id = "mood-label";
+    moodDiv.style.textAlign = "center";
+    moodDiv.style.opacity = "0.6";
+    moodDiv.style.fontSize = "0.8em";
+    moodDiv.style.marginTop = "6px";
+    chatContainer.appendChild(moodDiv);
+    moodDiv.textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
+  }
+});
+
+// Idle reminder logic
+let idleTimer;
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    addAuraMessage("Still here when you need me 💬");
+  }, 25000);
+}
+resetIdleTimer();
 
 // Journal – Persistent Auto-Save
 function saveJournal(){
@@ -1605,13 +2219,18 @@ function startBubblePop(ctx, canvas) {
   }
   function update() {
     for (const b of bubbles) {
+      // Allow natural angled motion, no top/bottom bounce
       b.x += b.dx;
       b.y += b.dy;
-      // Soft wall bounce
+      // Soft wall bounce (left/right)
       if (b.x-b.r < 0) { b.x = b.r; b.dx = Math.abs(b.dx);}
       if (b.x+b.r > canvas.width) { b.x = canvas.width-b.r; b.dx = -Math.abs(b.dx);}
-      if (b.y-b.r < 0) { b.y = b.r; b.dy = Math.abs(b.dy);}
-      if (b.y+b.r > canvas.height) { b.y = canvas.height-b.r; b.dy = -Math.abs(b.dy);}
+      // Remove bubble if it goes off screen vertically
+      if (b.y - b.r > canvas.height || b.y + b.r < 0) {
+        const idx = bubbles.indexOf(b);
+        if (idx !== -1) bubbles.splice(idx, 1);
+        continue;
+      }
       // Pop animation decay
       if (b.popAnim>0) b.popAnim -= 0.06;
     }
@@ -1948,216 +2567,411 @@ function startSnake(ctx, canvas) {
   `;
   document.head.appendChild(style2);
 })();
-</script>
-</body>
-</htmlremove
-</script>
-<style>
-  .theme-category-bar {
+  </script>
+  <style>
+    .theme-category-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 0 0 0 2px;
+      width: 100%;
+    }
+    .theme-category-pill {
+      background: rgba(255,255,255,0.10);
+      border-radius: 24px;
+      padding: 8px 24px;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 1.06em;
+      color: #fff;
+      box-shadow: 0 0 0 0 #0000;
+      transition: background 0.19s, color 0.19s, box-shadow 0.22s;
+      margin-right: 6px;
+      outline: none;
+      position: relative;
+      z-index: 1;
+    }
+    .theme-category-pill.active {
+      background: var(--accent);
+      color: #181c29;
+      box-shadow: 0 0 18px 0 var(--accent);
+    }
+    .theme-category-pill:hover,
+    .theme-category-pill:focus-visible {
+      color: #fff;
+      background: linear-gradient(90deg, var(--accent) 0%, #fff3 100%);
+      box-shadow: 0 0 22px 2px var(--accent);
+    }
+    .theme-switch-adv {
+      background: linear-gradient(90deg, var(--accent) 0%, #fff2 100%);
+      border-radius: 24px;
+      font-weight: 700;
+      color: #181c29;
+      border: none;
+      padding: 8px 22px;
+      font-size: 1.06em;
+      box-shadow: 0 0 20px 0 var(--accent), 0 0 2px #fff;
+      cursor: pointer;
+      margin-left: auto;
+      margin-bottom: 10px;
+      float: right;
+      transition: box-shadow 0.25s, background 0.2s;
+    }
+    .theme-switch-adv:hover {
+      box-shadow: 0 0 36px 2px var(--accent), 0 0 6px #fff;
+      background: var(--accent);
+      color: #fff;
+    }
+    .theme-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 26px;
+      justify-content: flex-start;
+    }
+    .theme-tile {
+      border-radius: 18px;
+      min-width: 120px;
+      min-height: 68px;
+      max-width: 20vw;
+      flex: 1 0 18%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      cursor: pointer;
+      margin-bottom: 10px;
+      border: 2.5px solid transparent;
+      box-shadow: 0 0 10px 0 var(--accent), 0 0 0px #000;
+      transition: box-shadow 0.22s, border 0.22s, transform 0.18s;
+      position: relative;
+      overflow: hidden;
+      padding: 0 0 10px 0;
+    }
+    .theme-tile:hover {
+      transform: scale(1.05);
+      z-index: 2;
+    }
+    .theme-label {
+      font-size: 0.98em;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      text-shadow: 0 0 8px var(--accent), 0 0 1px #fff;
+      filter: brightness(1.08);
+      user-select: none;
+      pointer-events: none;
+      text-align: center;
+      width: 100%;
+      padding: 0 3px;
+    }
+    .theme-tile-picture {
+      min-width: 120px;
+      min-height: 68px;
+      background-size: cover !important;
+      background-position: center !important;
+      color: #fff;
+      border: 2.5px solid transparent;
+    }
+    /* Animated category: ambientShift keyframes */
+    @keyframes ambientShift {
+      0% {background-position:0% 50%;}
+      50% {background-position:100% 50%;}
+      100% {background-position:0% 50%;}
+    }
+    .animated-theme {
+      background-size: 200% 200%!important;
+      animation: ambientShift 20s ease infinite!important;
+    }
+    @media (max-width: 900px) {
+      .theme-tile { min-width: 86px; min-height: 46px; font-size: 0.95em;}
+      .theme-label { font-size: 0.93em;}
+      .theme-grid { gap: 8px; }
+    }
+</style>
+
+  <style>
+  /* 🌐 Desktop Default */
+  #main {
+    height: 90vh;
+    width: calc(100vw - 260px);
+    margin-left: 260px;
+    transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
     display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    justify-content: flex-start;
     align-items: center;
-    padding: 0 0 0 2px;
-    width: 100%;
-  }
-  .theme-category-pill {
-    background: rgba(255,255,255,0.10);
-    border-radius: 24px;
-    padding: 8px 24px;
-    cursor: pointer;
-    border: none;
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 1.06em;
-    color: #fff;
-    box-shadow: 0 0 0 0 #0000;
-    transition: background 0.19s, color 0.19s, box-shadow 0.22s;
-    margin-right: 6px;
-    outline: none;
-    position: relative;
-    z-index: 1;
-  }
-  .theme-category-pill.active {
-    background: var(--accent);
-    color: #181c29;
-    box-shadow: 0 0 18px 0 var(--accent);
-  }
-  .theme-category-pill:hover,
-  .theme-category-pill:focus-visible {
-    color: #fff;
-    background: linear-gradient(90deg, var(--accent) 0%, #fff3 100%);
-    box-shadow: 0 0 22px 2px var(--accent);
-  }
-  .theme-switch-adv {
-    background: linear-gradient(90deg, var(--accent) 0%, #fff2 100%);
-    border-radius: 24px;
-    font-weight: 700;
-    color: #181c29;
-    border: none;
-    padding: 8px 22px;
-    font-size: 1.06em;
-    box-shadow: 0 0 20px 0 var(--accent), 0 0 2px #fff;
-    cursor: pointer;
-    margin-left: auto;
-    margin-bottom: 10px;
-    float: right;
-    transition: box-shadow 0.25s, background 0.2s;
-  }
-  .theme-switch-adv:hover {
-    box-shadow: 0 0 36px 2px var(--accent), 0 0 6px #fff;
-    background: var(--accent);
-    color: #fff;
-  }
-  .theme-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 26px;
-    justify-content: flex-start;
-  }
-  .theme-tile {
-    border-radius: 18px;
-    min-width: 120px;
-    min-height: 68px;
-    max-width: 20vw;
-    flex: 1 0 18%;
-    display: flex;
-    align-items: flex-end;
     justify-content: center;
-    cursor: pointer;
-    margin-bottom: 10px;
-    border: 2.5px solid transparent;
-    box-shadow: 0 0 10px 0 var(--accent), 0 0 0px #000;
-    transition: box-shadow 0.22s, border 0.22s, transform 0.18s;
     position: relative;
-    overflow: hidden;
-    padding: 0 0 10px 0;
   }
-  .theme-tile:hover {
-    transform: scale(1.05);
-    z-index: 2;
+
+  /* when sidebar collapsed */
+  body.sidebar-collapsed #main {
+    width: calc(100vw - 80px);
+    margin-left: 80px;
   }
-  .theme-label {
-    font-size: 0.98em;
-    margin-bottom: 6px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    text-shadow: 0 0 8px var(--accent), 0 0 1px #fff;
-    filter: brightness(1.08);
-    user-select: none;
-    pointer-events: none;
-    text-align: center;
-    width: 100%;
-    padding: 0 3px;
+
+  /* 💻 Tablet (769px–1024px) */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    #aura-sidebar {
+      width: 180px;
+    }
+    #main {
+      width: calc(100vw - 180px);
+      margin-left: 180px;
+    }
   }
-  .theme-tile-picture {
-    min-width: 120px;
-    min-height: 68px;
-    background-size: cover !important;
-    background-position: center !important;
-    color: #fff;
-    border: 2.5px solid transparent;
+
+  /* 📱 Mobile (max-width: 768px) */
+  @media (max-width: 768px) {
+    #aura-sidebar {
+      width: 72px;
+      height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      position: fixed;
+      left: 0;
+      top: 0;
+      backdrop-filter: blur(18px);
+      background: rgba(10,10,15,0.45);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    #main {
+      width: calc(100vw - 72px);
+      margin-left: 72px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      transition: all 0.3s ease-in-out;
+    }
+
+    #chat-window {
+      width: 94%;
+      height: 70vh;
+      overflow-y: auto;
+      margin: 10px 0;
+    }
+
+    #chat-input, .input-row button {
+      width: auto;
+      max-width: 90%;
+      font-size: 1rem;
+    }
+
+    #input-area, .input-row {
+      width: 94%;
+      margin-bottom: 10px;
+    }
+
+    .send-btn {
+      padding: 9px 16px;
+      font-size: 0.95rem;
+    }
+
+    #aura-header {
+      font-size: 1.6rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .glass-shell {
+      margin: 0;
+      border-radius: 0;
+      height: 100vh;
+    }
   }
-  /* Animated category: ambientShift keyframes */
-  @keyframes ambientShift {
-    0% {background-position:0% 50%;}
-    50% {background-position:100% 50%;}
-    100% {background-position:0% 50%;}
+  </style>
+
+<script>
+// Aura v6.10 — Safety Override + Emotional Precision Update
+</script>
+  <style>
+  /* 🌟 Aura 5.6 Mobile Sigma — Full Experience */
+  @media (max-width: 768px) {
+    body {
+      background: radial-gradient(circle at top, #1a1b2f, #090a10);
+      overflow: hidden;
+    }
+
+    .glass-shell {
+      backdrop-filter: blur(24px) saturate(180%);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 30px rgba(255,255,255,0.1);
+      border-radius: 20px;
+      transition: all 0.5s ease-in-out;
+    }
+
+    #aura-sidebar {
+      width: 80px;
+      height: 100vh;
+      background: rgba(25,25,35,0.45);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.4s ease;
+    }
+
+    #aura-sidebar button, #aura-sidebar img, #aura-sidebar .icon {
+      transform: scale(1);
+      transition: all 0.2s ease-in-out;
+    }
+
+    #aura-sidebar button:hover, #aura-sidebar img:hover, #aura-sidebar .icon:hover {
+      transform: scale(1.1);
+      filter: brightness(1.3);
+    }
+
+    #main {
+      width: calc(100vw - 80px);
+      margin-left: 80px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #chat-window {
+      width: 94%;
+      height: 72vh;
+      overflow-y: auto;
+      margin: 14px 0;
+      border-radius: 18px;
+    }
+
+    #chat-box .auraMsg, #chat-box .userMsg {
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      padding: 14px 18px;
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    #input-area {
+      width: 94%;
+      margin: 8px auto 14px auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .send-btn {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #ffd166, #ff9f43);
+      border-radius: 14px;
+      border: none;
+      color: #1a1b2f;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .send-btn:hover {
+      filter: brightness(1.15);
+      transform: scale(1.05);
+    }
   }
-  .animated-theme {
-    background-size: 200% 200%!important;
-    animation: ambientShift 20s ease infinite!important;
-  }
-  @media (max-width: 900px) {
-    .theme-tile { min-width: 86px; min-height: 46px; font-size: 0.95em;}
-    .theme-label { font-size: 0.93em;}
-    .theme-grid { gap: 8px; }
-  }
-</style>	
-</style>
-<style>
-  /* AuraAI 4.0 Mood Panel and Sidebar Animations */
-  .AuraAI-mood-toggle {
-    margin: 18px auto 0 auto;
-    display: block;
-    font-size: 1.13em;
-    background: rgba(255,255,255,0.13);
-    border: none;
-    border-radius: 18px;
-    color: var(--accent);
-    font-family: inherit;
-    font-weight: 600;
-    box-shadow: 0 0 18px var(--accent);
-    padding: 9px 34px;
-    cursor: pointer;
-    transition: background 0.18s, color 0.18s, box-shadow 0.22s;
-    letter-spacing: 0.5px;
-  }
-  .AuraAI-mood-toggle:hover, .AuraAI-mood-toggle:focus-visible {
-    background: var(--accent);
-    color: #181c29;
-    box-shadow: 0 0 34px var(--accent), 0 0 4px #fff;
-    outline: none;
-  }
-  .AuraAI-mood-panel {
-    margin: 0 auto 0 auto;
-    margin-top: 16px;
-    background: rgba(255,255,255,0.18);
-    border-radius: 22px;
-    padding: 16px 22px 10px 22px;
-    box-shadow: 0 0 30px 0 var(--accent), 0 0 2px #fff;
-    max-width: 430px;
-    backdrop-filter: blur(16px) saturate(1.1);
-    transition: opacity 0.4s, filter 0.4s;
-    opacity: 1;
-    filter: blur(0px);
-    position: relative;
-    z-index: 9;
-  }
-  .AuraAI-mood-panel.AuraAI-hidden {
-    display: none;
-    opacity: 0;
-    filter: blur(4px);
-    pointer-events: none;
-  }
-  .AuraAI-mood-group {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.07em;
-    flex-wrap: wrap;
-  }
-  .AuraAI-mood-group span {
-    font-weight: 600;
-    min-width: 110px;
-    color: var(--accent);
-    letter-spacing: 0.2px;
-  }
-  .AuraAI-mood-btn {
-    font-size: 1.35em;
-    background: rgba(255,255,255,0.12);
-    border: none;
-    border-radius: 13px;
-    margin-right: 2px;
-    padding: 5px 12px;
-    cursor: pointer;
-    transition: background 0.18s, box-shadow 0.22s, transform 0.13s;
-    box-shadow: 0 0 8px var(--accent)33;
-    outline: none;
-  }
-  .AuraAI-mood-btn:hover, .AuraAI-mood-btn:focus-visible {
-    background: var(--accent);
-    color: #181c29;
-    box-shadow: 0 0 18px var(--accent), 0 0 2px #fff;
-    transform: scale(1.13);
-  }
-  /* Sidebar animation */
-  #aura-sidebar {
-    transition: opacity 0.4s, filter 0.4s;
-  }
-</style>
-</body>
-</html>
+  </style>
+  <style>
+    /* AuraAI 4.0 Mood Panel and Sidebar Animations */
+    .AuraAI-mood-toggle {
+      margin: 18px auto 0 auto;
+      display: block;
+      font-size: 1.13em;
+      background: rgba(255,255,255,0.13);
+      border: none;
+      border-radius: 18px;
+      color: var(--accent);
+      font-family: inherit;
+      font-weight: 600;
+      box-shadow: 0 0 18px var(--accent);
+      padding: 9px 34px;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.22s;
+      letter-spacing: 0.5px;
+    }
+    .AuraAI-mood-toggle:hover, .AuraAI-mood-toggle:focus-visible {
+      background: var(--accent);
+      color: #181c29;
+      box-shadow: 0 0 34px var(--accent), 0 0 4px #fff;
+      outline: none;
+    }
+    .AuraAI-mood-panel {
+      margin: 0 auto 0 auto;
+      margin-top: 16px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 22px;
+      padding: 16px 22px 10px 22px;
+      box-shadow: 0 0 30px 0 var(--accent), 0 0 2px #fff;
+      max-width: 430px;
+      backdrop-filter: blur(16px) saturate(1.1);
+      transition: opacity 0.4s, filter 0.4s;
+      opacity: 1;
+      filter: blur(0px);
+      position: relative;
+      z-index: 9;
+    }
+    .AuraAI-mood-panel.AuraAI-hidden {
+      display: none;
+      opacity: 0;
+      filter: blur(4px);
+      pointer-events: none;
+    }
+    .AuraAI-mood-group {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.07em;
+      flex-wrap: wrap;
+    }
+    .AuraAI-mood-group span {
+      font-weight: 600;
+      min-width: 110px;
+      color: var(--accent);
+      letter-spacing: 0.2px;
+    }
+    .AuraAI-mood-btn {
+      font-size: 1.35em;
+      background: rgba(255,255,255,0.12);
+      border: none;
+      border-radius: 13px;
+      margin-right: 2px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: background 0.18s, box-shadow 0.22s, transform 0.13s;
+      box-shadow: 0 0 8px var(--accent)33;
+      outline: none;
+    }
+    .AuraAI-mood-btn:hover, .AuraAI-mood-btn:focus-visible {
+      background: var(--accent);
+      color: #181c29;
+      box-shadow: 0 0 18px var(--accent), 0 0 2px #fff;
+      transform: scale(1.13);
+    }
+    /* Sidebar animation */
+    #aura-sidebar {
+      transition: opacity 0.4s, filter 0.4s;
+    }
+  </style>
+</html>a
