@@ -1,3 +1,18 @@
+// --- Aura v7.0: prefers-reduced-motion fallback for smooth animations ---
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (prefersReducedMotion) {
+  document.body.classList.add('reduced-motion');
+  const style = document.createElement('style');
+  style.textContent = `
+    * { transition: none !important; animation-duration: 0.01s !important; }
+    .tab-content, .glass-shell, .sidebar-nav-btn, .message { transition: none !important; }
+  `;
+  document.head.appendChild(style);
+}
+// Aura v7.0 — Refined Core Stable (2025)
+// Major Stability, Layout, and Performance Overhaul
+// Author: Aura Dev Team (Keshav, Kritika, Aadhya)
+
 <!-- AuraAI Ultimate Merged (Part 1/4) -->
 <!DOCTYPE html>
 <html lang="en">
@@ -7,111 +22,79 @@
 <title>AuraAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
 <style>
+/* --- Aura v7.0 Core Variables & Responsive Typography --- */
 :root {
   --accent: #7cc6ff;
   --bg1: #0b0d16;
   --bg2: #1a1c2a;
   --glass: rgba(255,255,255,0.08);
-  --blur: blur(25px);
+  --blur: blur(18px);
+  --frost-bright: brightness(1.15);
+  --main-radius: 30px;
+  --main-shadow: 0 6px 44px 0 rgba(0,0,0,0.36), 0 0 0 1px rgba(124,198,255,0.08) inset, 0 10px 44px 0 rgba(124,198,255,0.09) inset, 0 0 0 2px var(--accent, #7cc6ff)10;
 }
 html, body {
-  margin: 0; padding: 0; height: 100%;
-  /* PATCH 2: new multi-gradient background */
+  margin: 0; padding: 0;
+  height: 100vh; width: 100vw; min-height: 100vh; min-width: 100vw;
   background: linear-gradient(135deg, #0b0d16 0%, #111426 50%, #1a1c2a 100%);
   font-family: 'Outfit', sans-serif;
   color: #f0f4ff;
-  height: 100vh;
-  width: 100vw;
-  min-height: 100vh;
-  min-width: 100vw;
   overflow: hidden;
-}
-
-body {
-  min-height: 100vh;
-  min-width: 100vw;
   box-sizing: border-box;
+  font-size: clamp(15px, 1.2vw, 18px);
 }
 
-/* --- SIDEBAR PATCH 1 + Frosted Thin-Bar Collapsed Mode --- */
+/* --- SIDEBAR v7.0 --- */
 aside#aura-sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  width: 260px;
-  height: 100vh;
+  width: 260px; height: 100vh;
   background: linear-gradient(135deg, rgba(18,19,34,0.93) 60%, rgba(30,30,60,0.82) 100%);
   box-shadow: 0 0 70px 0 var(--accent), 0 2px 32px 0 rgba(0,0,0,0.22);
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  padding: 0;
-  border-top-right-radius: 32px;
-  border-bottom-right-radius: 32px;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  border-top-right-radius: 32px; border-bottom-right-radius: 32px;
   overflow: hidden;
-  backdrop-filter: blur(30px) brightness(1.12);
+  backdrop-filter: var(--blur) var(--frost-bright);
   transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
 }
-
 aside#aura-sidebar.collapsed {
   width: 72px;
   background: rgba(18,19,34,0.35);
-  backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(14px) brightness(1.1);
   box-shadow: 0 0 20px rgba(0,0,0,0.25), inset 0 0 30px rgba(255,255,255,0.05);
-  transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
 }
 aside#aura-sidebar.collapsed .label { display: none; }
 aside#aura-sidebar.collapsed .sidebar-title { opacity: 0; pointer-events: none; transition: opacity 0.25s;}
-aside#aura-sidebar.collapsed:hover {
-  backdrop-filter: blur(18px) brightness(1.1);
-  box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 40px rgba(255,255,255,0.08);
-}
 aside#aura-sidebar .sidebar-title {
-  font-size: 2.1rem;
+  font-size: clamp(1.1rem, 2.1vw, 2.1rem);
   font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 1px;
-  margin: 0;
-  padding: 38px 0 32px 0;
+  color: var(--accent); letter-spacing: 1px;
+  margin: 0; padding: 38px 0 32px 0;
   text-align: center;
   font-family: 'Poppins', 'Outfit', sans-serif;
   text-shadow: 0 0 18px var(--accent), 0 0 2px #fff;
   user-select: none;
 }
 .sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 0 0 0;
-  width: 100%;
+  display: flex; flex-direction: column;
+  gap: 2px; padding: 0; width: 100%;
 }
 .sidebar-nav-btn {
   width: 100%;
   padding: 16px 32px 16px 32px;
-  font-size: 1.14rem;
-  font-family: inherit;
-  color: #e7f4ff;
-  background: none;
-  border: none;
-  outline: none;
-  display: flex;
-  align-items: center;
-  gap: 18px;
+  font-size: clamp(1rem, 1.14vw, 1.14rem);
+  font-family: inherit; color: #e7f4ff;
+  background: none; border: none; outline: none;
+  display: flex; align-items: center; gap: 18px;
   cursor: pointer;
   border-radius: 16px 0 0 16px;
-  margin: 0;
-  position: relative;
+  margin: 0; position: relative;
   transition: background 0.18s, color 0.18s, box-shadow 0.28s;
-  z-index: 1;
-  font-weight: 500;
+  z-index: 1; font-weight: 500;
 }
 .sidebar-nav-btn .icon {
-  font-size: 1.55em;
-  margin-right: 10px;
-  width: 1.5em;
-  text-align: center;
-  flex-shrink: 0;
+  font-size: 1.55em; margin-right: 10px; width: 1.5em; text-align: center; flex-shrink: 0;
   filter: drop-shadow(0 0 7px var(--accent));
 }
 .sidebar-nav-btn:hover,
@@ -180,54 +163,60 @@ aside#aura-sidebar .sidebar-title {
   transform: scale(1.15);
 }
 
+/* --- MAIN LAYOUT & WINDOW v7.0 --- */
 #main {
+  min-height: 100vh;
+  min-width: 100vw;
   height: 100vh;
   width: 100vw;
   margin-left: 260px;
-  transition: margin-left 0.4s cubic-bezier(.45,1.4,.4,1);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-}
-#main.collapsed {
-  margin-left: 72px;
   transition: margin-left 0.4s cubic-bezier(.45,1.4,.4,1);
 }
+#main.collapsed { margin-left: 72px; }
 @media (max-width: 900px) {
   #main { margin-left: 68px; }
 }
-
-/* PATCH 2: glass-shell and tab-content gradient, depth, radius, animation */
+@media (max-width: 1024px) and (min-width: 769px) {
+  #main { margin-left: 180px; width: calc(100vw - 180px);}
+}
+@media (max-width: 768px) {
+  #main {
+    margin: 0; width: 100vw; height: calc(100vh - 70px);
+    flex-direction: column; justify-content: flex-end; align-items: center;
+  }
+}
 .glass-shell {
-  width: 90%;
-  height: 85%;
-  border-radius: 30px;
+  width: clamp(340px, 92vw, 750px);
+  height: clamp(350px, 84vh, 720px);
+  border-radius: var(--main-radius);
   background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  backdrop-filter: var(--blur);
-  box-shadow: 0 0 50px 0 rgba(0,0,0,0.32), 0 0 0 1px rgba(124,198,255,0.04) inset, 0 10px 44px 0 rgba(124,198,255,0.07) inset;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: 0.3s;
-  min-width: 340px;
-  min-height: 300px;
+  backdrop-filter: var(--blur) var(--frost-bright);
+  box-shadow: var(--main-shadow);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: box-shadow 0.32s, backdrop-filter 0.32s, background 0.32s;
+  min-width: 320px; min-height: 300px;
+  margin: 0 auto;
 }
 .tab-content {
   flex: 1;
   overflow-y: auto;
-  padding: 32px 42px;
+  padding: clamp(18px, 4vw, 42px) clamp(8px, 2vw, 42px);
   display: none;
   background: none;
-  border-radius: 30px;
+  border-radius: var(--main-radius);
   animation: fadeSlideIn 0.5s cubic-bezier(.4,1.2,.2,1) both;
-  /* opacity/transition handled below for fade */
+  transition: opacity 0.4s cubic-bezier(.4,1.3,.2,1);
 }
 .tab-content.active {
   display: block;
   opacity: 1;
   pointer-events: auto;
   animation: fadeSlideIn 0.5s cubic-bezier(.4,1.2,.2,1);
+  transition: opacity 0.4s cubic-bezier(.4,1.3,.2,1);
 }
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(36px);}
@@ -236,39 +225,106 @@ aside#aura-sidebar .sidebar-title {
 .tab-content:not(.active) {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s cubic-bezier(.4,1.3,.2,1);
 }
 
 /* Remove old header/nav styles */
 
 
-/* Aura Chat */
+/* --- Aura Chat v7.0 --- */
 #aura-chat {
   display: flex; flex-direction: column; height: 100%;
 }
 .chat-window {
-  flex: 1; overflow-y: auto; background: rgba(255,255,255,0.03);
-  border-radius: 16px; padding: 10px; margin-bottom: 10px;
+  flex: 1;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
+  min-height: 150px;
+  max-height: 57vh;
+  scroll-behavior: smooth;
 }
 .message {
-  margin: 8px 0; padding: 10px 14px; border-radius: 14px; max-width: 70%;
+  margin: 8px 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  max-width: 70%;
+  font-size: clamp(1rem, 1.01vw, 1.12rem);
+  word-break: break-word;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  transition: transform 0.25s cubic-bezier(.47,1.64,.41,.8), box-shadow 0.25s;
 }
-.user { background: rgba(124,198,255,0.2); align-self: flex-end; }
-.bot { background: rgba(255,255,255,0.08); align-self: flex-start; }
-.input-row { display: flex; gap: 10px; }
+.user {
+  background: rgba(124,198,255,0.18);
+  align-self: flex-end;
+  backdrop-filter: blur(14px) brightness(1.15);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.bot {
+  background: rgba(255,255,255,0.12);
+  align-self: flex-start;
+  backdrop-filter: blur(14px) brightness(1.15);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.message:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.21);
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 .input-row input {
-  flex: 1; border: none; border-radius: 12px; padding: 10px; background: rgba(255,255,255,0.07); color: #fff;
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  font-size: clamp(1rem, 1.01vw, 1.12rem);
+  outline: none;
+  transition: background 0.18s;
+}
+.input-row input:focus {
+  background: rgba(255,255,255,0.16);
 }
 .input-row button {
-  background: var(--accent); color: #000; border: none; border-radius: 12px; padding: 10px 16px; cursor: pointer; font-weight: 600;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: clamp(1rem, 1.01vw, 1.12rem);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+  transition: background 0.18s, color 0.18s, box-shadow 0.22s;
+}
+.input-row button:hover, .input-row button:focus-visible {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 4px 18px var(--accent)33;
 }
 
 /* Journal */
 #journal-area textarea {
-  width: 100%; height: 200px; border-radius: 12px; background: rgba(255,255,255,0.05);
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
   border: none; padding: 10px; color: #fff;
+  font-size: clamp(1rem, 1.01vw, 1.12rem);
+  backdrop-filter: blur(14px) brightness(1.15);
 }
-.journal-entry { background: rgba(255,255,255,0.07); border-radius: 10px; padding: 10px; margin: 8px 0; }
+.journal-entry {
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0;
+  backdrop-filter: blur(14px) brightness(1.15);
+}
 
 /* Account Panel Overhaul */
 #account {
@@ -280,12 +336,29 @@ aside#aura-sidebar .sidebar-title {
 }
 
 /* Games */
-#games-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-.game-card {
-  background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; width: 300px; height: 300px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;
+#games-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
-.game-card:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
+.game-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 20px;
+  width: 300px; height: 300px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: box-shadow 0.24s, transform 0.22s, background 0.22s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  font-size: clamp(1.15rem, 1.22vw, 1.32rem);
+  backdrop-filter: blur(14px) brightness(1.15);
+}
+.game-card:hover {
+  transform: scale(1.03);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
 
 /* --- GAME AREA FULLSCREEN OVERLAY --- */
 #game-area {
@@ -297,7 +370,7 @@ aside#aura-sidebar .sidebar-title {
   padding: 0;
   z-index: 9999;
   background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(30px) brightness(1.2);
+  backdrop-filter: blur(18px) brightness(1.15);
   box-shadow: inset 0 0 60px rgba(0,0,0,0.4), 0 0 40px var(--accent);
   display: flex;
   align-items: center;
@@ -333,76 +406,15 @@ aside#aura-sidebar .sidebar-title {
   transform: scale(1.05);
 }
 
-/* Music */	
-#music iframe { border: none; border-radius: 20px; width: 100%; height: 380px; }
-
-</style>
-<style>
-/* 🌐 Desktop Default */
-#main {
-  height: 90vh;
-  width: calc(100vw - 260px);
-  margin-left: 260px;
-  transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+/* Music */
+#music iframe {
+  border: none;
+  border-radius: 20px;
+  width: 100%;
+  height: 380px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 
-/* when sidebar collapsed */
-body.sidebar-collapsed #main {
-  width: calc(100vw - 80px);
-  margin-left: 80px;
-}
-
-/* 💻 Tablet (769px–1024px) */
-@media (max-width: 1024px) and (min-width: 769px) {
-  #aura-sidebar {
-    width: 180px;
-  }
-  #main {
-    width: calc(100vw - 180px);
-    margin-left: 180px;
-  }
-}
-
-/* 📱 Mobile (max-width: 768px) */
-@media (max-width: 768px) {
-  #aura-sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    justify-content: space-around;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-  }
-
-  #main {
-    width: 100%;
-    height: calc(100vh - 70px);
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-  }
-
-  #chat-box, #input-area {
-    width: 95%;
-    margin: auto;
-  }
-
-  .send-btn {
-    padding: 10px 14px;
-    font-size: 1rem;
-  }
-}
 </style>
 </head>
 <body>
@@ -487,12 +499,20 @@ body.sidebar-collapsed #main {
   </div>
 </div>
 <script>
-// PATCH 1: Sidebar navigation system
+// PATCH 1: Sidebar navigation system (Aura 7.0: smooth transitions)
 function switchTab(id) {
-  // Tab content activation
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  // Tab content activation with fade
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    if (tab.classList.contains('active')) {
+      tab.classList.remove('active');
+      setTimeout(() => { tab.style.display = 'none'; }, 350);
+    }
+  });
   var tabEl = document.getElementById(id);
-  if(tabEl) tabEl.classList.add('active');
+  if(tabEl) {
+    tabEl.style.display = 'block';
+    setTimeout(() => { tabEl.classList.add('active'); }, 10);
+  }
   // Sidebar nav highlight
   document.querySelectorAll('.sidebar-nav-btn').forEach(btn => btn.classList.remove('active'));
   // Map id to button
@@ -622,123 +642,133 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// --- Name memory ---
-let AuraAI_username = localStorage.getItem('AuraAI_username');
+// --- Name memory & refined chat system (Aura 7.0) ---
+let AuraAI_username = null;
 let AuraAI_tone = localStorage.getItem('AuraAI_tone') || 'neutral';
 let AuraAI_mood = localStorage.getItem('AuraAI_mood') || 'neutral';
 let AuraAI_awaitingName = false;
-
-// --- Greeting memory system ---
 let lastAuraMessage = "";
 let greetingMemory = false;
 
-// Add AuraAI message with emotion bubble tint (Aura 5.5)
-function addAuraAIMessage(msg, who='bot', emotion='neutral') {
+function getStoredUsername() {
+  try {
+    return localStorage.getItem('AuraAI_username');
+  } catch (e) {
+    return AuraAI_username;
+  }
+}
+function setStoredUsername(name) {
+  AuraAI_username = name;
+  try { localStorage.setItem('AuraAI_username', name); } catch (e) {}
+}
+
+function addAuraAIMessage(msg, who='bot', emotion='neutral', opts={typewriter:false, instant:false}) {
   const chat = document.getElementById('chat-window');
   const div = document.createElement('div');
   div.className = 'message ' + (who === 'user' ? 'user' : 'bot');
-  div.textContent = msg;
-  // Only tint Aura's reply bubbles based on emotion color
+  // Tint Aura's reply bubbles based on emotion color
   if (who === 'bot') {
     let emo = emotion;
     if (!AuraEmotionProfiles[emo]) emo = 'neutral';
-    // Only tint bubble; do not affect global UI
     div.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
     div.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
     div.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
-    // Set lastAuraMessage for greeting memory
     lastAuraMessage = msg;
   }
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+  if (opts.typewriter && !opts.instant) {
+    let i = 0;
+    let speed = 13; // Aura 7.0: faster, less lag
+    div.textContent = "";
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    function type() {
+      if (i <= msg.length) {
+        div.textContent = msg.slice(0, i);
+        chat.scrollTop = chat.scrollHeight;
+        i++;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { div.textContent = msg; return; }
+        setTimeout(type, Math.max(7, Math.random()*speed));
+      }
+    }
+    type();
+  } else {
+    div.textContent = msg;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
 }
 
 function sendAuraAIMessage() {
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
   if (!msg) return;
-  addAuraAIMessage(msg, 'user');
+  addAuraAIMessage(msg, 'user', 'neutral', {instant:true});
   input.value = '';
-  const botDiv = document.createElement('div');
-  botDiv.className = 'message bot';
-  botDiv.textContent = 'Aura is thinking...';
-  botDiv.style.opacity = '0.6';
-  document.getElementById('chat-window').appendChild(botDiv);
-  document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+  // Show typing... animation
+  const chat = document.getElementById('chat-window');
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'message bot';
+  typingDiv.style.opacity = '0.7';
+  typingDiv.style.fontStyle = 'italic';
+  typingDiv.textContent = 'Aura is typing...';
+  typingDiv.id = 'aura-typing-indicator';
+  typingDiv.style.transition = 'opacity 0.32s cubic-bezier(.4,1.3,.2,1)';
+  chat.appendChild(typingDiv);
+  chat.scrollTop = chat.scrollHeight;
 
   setTimeout(() => {
-    // Name memory logic
+    typingDiv.style.opacity = '0';
+    setTimeout(() => { if (typingDiv.parentNode) typingDiv.parentNode.removeChild(typingDiv); }, 300);
+    // Name detection logic (robust, works even if localStorage fails)
     if (AuraAI_awaitingName && msg.length > 0 && msg.length < 32) {
-      AuraAI_username = msg.replace(/[^a-zA-Z0-9 _\-]/g,'').trim();
-      if (AuraAI_username.length > 0) {
-        localStorage.setItem('AuraAI_username', AuraAI_username);
+      let name = msg.replace(/[^a-zA-Z0-9 _\-]/g,'').trim();
+      if (name.length > 0) {
+        setStoredUsername(name);
         AuraAI_awaitingName = false;
-        botDiv.style.opacity = '1';
-        botDiv.textContent = `Aura: Got it! I'll remember your name, ${AuraAI_username} 💙`;
+        addAuraAIMessage(`Nice to meet you, ${name} 💙`, 'bot', 'joy', {typewriter:true});
         updateAuraAIHeader();
-        // Set lastAuraMessage for greeting memory
-        lastAuraMessage = botDiv.textContent;
+        lastAuraMessage = `Nice to meet you, ${name} 💙`;
         return;
       }
     }
-
-    // --- Greeting memory system ---
-    // Keywords for greetings
-    const greetingKeywords = [
-      "hi","hello","hey","greetings","good morning","good evening","nice to see you"
-    ];
+    // Greeting memory logic
+    const greetingKeywords = [ "hi","hello","hey","greetings","good morning","good evening","nice to see you" ];
     function containsGreeting(str) {
       if (!str) return false;
       const lower = str.toLowerCase();
       return greetingKeywords.some(kw => lower.includes(kw));
     }
-    // Check if last Aura message and user message are both greetings
     let skipGreeting = false;
-    if (containsGreeting(lastAuraMessage) && containsGreeting(msg)) {
-      skipGreeting = true;
-    }
-    // If skipGreeting, use continuation and set greetingMemory
+    if (containsGreeting(lastAuraMessage) && containsGreeting(msg)) skipGreeting = true;
     if (skipGreeting) {
-      botDiv.style.opacity = '1';
-      botDiv.textContent = "Aww, nice to see you too 💫 How are you feeling today?";
-      // Tint bubble as neutral
-      let emo = "neutral";
-      botDiv.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
-      botDiv.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
-      botDiv.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
+      addAuraAIMessage("Aww, nice to see you too 💫 How are you feeling today?", 'bot', 'joy', {typewriter:true});
       greetingMemory = true;
-      lastAuraMessage = botDiv.textContent;
-      document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+      lastAuraMessage = "Aww, nice to see you too 💫 How are you feeling today?";
       return;
     } else if (containsGreeting(msg)) {
-      // If user message is a greeting, but not a repeated one, set greetingMemory
       greetingMemory = true;
     } else {
-      // If user message is not a greeting, reset greetingMemory
       greetingMemory = false;
     }
-
-    // Aura 5.5: Respond with emotion, tint bubble
+    // If user gives a name, don't fallback to neutral filler
+    if (AuraAI_awaitingName && msg.length > 0 && msg.length < 32) return;
+    // Respond with emotion, tint bubble, typewriter
     const { reply, emotion } = auraRespondEmotion(msg);
-    botDiv.style.opacity = '1';
-    botDiv.textContent = "Aura: " + reply;
-    // Tint only Aura's reply bubble
-    let emo = emotion;
-    if (!AuraEmotionProfiles[emo]) emo = 'neutral';
-    botDiv.style.background = `linear-gradient(90deg, ${AuraEmotionProfiles[emo].color}22 0%, rgba(255,255,255,0.10) 100%)`;
-    botDiv.style.borderLeft = `5px solid ${AuraEmotionProfiles[emo].color}`;
-    botDiv.style.boxShadow = `0 0 12px 0 ${AuraEmotionProfiles[emo].color}55`;
-    lastAuraMessage = botDiv.textContent;
-    document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
-  }, 600);
+    addAuraAIMessage("Aura: " + reply, 'bot', emotion, {typewriter:true});
+    lastAuraMessage = "Aura: " + reply;
+    chat.scrollTop = chat.scrollHeight;
+  }, 380);
 }
 
-// Enter key for chat input
+// Enter key for chat input (Aura 7.0: only one listener)
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById('chat-input');
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') sendAuraAIMessage();
-  });
+  if (!input._aura7_enter) {
+    input._aura7_enter = true;
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendAuraAIMessage();
+    });
+  }
 });
 
 // --- Mood system: 25 moods with conversational responses ---
@@ -856,42 +886,32 @@ function buildAuraAIMoodPanel() {
   });
 }
 
-// --- Mood/Sidebar/Name memory: initialize and sync on load ---
+// --- Mood/Sidebar/Name memory: initialize and sync on load (Aura 7.0) ---
 document.addEventListener('DOMContentLoaded', function() {
-  // Mood panel UI
   buildAuraAIMoodPanel();
-  // Set header to current mood
   updateAuraAIHeader();
-  // Name memory
-  AuraAI_username = localStorage.getItem('AuraAI_username');
+  AuraAI_username = getStoredUsername();
   if (!AuraAI_username) {
     AuraAI_awaitingName = true;
-    setTimeout(()=>addAuraAIMessage("Aura: Hey there 💙 What should I call you?"), 800);
+    setTimeout(()=>addAuraAIMessage("Hey there 💙 What should I call you?", 'bot', 'joy', {typewriter:true}), 800);
   } else {
-    setTimeout(()=>addAuraAIMessage(`Aura: Hello hello ✨ Nice to see you again, ${AuraAI_username} 💙`), 800);
+    setTimeout(()=>addAuraAIMessage(`Hello hello ✨ Nice to see you again, ${AuraAI_username} 💙`, 'bot', 'joy', {typewriter:true}), 800);
   }
 });
 
-// --- Sidebar animation: opacity+blur on open/close ---
+// --- Sidebar animation: opacity+blur on open/close (Aura 7.0) ---
 document.addEventListener('DOMContentLoaded', function() {
   const sidebar = document.getElementById('aura-sidebar');
   sidebar.style.transition = 'opacity 0.4s, filter 0.4s';
-  sidebar.addEventListener('transitionstart', ()=>{
-    sidebar.style.willChange = 'opacity, filter';
-  });
-  sidebar.addEventListener('transitionend', ()=>{
-    sidebar.style.willChange = '';
-  });
-  // Animate on collapse/expand
   const observer = new MutationObserver(function(muts){
     muts.forEach(m=>{
       if (m.attributeName === 'class') {
         if (sidebar.classList.contains('collapsed')) {
-          sidebar.style.opacity = '0.6';
-          sidebar.style.filter = 'blur(2px)';
+          sidebar.style.opacity = '0.7';
+          sidebar.style.filter = 'blur(2px) brightness(1.1)';
         } else {
           sidebar.style.opacity = '1';
-          sidebar.style.filter = 'blur(0px)';
+          sidebar.style.filter = 'blur(0px) brightness(1.15)';
         }
       }
     });
@@ -1472,27 +1492,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'Enter') sendAuraAIMessage();
   });
 });
-// Mood label below chat container
+// Mood label below chat container, centered (Aura 7.0)
 document.addEventListener('DOMContentLoaded', function() {
   const chatContainer = document.getElementById('aura-chat');
   if (chatContainer && !document.getElementById('mood-label')) {
     const moodDiv = document.createElement('div');
     moodDiv.id = "mood-label";
     moodDiv.style.textAlign = "center";
-    moodDiv.style.opacity = "0.6";
-    moodDiv.style.fontSize = "0.8em";
-    moodDiv.style.marginTop = "6px";
+    moodDiv.style.opacity = "0.68";
+    moodDiv.style.fontSize = "clamp(0.82em, 0.98vw, 1em)";
+    moodDiv.style.margin = "12px auto 0 auto";
+    moodDiv.style.fontWeight = "500";
     chatContainer.appendChild(moodDiv);
     moodDiv.textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
   }
 });
 
-// Idle reminder logic
+// Idle reminder logic (Aura 7.0: reduced redundant listeners)
 let idleTimer;
 function resetIdleTimer() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    addAuraMessage("Still here when you need me 💬");
+    addAuraAIMessage("Still here when you need me 💬", 'bot', 'neutral', {typewriter:true});
   }, 25000);
 }
 resetIdleTimer();
@@ -1527,14 +1548,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window._saveTimer = setTimeout(() => saveJournal(), 10000);
   });
 
-  // Sidebar toggle logic for frosted glass thin-bar mode
+// Sidebar toggle logic for frosted glass thin-bar mode (Aura 7.0: only 1 listener)
   const sidebar = document.getElementById('aura-sidebar');
   const toggle = document.getElementById('toggle-sidebar');
   const main = document.getElementById('main');
-  toggle.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    main.classList.toggle('collapsed');
-  });
+  if (!toggle._aura7) {
+    toggle._aura7 = true;
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      main.classList.toggle('collapsed');
+    });
+  }
 });
 
 
@@ -2789,7 +2813,7 @@ function startSnake(ctx, canvas) {
   </style>
 
 <script>
-// Aura v6.10 — Safety Override + Emotional Precision Update
+// Aura v6.10 — Stable Emotional Engine Build
 </script>
   <style>
   /* 🌟 Aura 5.6 Mobile Sigma — Full Experience */
