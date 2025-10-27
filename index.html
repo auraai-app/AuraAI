@@ -538,6 +538,92 @@ html, body { box-sizing: border-box; }
     100%{opacity:1; transform: translate(-50%, 0) scale(1);} 
   }
 </style>
+<style>
+  /* AuraOS Transparent-ish Home UI (MacOS Glass) */
+
+  /* Status bar */
+  #auraos-status {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 48px; z-index: 160;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px;
+    color: #eaf6ff; font-weight: 600;
+    backdrop-filter: blur(16px) saturate(1.2);
+    background: rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  #auraos-status .time { font-size: 0.95rem; letter-spacing: 0.5px; }
+  #auraos-status .center { opacity: 0.8; font-size: 0.9rem; }
+  #auraos-status .pill {
+    padding: 4px 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    font-size: 0.85rem;
+  }
+
+  /* Widgets Row */
+  #auraos-widgets {
+    position: fixed; top: 60px; left: 0; right: 0;
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 14px; padding: 0 18px; z-index: 140;
+  }
+  .auraos-widget {
+    min-height: 150px; border-radius: 16px; padding: 14px;
+    color: #fff; background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+  }
+
+  /* Calendar widget */
+  #auraos-widget-calendar header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  #auraos-widget-calendar .nav button {
+    border: none; border-radius: 8px;
+    background: rgba(255,255,255,0.12);
+    color: #fff; font-size: 0.8rem;
+    width: 28px; height: 28px;
+  }
+  #auraos-widget-calendar .grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; font-size: 0.75rem;
+  }
+  #auraos-widget-calendar .cell {
+    text-align: center; padding: 4px 0;
+    border-radius: 8px; opacity: 0.9;
+  }
+  #auraos-widget-calendar .today {
+    background: rgba(100,180,255,0.3);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+
+  /* Bottom controls */
+  #auraos-controls {
+    position: fixed; bottom: 100px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 12px;
+    padding: 6px 14px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    z-index: 150;
+  }
+  #auraos-controls button {
+    background: rgba(255,255,255,0.12);
+    border: none; color: #fff;
+    font-weight: 600; border-radius: 16px;
+    height: 32px; padding: 0 14px;
+    backdrop-filter: blur(10px);
+  }
+  #auraos-controls button:active { transform: translateY(1px); }
+
+  /* Adjust grid padding */
+  body.auraos-mode #auraos-home { padding-top: 240px; }
+</style>
 </head>
 <body>
 <!-- Reminder: After uploading to GitHub Pages, check if AuraOS Mobile (Luna Glass) UI loads on your phone.
@@ -3119,27 +3205,81 @@ function startSnake(ctx, canvas) {
     return force || isMobileUA || (isTouch && narrow);
   }
 
-  function ensureAuraOSDOM() {
-    if (!document.getElementById('auraos-home')) {
-      const home = document.createElement('div');
-      home.id = 'auraos-home';
-      const apps = ['💬','🎨','🎮','🎵','📔','⚙️','🌈','🧠','📁'];
-      apps.forEach(icon => {
-        const tile = document.createElement('div');
-        tile.className = 'auraos-tile';
-        tile.textContent = icon;
-        home.appendChild(tile);
-      });
-      document.body.appendChild(home);
-    }
-    if (!document.getElementById('auraos-dock')) {
-      const dock = document.createElement('div');
-      dock.id = 'auraos-dock';
-      dock.innerHTML = '<span>💬</span><span>🎨</span><span>🎮</span><span>🎵</span><span>📔</span>';
-      document.body.appendChild(dock);
-    }
+ function ensureAuraOSDOM() {
+  // Status Bar
+  if (!document.getElementById('auraos-status')) {
+    const bar = document.createElement('div');
+    bar.id = 'auraos-status';
+    bar.innerHTML = `
+      <div class="time">--:--</div>
+      <div class="center">AuraOS • Luna Glass</div>
+      <div class="pill" id="auraos-health">Mood: —</div>
+    `;
+    document.body.appendChild(bar);
   }
 
+  // Widgets
+  if (!document.getElementById('auraos-widgets')) {
+    const widgets = document.createElement('div');
+    widgets.id = 'auraos-widgets';
+
+    const cal = document.createElement('div');
+    cal.id = 'auraos-widget-calendar';
+    cal.className = 'auraos-widget';
+    cal.innerHTML = `
+      <header>
+        <span class="title">Calendar</span>
+        <div class="nav">
+          <button id="calPrev">‹</button>
+          <button id="calToday">Today</button>
+          <button id="calNext">›</button>
+        </div>
+      </header>
+      <div class="grid" id="calGrid"></div>
+    `;
+    widgets.appendChild(cal);
+
+    const np = document.createElement('div');
+    np.className = 'auraos-widget';
+    np.innerHTML = `<div style="font-weight:700;margin-bottom:6px;">Now Playing</div><div id="nowPlaying">—</div>`;
+    widgets.appendChild(np);
+
+    document.body.appendChild(widgets);
+  }
+
+  // Home grid
+  if (!document.getElementById('auraos-home')) {
+    const home = document.createElement('div');
+    home.id = 'auraos-home';
+    const apps = ['💬','🎨','🎮','🎵','📔','⚙️','🌈','🧠','📁'];
+    apps.forEach(icon => {
+      const tile = document.createElement('div');
+      tile.className = 'auraos-tile';
+      tile.textContent = icon;
+      home.appendChild(tile);
+    });
+    document.body.appendChild(home);
+  }
+
+  // Dock
+  if (!document.getElementById('auraos-dock')) {
+    const dock = document.createElement('div');
+    dock.id = 'auraos-dock';
+    dock.innerHTML = '<span>💬</span><span>🎨</span><span>🎮</span><span>🎵</span><span>📔</span>';
+    document.body.appendChild(dock);
+  }
+
+  // Bottom Controls
+  if (!document.getElementById('auraos-controls')) {
+    const ctl = document.createElement('div');
+    ctl.id = 'auraos-controls';
+    ctl.innerHTML = `
+      <button id="btnBack">← Back</button>
+      <button id="btnHome">Home</button>
+    `;
+    document.body.appendChild(ctl);
+  }
+}
   function activateAuraOS() {
     if (!document.body.classList.contains('auraos-mode')) {
       document.body.classList.add('auraos-mode');
@@ -3161,4 +3301,5 @@ function startSnake(ctx, canvas) {
   };
 })();
 </script>
+
 </html>
