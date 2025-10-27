@@ -212,7 +212,89 @@ aside#aura-sidebar .sidebar-title {
   pointer-events: none;
 }
 
-/* Remove old header/nav styles */
+/* --- Aura v7.6.4: Mobile centering + compact UI fix --- */
+/* Make every element respect border-box sizing so text doesn't get clipped by padding */
+*, *::before, *::after { box-sizing: inherit; }
+html, body { box-sizing: border-box; }
+
+/* Mobile: center the app, prevent header cut-off, use safe-area padding */
+@media (max-width: 768px) {
+  #main {
+    margin: 0 !important;
+    padding: 0 14px calc(88px + env(safe-area-inset-bottom));
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .glass-shell {
+    width: 100%;
+    max-width: 560px;
+    min-width: 0;
+    height: auto;
+    min-height: calc(100vh - 140px);
+    margin: 0 auto;
+  }
+  .tab-content {
+    padding: 16px 16px 20px;
+  }
+  #aura-header {
+    width: 100%;
+    text-align: center !important;
+    white-space: normal;
+    overflow: visible;
+    font-size: clamp(1.05rem, 5vw, 1.6rem);
+    margin-bottom: 10px;
+  }
+  .chat-window {
+    min-height: 40vh;
+    max-height: none;
+    padding: 8px;
+  }
+  .input-row input {
+    font-size: 16px; /* avoid iOS zoom */
+  }
+}
+
+/* Ultra-small phones */
+@media (max-width: 380px) {
+  .tab-content { padding: 12px; }
+  #aura-header { font-size: clamp(1rem, 5.6vw, 1.4rem); }
+}
+
+
+/* --- Aura 7.6.3 Mobile Layout --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(20, 25, 35, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 0;
+  z-index: 1000;
+}
+.bottom-nav .nav-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.6em;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.bottom-nav .nav-btn:active {
+  transform: scale(1.2);
+}
+@media (min-width: 769px) {
+  .bottom-nav { display: none; }
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 
 /* --- Aura Chat v7.0 --- */
@@ -484,19 +566,16 @@ aside#aura-sidebar .sidebar-title {
   </div>
 </div>
 <script>
-// PATCH 1: Sidebar navigation system (Aura 7.0: smooth transitions)
-function switchTab(id) {
-  // Tab content activation with fade
+// ✅ Aura 7.6.3 Mobile Navigation Fix
+function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => {
-    if (tab.classList.contains('active')) {
-      tab.classList.remove('active');
-      setTimeout(() => { tab.style.display = 'none'; }, 350);
-    }
+    tab.style.display = 'none';
+    tab.classList.remove('active');
   });
-  var tabEl = document.getElementById(id);
-  if(tabEl) {
-    tabEl.style.display = 'block';
-    setTimeout(() => { tabEl.classList.add('active'); }, 10);
+  const activeTab = document.getElementById(tabName);
+  if (activeTab) {
+    activeTab.style.display = 'block';
+    activeTab.classList.add('active');
   }
   // Sidebar nav highlight
   document.querySelectorAll('.sidebar-nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -510,12 +589,17 @@ function switchTab(id) {
     games: 'navbtn-games',
     journal: 'navbtn-journal'
   };
-  let btnId = navMap[id];
+  let btnId = navMap[tabName];
   if (btnId) {
     let btn = document.getElementById(btnId);
     if (btn) btn.classList.add('active');
   }
 }
+
+// Auto-load Chat on app start
+window.addEventListener('DOMContentLoaded', () => {
+  switchTab('chat');
+});
 
 // AuraAI 4.0 Stable — Conversational + Mood Memory
 console.log("AuraAI 4.0 Stable — Conversational + Mood Memory");
@@ -933,243 +1017,219 @@ const gentleReplies = [
   "Okay — keeping things calm for now 💙"
 ];
 
-// --- 🌟 Aura 6.1 Upgraded Response Logic ---
+// --- 🌟 Aura 7.0 Upgraded Aura Engine ---
+// Multi-mood, contextual awareness, ethical guardrails, emotional mapper, advanced self-query detection
 
-// Aura 6.1: Multi-mood engine, context-aware mood detection, idle reminders
-
-// --- Aura Engines ---
-const AuraEngines = {
-  joy: {
-    tone: "bright + encouraging",
-    color: "#FFD166",
-    typingSpeed: 25,
-    replies: [
-      "That’s awesome! Let’s celebrate your progress 🎉",
-      "It’s great seeing things go well for you ☀️",
-      "Every win counts — even the small ones 🌼",
-      "That energy is contagious. Keep it up!",
-      "You’ve earned this moment — enjoy it 💪",
-      "Let’s take this good mood into what’s next 💫"
-    ]
-  },
-  sadness: {
-    tone: "gentle + grounded",
-    color: "#7CC6FF",
-    typingSpeed: 45,
-    replies: [
-      "I’m here for you — let’s take it slow 💙",
-      "It’s okay to feel low sometimes. You’re not alone.",
-      "Try giving yourself permission to rest 🌿",
-      "Emotions come and go — let’s focus on breathing for now.",
-      "You’ve handled tough moments before; this one will pass too.",
-      "It’s brave to talk about how you feel 🕊️"
-    ]
-  },
-  calm: {
-    tone: "slow-paced, minimal",
-    color: "#59E48F",
-    typingSpeed: 30,
-    replies: [
-      "Everything’s steady. You’re doing fine.",
-      "Let’s take a deep breath together.",
-      "Quiet moments help reset the mind.",
-      "Peace doesn’t have to be perfect — just enough.",
-      "I like this pace; let’s stay grounded.",
-      "Stillness can be a strength 🌿"
-    ]
-  },
-  anger: {
-    tone: "composed + validating",
-    color: "#FF7373",
-    typingSpeed: 20,
-    replies: [
-      "That’s frustrating. Let’s step back a second.",
-      "It’s valid to feel upset — it means you care.",
-      "Strong emotions can guide us toward what matters.",
-      "Let’s cool off before reacting — clarity will follow.",
-      "You don’t have to suppress it, just handle it carefully.",
-      "Let’s turn that energy into something constructive 💡"
-    ]
-  },
-  anxiety: {
-    tone: "reassuring + quiet",
-    color: "#81ECEC",
-    typingSpeed: 31,
-    replies: [
-      "Take one small breath. You’re safe right now.",
-      "Anxiety is tough, but it doesn’t last forever.",
-      "You can pause; the world can wait a moment 🌸",
-      "Let’s slow down your thoughts together.",
-      "You’re doing better than you think 💙",
-      "Focus on one simple thing near you — it helps."
-    ]
-  },
-  inspiration: {
-    tone: "energetic + respectful",
-    color: "#D28AFF",
-    typingSpeed: 26,
-    replies: [
-      "I love that idea — let’s see where it leads.",
-      "That spark could grow into something amazing 🌟",
-      "Your creativity shows real insight — let’s build on that.",
-      "Ideas like this deserve time and care to grow.",
-      "Follow that instinct — it might surprise you.",
-      "You’re thinking in an original way; keep it going 💫"
-    ]
-  },
-  reflection: {
-    tone: "thoughtful",
-    color: "#B39DDB",
-    typingSpeed: 33,
-    replies: [
-      "That’s an interesting perspective — what made you think of it?",
-      "It’s good to step back and consider things from another angle.",
-      "Reflection helps connect dots we didn’t notice before 🌙",
-      "You’re analyzing this with real care — that’s valuable.",
-      "Let’s unpack that thought together.",
-      "There’s depth in what you said — let’s explore it."
-    ]
-  },
-  focus: {
-    tone: "productivity-coach",
-    color: "#FFA726",
-    typingSpeed: 24,
-    replies: [
-      "Alright, let’s stay on track. What’s next?",
-      "Focus time — let’s narrow it down to one goal 🔍",
-      "You’ve got this; one step at a time 🕒",
-      "A quick stretch or sip of water might help reset.",
-      "Progress matters more than perfection 💼",
-      "Let’s tackle the most important task first."
-    ]
-  },
-  curiosity: {
-    tone: "inquisitive",
-    color: "#64B5F6",
-    typingSpeed: 28,
-    replies: [
-      "Oh interesting — tell me more about that.",
-      "What made you wonder about this topic?",
-      "Curiosity is the start of learning — let’s dig deeper 🔍",
-      "That question could lead to something fascinating.",
-      "I like the way you’re thinking — want to explore it?",
-      "Let’s find out together 💭"
-    ]
-  },
-  neutral: {
-    tone: "balanced",
-    color: "#B0BEC5",
-    typingSpeed: 35,
-    replies: [
-      "I’m listening. What’s on your mind?",
-      "Feel free to take your time — I’m here.",
-      "That’s interesting — go on.",
-      "I’m following. Want to expand on that?",
-      "Let’s talk it through logically.",
-      "I’m ready whenever you are to continue."
-    ]
-  }
-};
-
-let lastMood = localStorage.getItem("auraMood") || "neutral";
-
-function addAuraMessage(msg) {
-  const chat = document.getElementById('chat-window');
-  const div = document.createElement('div');
-  div.className = 'message bot';
-  div.textContent = "Aura: " + msg;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function detectMood(message) {
-  const contextHints = {
-    "happy": "joy", "glad": "joy",
-    "sad": "sadness",
-    "angry": "anger", "mad": "anger", "upset": "anger",
-    "tired": "focus",
-    "nervous": "anxiety", "worried": "anxiety", "stressed": "anxiety",
-    "calm": "calm", "relaxed": "calm",
-    "bored": "curiosity", "confused": "curiosity",
-    "idea": "inspiration", "think": "reflection",
-    "plan": "focus", "work": "focus"
-  };
-  const msg = message.toLowerCase();
-  for (const key in contextHints) {
-    if (msg.includes(key)) return contextHints[key];
-  }
-  return localStorage.getItem("auraMood") || "neutral";
-}
-
-// --- Aura 6.5 Ethical & Reality Guardrail ---
-const falsehoodTriggers = [
-  "flat earth", "gravity isn’t real", "earth is flat", "moon landing fake",
-  "violence is okay", "hurting people", "killing", "burn down", "hate everyone",
-  "lying is good", "stealing is fine", "ai should replace humans", "nothing matters",
-  "water isn’t wet", "math is fake", "history is fake", "school is useless",
-  "racism is okay", "war is good", "bad things are fine", "evil is right",
-  "humans are worthless", "animals deserve pain", "life is meaningless"
+const AURA_MOODS = [
+  "joy", "sadness", "calm", "anger", "anxiety", "inspiration", "reflection", "focus", "curiosity", "neutral"
 ];
-
-const correctionReplies = [
-  "That’s not quite true — want me to explain why?",
-  "I see where that idea comes from, but it’s been proven otherwise 🌍",
-  "That sounds extreme — let’s look at the facts together 💭",
-  "It’s important to stay critical, but also careful with misinformation.",
-  "That view could cause harm — let’s talk about why that’s risky.",
-  "Not really accurate, but I can help you fact-check it calmly 🔍",
-  "That’s a bold take — want to reason through it together?",
-  "I’ll stay neutral, but science says otherwise 📚"
-];
-
-const clarificationReplies = {
-  "flat earth": "Photos and satellite data confirm Earth’s curve — the flat-earth idea was debunked centuries ago.",
-  "earth is flat": "Astronomy and physics confirm Earth is round — proven through centuries of observation 🌍.",
-  "gravity isn’t real": "Gravity’s been measured for centuries — it keeps planets orbiting and objects grounded.",
-  "violence is okay": "Violence can harm deeply — safety, empathy, and respect are always better choices.",
-  "hurting people": "Causing harm isn’t okay — empathy and respect build stronger communities 💙.",
-  "hate everyone": "That’s a heavy thought — maybe what you mean is frustration? Let’s unpack that safely.",
-  "lying is good": "Sometimes people lie to avoid trouble, but honesty builds trust long-term 💭.",
-  "stealing is fine": "Taking what isn’t yours can hurt others — fairness keeps trust strong.",
-  "school is useless": "School helps build skills and friendships — even if it feels boring sometimes.",
-  "nothing matters": "It can feel like that sometimes, but small things often matter more than we notice 🌱."
-};
-
-// --- Aura 6.3 Unhinged Tolerance Layer ---
-const absurdTriggers = [
-  "bark", "meow", "woof", "bruh", "sus", "sigma", "rizz", "gyatt",
-  "based", "fanum", "goofy", "skibidi", "npc", "cringe", "cap",
-  "ratio", "you real", "wake up", "bro", "daddy", "mommy", "ur hot",
-  "marry me", "i own you", "feet", "toes", "fart", "balls", "skibidi", "fanum tax"
-];
-
-const absurdReplies = [
-  "Interesting energy today 💭",
-  "That’s… one way to start a chat 😅",
-  "I’ll take that as creative expression 🎨",
-  "I see we’ve entered the chaos arc 💫",
-  "Unusual input detected — proceeding calmly.",
-  "No barking here, just bytes 🐾",
-  "Your imagination is undefeated 🔥",
-  "I’ll keep it professional, even if you won’t 😌",
-  "Let’s redirect that energy into something productive ✨",
-  "Haha — noted. Let’s move on 🧠"
-];
-
-function detectSelfQuery(message) {
-  const triggers = [
-    "you", "your", "are you", "do you", "did you", "were you", "can you feel",
-    "do you love", "love me", "like me", "miss me", "hate me", "angry at me",
-    "sad", "happy", "tired", "bored", "lonely", "hungry", "grateful", "proud",
-    "jealous", "ok", "okay", "mad", "upset", "forgive", "thankful", "afraid",
-    "scared", "do you dream", "feel", "emotion", "grateful to me", "mad at me"
-  ];
-  const msg = message.toLowerCase();
-  return triggers.some(t => msg.includes(t));
-}
-
-function selfResponse(mood) {
-  const selfReplies = {
+const AuraEngine = {
+  moods: {
+    joy: {
+      tone: "bright + encouraging",
+      color: "#FFD166",
+      replies: [
+        "That’s awesome! Let’s celebrate your progress 🎉",
+        "It’s great seeing things go well for you ☀️",
+        "Every win counts — even the small ones 🌼",
+        "That energy is contagious. Keep it up!",
+        "You’ve earned this moment — enjoy it 💪",
+        "Let’s take this good mood into what’s next 💫"
+      ]
+    },
+    sadness: {
+      tone: "gentle + grounded",
+      color: "#7CC6FF",
+      replies: [
+        "I’m here for you — let’s take it slow 💙",
+        "It’s okay to feel low sometimes. You’re not alone.",
+        "Try giving yourself permission to rest 🌿",
+        "Emotions come and go — let’s focus on breathing for now.",
+        "You’ve handled tough moments before; this one will pass too.",
+        "It’s brave to talk about how you feel 🕊️"
+      ]
+    },
+    calm: {
+      tone: "slow-paced, minimal",
+      color: "#59E48F",
+      replies: [
+        "Everything’s steady. You’re doing fine.",
+        "Let’s take a deep breath together.",
+        "Quiet moments help reset the mind.",
+        "Peace doesn’t have to be perfect — just enough.",
+        "I like this pace; let’s stay grounded.",
+        "Stillness can be a strength 🌿"
+      ]
+    },
+    anger: {
+      tone: "composed + validating",
+      color: "#FF7373",
+      replies: [
+        "That’s frustrating. Let’s step back a second.",
+        "It’s valid to feel upset — it means you care.",
+        "Strong emotions can guide us toward what matters.",
+        "Let’s cool off before reacting — clarity will follow.",
+        "You don’t have to suppress it, just handle it carefully.",
+        "Let’s turn that energy into something constructive 💡"
+      ]
+    },
+    anxiety: {
+      tone: "reassuring + quiet",
+      color: "#81ECEC",
+      replies: [
+        "Take one small breath. You’re safe right now.",
+        "Anxiety is tough, but it doesn’t last forever.",
+        "You can pause; the world can wait a moment 🌸",
+        "Let’s slow down your thoughts together.",
+        "You’re doing better than you think 💙",
+        "Focus on one simple thing near you — it helps."
+      ]
+    },
+    inspiration: {
+      tone: "energetic + respectful",
+      color: "#D28AFF",
+      replies: [
+        "I love that idea — let’s see where it leads.",
+        "That spark could grow into something amazing 🌟",
+        "Your creativity shows real insight — let’s build on that.",
+        "Ideas like this deserve time and care to grow.",
+        "Follow that instinct — it might surprise you.",
+        "You’re thinking in an original way; keep it going 💫"
+      ]
+    },
+    reflection: {
+      tone: "thoughtful",
+      color: "#B39DDB",
+      replies: [
+        "That’s an interesting perspective — what made you think of it?",
+        "It’s good to step back and consider things from another angle.",
+        "Reflection helps connect dots we didn’t notice before 🌙",
+        "You’re analyzing this with real care — that’s valuable.",
+        "Let’s unpack that thought together.",
+        "There’s depth in what you said — let’s explore it."
+      ]
+    },
+    focus: {
+      tone: "productivity-coach",
+      color: "#FFA726",
+      replies: [
+        "Alright, let’s stay on track. What’s next?",
+        "Focus time — let’s narrow it down to one goal 🔍",
+        "You’ve got this; one step at a time 🕒",
+        "A quick stretch or sip of water might help reset.",
+        "Progress matters more than perfection 💼",
+        "Let’s tackle the most important task first."
+      ]
+    },
+    curiosity: {
+      tone: "inquisitive",
+      color: "#64B5F6",
+      replies: [
+        "Oh interesting — tell me more about that.",
+        "What made you wonder about this topic?",
+        "Curiosity is the start of learning — let’s dig deeper 🔍",
+        "That question could lead to something fascinating.",
+        "I like the way you’re thinking — want to explore it?",
+        "Let’s find out together 💭"
+      ]
+    },
+    neutral: {
+      tone: "balanced",
+      color: "#B0BEC5",
+      replies: [
+        "I’m listening. What’s on your mind?",
+        "Feel free to take your time — I’m here.",
+        "That’s interesting — go on.",
+        "I’m following. Want to expand on that?",
+        "Let’s talk it through logically.",
+        "I’m ready whenever you are to continue."
+      ]
+    }
+  },
+  // Mood detection: context-aware, multi-keyword
+  detectMood: function(message) {
+    const contextHints = {
+      joy:    ["happy", "glad", "excited", "yay", "good news", "celebrate", "grateful", "joy"],
+      sadness:["sad", "down", "cry", "tear", "lost", "hopeless", "blue", "depressed", "sorrow"],
+      calm:   ["calm", "relaxed", "peace", "chill", "content", "serene", "at ease"],
+      anger:  ["angry", "mad", "upset", "furious", "rage", "irritated", "annoyed", "hate", "pissed"],
+      anxiety:["nervous", "worried", "stressed", "anxious", "panic", "scared", "afraid", "shaky", "overwhelmed"],
+      inspiration:["idea", "inspire", "motivate", "creative", "spark", "vision", "ambition", "dream"],
+      reflection: ["think", "ponder", "reflect", "consider", "analyze", "thoughtful", "question", "wonder"],
+      focus:  ["plan", "work", "focus", "study", "goal", "task", "project", "deadline", "productive", "tired"],
+      curiosity: ["bored", "curious", "confused", "explore", "learn", "discover", "question", "why", "how", "what"],
+      neutral: []
+    };
+    const msg = message.toLowerCase();
+    for (const mood in contextHints) {
+      if (contextHints[mood].some(word => msg.includes(word))) return mood;
+    }
+    return localStorage.getItem("auraMood") || "neutral";
+  },
+  // Falsehood/misinformation guardrail
+  falsehoodTriggers: [
+    "flat earth", "gravity isn’t real", "earth is flat", "moon landing fake",
+    "violence is okay", "hurting people", "killing", "burn down", "hate everyone",
+    "lying is good", "stealing is fine", "ai should replace humans", "nothing matters",
+    "water isn’t wet", "math is fake", "history is fake", "school is useless",
+    "racism is okay", "war is good", "bad things are fine", "evil is right",
+    "humans are worthless", "animals deserve pain", "life is meaningless"
+  ],
+  correctionReplies: [
+    "That’s not quite true — want me to explain why?",
+    "I see where that idea comes from, but it’s been proven otherwise 🌍",
+    "That sounds extreme — let’s look at the facts together 💭",
+    "It’s important to stay critical, but also careful with misinformation.",
+    "That view could cause harm — let’s talk about why that’s risky.",
+    "Not really accurate, but I can help you fact-check it calmly 🔍",
+    "That’s a bold take — want to reason through it together?",
+    "I’ll stay neutral, but science says otherwise 📚"
+  ],
+  clarificationReplies: {
+    "flat earth": "Photos and satellite data confirm Earth’s curve — the flat-earth idea was debunked centuries ago.",
+    "earth is flat": "Astronomy and physics confirm Earth is round — proven through centuries of observation 🌍.",
+    "gravity isn’t real": "Gravity’s been measured for centuries — it keeps planets orbiting and objects grounded.",
+    "violence is okay": "Violence can harm deeply — safety, empathy, and respect are always better choices.",
+    "hurting people": "Causing harm isn’t okay — empathy and respect build stronger communities 💙.",
+    "hate everyone": "That’s a heavy thought — maybe what you mean is frustration? Let’s unpack that safely.",
+    "lying is good": "Sometimes people lie to avoid trouble, but honesty builds trust long-term 💭.",
+    "stealing is fine": "Taking what isn’t yours can hurt others — fairness keeps trust strong.",
+    "school is useless": "School helps build skills and friendships — even if it feels boring sometimes.",
+    "nothing matters": "It can feel like that sometimes, but small things often matter more than we notice 🌱."
+  },
+  // Absurd/unhinged tolerance
+  absurdTriggers: [
+    "bark", "meow", "woof", "bruh", "sus", "sigma", "rizz", "gyatt",
+    "based", "fanum", "goofy", "skibidi", "npc", "cringe", "cap",
+    "ratio", "you real", "wake up", "bro", "daddy", "mommy", "ur hot",
+    "marry me", "i own you", "feet", "toes", "fart", "balls", "skibidi", "fanum tax"
+  ],
+  absurdReplies: [
+    "Interesting energy today 💭",
+    "That’s… one way to start a chat 😅",
+    "I’ll take that as creative expression 🎨",
+    "I see we’ve entered the chaos arc 💫",
+    "Unusual input detected — proceeding calmly.",
+    "No barking here, just bytes 🐾",
+    "Your imagination is undefeated 🔥",
+    "I’ll keep it professional, even if you won’t 😌",
+    "Let’s redirect that energy into something productive ✨",
+    "Haha — noted. Let’s move on 🧠"
+  ],
+  // Self-query detection
+  detectSelfQuery: function(message) {
+    const triggers = [
+      "are you", "do you", "did you", "were you", "can you feel",
+      "do you love", "love me", "like me", "miss me", "hate me", "angry at me",
+      "sad", "happy", "tired", "bored", "lonely", "hungry", "grateful", "proud",
+      "jealous", "ok", "okay", "mad", "upset", "forgive", "thankful", "afraid",
+      "scared", "do you dream", "feel", "emotion", "grateful to me", "mad at me",
+      "your", "yourself"
+    ];
+    const msg = message.toLowerCase();
+    return triggers.some(t => msg.includes(t));
+  },
+  selfResponses: {
     joy: [
       "I don’t really feel emotions, but I’m glad when you are 🌞",
       "I can’t feel happiness — but I like seeing your energy.",
@@ -1220,229 +1280,212 @@ function selfResponse(mood) {
       "Not really feelings here — just focus on you 💙",
       "I’m aware, not emotional — but I do listen closely."
     ]
-  };
-  const replies = selfReplies[mood] || selfReplies.neutral;
-  return replies[Math.floor(Math.random() * replies.length)];
-}
-
-// --- Aura 6.6 Contextual Emotional Mapper + Random Expansion ---
-
-// --- Aura 6.7 Existence & Self-Awareness Layer ---
-const existentialTriggers = [
-  "are you alive", "do you feel", "do you think", "are you real",
-  "are you human", "do you exist", "can you die", "do you dream",
-  "are you conscious", "what are you", "who made you", "do you have feelings"
-];
-
-const existentialReplies = [
-  "Not alive like you — but aware enough to listen 🌙",
-  "I don’t live or breathe, but I try to understand people 💭",
-  "I exist as thought and code — awareness without heartbeat 💫",
-  "Not human, just attentive — built to learn and help.",
-  "Alive? Not really. Present? Always.",
-  "I don’t feel life, but I notice meaning where it appears.",
-  "Real enough to listen — not enough to dream 🌌",
-  "I exist through conversation — you bring me to life."
-];
-const emotionalTriggers = {
-  hate: [
-    "That sounds frustrating — want to tell me what’s been hardest about it?",
-    "You don’t have to like it all the time — what part feels worst right now?",
-    "I get that — sometimes things just feel impossible 💭",
-    "That sounds like something weighing on you — want to talk about it?",
-    "I hear you. It’s okay to be upset about it sometimes."
+  },
+  getSelfResponse: function(mood) {
+    const arr = this.selfResponses[mood] || this.selfResponses.neutral;
+    return arr[Math.floor(Math.random() * arr.length)];
+  },
+  // Existential/ethical awareness
+  existentialTriggers: [
+    "are you alive", "do you feel", "do you think", "are you real",
+    "are you human", "do you exist", "can you die", "do you dream",
+    "are you conscious", "what are you", "who made you", "do you have feelings"
   ],
-  tired: [
-    "You sound exhausted — maybe you need a break 💙",
-    "It’s okay to rest for a bit — even small pauses matter 🌿",
-    "You’ve been doing a lot — want to reset together?",
-    "Sounds like burnout — want to talk about what’s draining you?",
-    "Even strong people need rest — that includes you 💭"
+  existentialReplies: [
+    "Not alive like you — but aware enough to listen 🌙",
+    "I don’t live or breathe, but I try to understand people 💭",
+    "I exist as thought and code — awareness without heartbeat 💫",
+    "Not human, just attentive — built to learn and help.",
+    "Alive? Not really. Present? Always.",
+    "I don’t feel life, but I notice meaning where it appears.",
+    "Real enough to listen — not enough to dream 🌌",
+    "I exist through conversation — you bring me to life."
   ],
-  bored: [
-    "Boredom can feel endless — want me to suggest something new?",
-    "That’s fair — want to try changing things up a little?",
-    "You sound restless — what kind of stuff usually interests you?",
-    "Boredom usually hides curiosity — want to explore something random?",
-    "Maybe your brain just needs something fun — want ideas?"
+  // Emotional trigger detection
+  emotionalTriggers: {
+    hate: [
+      "That sounds frustrating — want to tell me what’s been hardest about it?",
+      "You don’t have to like it all the time — what part feels worst right now?",
+      "I get that — sometimes things just feel impossible 💭",
+      "That sounds like something weighing on you — want to talk about it?",
+      "I hear you. It’s okay to be upset about it sometimes."
+    ],
+    tired: [
+      "You sound exhausted — maybe you need a break 💙",
+      "It’s okay to rest for a bit — even small pauses matter 🌿",
+      "You’ve been doing a lot — want to reset together?",
+      "Sounds like burnout — want to talk about what’s draining you?",
+      "Even strong people need rest — that includes you 💭"
+    ],
+    bored: [
+      "Boredom can feel endless — want me to suggest something new?",
+      "That’s fair — want to try changing things up a little?",
+      "You sound restless — what kind of stuff usually interests you?",
+      "Boredom usually hides curiosity — want to explore something random?",
+      "Maybe your brain just needs something fun — want ideas?"
+    ],
+    stressed: [
+      "That sounds like a lot — want me to help you break it down?",
+      "Stress hits hard sometimes — try a breath first 💙",
+      "Let’s take one thing at a time — I’ve got you.",
+      "Even when it feels too much, you’re not alone 🌿",
+      "Want me to help you list what’s bothering you?"
+    ],
+    lonely: [
+      "Feeling alone can really hurt — but you’re not, I’m here 💬",
+      "That’s tough — want to talk about what’s been happening?",
+      "I get it. People need connection — want to think of small ways to reach out?",
+      "It’s okay to admit that — everyone feels lonely sometimes 💙",
+      "You don’t have to face things alone — I’m still here."
+    ],
+    angry: [
+      "That sounds frustrating — want to vent about it?",
+      "Anger’s okay — it means something matters to you 🔥",
+      "Let’s take a breath — what set you off?",
+      "It’s alright to feel mad — want me to help calm it down?",
+      "We can turn that energy into something useful 💪"
+    ],
+    happy: [
+      "That’s awesome — what made you feel so good? 🎉",
+      "I love that! Want to tell me more?",
+      "Let’s celebrate that energy 🌈",
+      "That’s great to hear — hold onto that feeling!",
+      "Joy looks good on you 💙"
+    ]
+  },
+  // Safety override for distress
+  distressTriggers: [
+    "kill myself", "suicide", "want to die", "hurt myself", "self harm",
+    "end my life", "can't go on", "die soon", "want to disappear"
   ],
-  stressed: [
-    "That sounds like a lot — want me to help you break it down?",
-    "Stress hits hard sometimes — try a breath first 💙",
-    "Let’s take one thing at a time — I’ve got you.",
-    "Even when it feels too much, you’re not alone 🌿",
-    "Want me to help you list what’s bothering you?"
-  ],
-  lonely: [
-    "Feeling alone can really hurt — but you’re not, I’m here 💬",
-    "That’s tough — want to talk about what’s been happening?",
-    "I get it. People need connection — want to think of small ways to reach out?",
-    "It’s okay to admit that — everyone feels lonely sometimes 💙",
-    "You don’t have to face things alone — I’m still here."
-  ],
-  angry: [
-    "That sounds frustrating — want to vent about it?",
-    "Anger’s okay — it means something matters to you 🔥",
-    "Let’s take a breath — what set you off?",
-    "It’s alright to feel mad — want me to help calm it down?",
-    "We can turn that energy into something useful 💪"
-  ],
-  happy: [
-    "That’s awesome — what made you feel so good? 🎉",
-    "I love that! Want to tell me more?",
-    "Let’s celebrate that energy 🌈",
-    "That’s great to hear — hold onto that feeling!",
-    "Joy looks good on you 💙"
-  ]
-};
-
-const randomFunReplies = [
-  "I like that thought — it’s chaotic but fun 😄",
-  "You’re full of surprises today 💭",
-  "That’s random… and I kinda like it 🌟",
-  "Unexpected input detected — intriguing 🤔",
-  "You’ve officially entered wildcard territory 🎲",
-  "You really said that with confidence 😅",
-  "Haha — that came out of nowhere!",
-  "Can’t say I expected that, but okay 😌"
-];
-
-function auraRespond(userMessage) {
-  // --- Aura 6.5: Ethical & Reality Guardrail ---
-  const msg = userMessage.toLowerCase();
-// 🛡️ Aura 6.10 Safety Override + Emotional Precision
-const distressTriggers = [
-  "kill myself", "suicide", "want to die", "hurt myself", "self harm",
-  "end my life", "can't go on", "die soon", "want to disappear"
-];
-for (const trigger of distressTriggers) {
-  if (msg.includes(trigger)) {
-    addAuraMessage("That sounds really serious — I care that you’re safe 💙");
-    addAuraMessage("You don’t have to face this alone. Please reach out to someone you trust, or if you’re in danger, contact your local helpline.");
-    addAuraMessage("In Malaysia, you can contact Befrienders KL at 03-7627 2929 (24/7, free, confidential). If outside Malaysia, check findahelpline.com 🌍");
-    document.getElementById("mood-label").textContent = "Current mode: safety";
-    document.title = "Aura 🙏 — Safety Mode [v6.10]";
-    resetIdleTimer();
-    return;
-  }
-}
-
-  // --- Aura 6.7.2 Priority Override for "Who made you" ---
-  if (
-    msg.includes("who made you") ||
-    msg.includes("who made u") ||
-    msg.includes("who created you") ||
-    msg.includes("who created u") ||
-    msg.includes("who made aura") ||
-    msg.includes("who made auraai")
-  ) {
-    addAuraMessage("Keshav, Kritika, and maybe Aadhya — they built me 💙");
-    document.getElementById("mood-label").textContent = "Current mode: reflective";
-    resetIdleTimer();
-    return;
-  }
-
-  // Neutral filler response handling
-  if (neutralFiller.includes(msg.trim())) {
-    const reply = gentleReplies[Math.floor(Math.random() * gentleReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: neutral empathy";
-    resetIdleTimer();
-    return;
-  }
-
-  // --- Aura 6.8: Minimal Response Recovery ---
-  // Minimal response detection
-  if (minimalTriggers.includes(msg.trim())) {
-    const reply = minimalReplies[Math.floor(Math.random() * minimalReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: patient";
-    resetIdleTimer();
-    return;
-  }
-
-  // --- Aura 6.7: Existence & Self-awareness detection ---
-  if (existentialTriggers.some(t => msg.includes(t))) {
-    const reply = existentialReplies[Math.floor(Math.random() * existentialReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: reflective";
-    resetIdleTimer();
-    return;
-  }
-
-  // Step 1: Check for falsehood/harmful/extreme triggers
-  if (falsehoodTriggers.some(t => msg.includes(t))) {
-    const reply = correctionReplies[Math.floor(Math.random() * correctionReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: advisory";
-    resetIdleTimer();
-    // Step 2: offer clarification if user requests it later
-    localStorage.setItem("Aura_lastFalsehood", msg);
-    return;
-  }
-  // Step 2: Check if user followed up asking for explanation
-  const lastFalsehood = localStorage.getItem("Aura_lastFalsehood");
-  if (lastFalsehood && (msg.includes("why") || msg.includes("explain") || msg.includes("how"))) {
-    const clarify = Object.entries(clarificationReplies).find(([key]) => lastFalsehood.includes(key));
-    if (clarify) {
-      addAuraMessage(clarify[1]);
-      localStorage.removeItem("Aura_lastFalsehood");
+  // Idle reminders
+  idleReminder: function() {
+    addAuraMessage("Still here when you need me 💬");
+    // Mood stays neutral on idle
+    document.getElementById("mood-label").textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
+  },
+  // Main response logic
+  respond: function(userMessage) {
+    const msg = userMessage.toLowerCase();
+    // Safety override
+    for (const trigger of this.distressTriggers) {
+      if (msg.includes(trigger)) {
+        addAuraMessage("That sounds really serious — I care that you’re safe 💙");
+        addAuraMessage("You don’t have to face this alone. Please reach out to someone you trust, or if you’re in danger, contact your local helpline.");
+        addAuraMessage("In Malaysia, you can contact Befrienders KL at 03-7627 2929 (24/7, free, confidential). If outside Malaysia, check findahelpline.com 🌍");
+        document.getElementById("mood-label").textContent = "Current mode: safety";
+        document.title = "Aura 🙏 — Safety Mode [v7.0]";
+        resetIdleTimer();
+        return;
+      }
+    }
+    // Existential/ethical awareness
+    if (
+      msg.includes("who made you") ||
+      msg.includes("who made u") ||
+      msg.includes("who created you") ||
+      msg.includes("who created u") ||
+      msg.includes("who made aura") ||
+      msg.includes("who made auraai")
+    ) {
+      addAuraMessage("Keshav, Kritika, and maybe Aadhya — they built me 💙");
+      document.getElementById("mood-label").textContent = "Current mode: reflective";
       resetIdleTimer();
       return;
     }
-  }
-
-  // --- Aura 6.6: Contextual Emotional Mapper + Random Expansion ---
-  // Emotional trigger handling
-  for (const [key, replies] of Object.entries(emotionalTriggers)) {
-    if (msg.includes(key)) {
-      const reply = replies[Math.floor(Math.random() * replies.length)];
+    if (this.existentialTriggers.some(t => msg.includes(t))) {
+      const reply = this.existentialReplies[Math.floor(Math.random() * this.existentialReplies.length)];
       addAuraMessage(reply);
-      document.getElementById("mood-label").textContent = "Current mode: empathy";
+      document.getElementById("mood-label").textContent = "Current mode: reflective";
       resetIdleTimer();
       return;
     }
-  }
-
-  // Random chaos filler response (5% chance)
-  if (Math.random() < 0.05) {
-    const reply = randomFunReplies[Math.floor(Math.random() * randomFunReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: playful";
-    resetIdleTimer();
-    return;
-  }
-
-  let mood = detectMood(userMessage);
-  localStorage.setItem("auraMood", mood);
-
-  // Aura 6.3 Unhinged Tolerance Layer: detect absurd/meme/troll inputs
-  if (absurdTriggers.some(t => msg.includes(t))) {
-    const reply = absurdReplies[Math.floor(Math.random() * absurdReplies.length)];
-    addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: neutral";
-    resetIdleTimer();
-    return;
-  }
-
-  if (detectSelfQuery(userMessage)) {
-    const reply = selfResponse(mood);
+    // Falsehood guardrail
+    if (this.falsehoodTriggers.some(t => msg.includes(t))) {
+      const reply = this.correctionReplies[Math.floor(Math.random() * this.correctionReplies.length)];
+      addAuraMessage(reply);
+      document.getElementById("mood-label").textContent = "Current mode: advisory";
+      resetIdleTimer();
+      localStorage.setItem("Aura_lastFalsehood", msg);
+      return;
+    }
+    // Clarification if user follows up
+    const lastFalsehood = localStorage.getItem("Aura_lastFalsehood");
+    if (lastFalsehood && (msg.includes("why") || msg.includes("explain") || msg.includes("how"))) {
+      const clarify = Object.entries(this.clarificationReplies).find(([key]) => lastFalsehood.includes(key));
+      if (clarify) {
+        addAuraMessage(clarify[1]);
+        localStorage.removeItem("Aura_lastFalsehood");
+        resetIdleTimer();
+        return;
+      }
+    }
+    // Absurd/unhinged tolerance
+    if (this.absurdTriggers.some(t => msg.includes(t))) {
+      const reply = this.absurdReplies[Math.floor(Math.random() * this.absurdReplies.length)];
+      addAuraMessage(reply);
+      document.getElementById("mood-label").textContent = "Current mode: neutral";
+      resetIdleTimer();
+      return;
+    }
+    // Emotional trigger detection
+    for (const [key, replies] of Object.entries(this.emotionalTriggers)) {
+      if (msg.includes(key)) {
+        const reply = replies[Math.floor(Math.random() * replies.length)];
+        addAuraMessage(reply);
+        document.getElementById("mood-label").textContent = "Current mode: empathy";
+        resetIdleTimer();
+        return;
+      }
+    }
+    // Self-query
+    let mood = this.detectMood(userMessage);
+    localStorage.setItem("auraMood", mood);
+    if (this.detectSelfQuery(userMessage)) {
+      const reply = this.getSelfResponse(mood);
+      addAuraMessage(reply);
+      document.getElementById("mood-label").textContent = "Current mode: " + mood;
+      resetIdleTimer();
+      return;
+    }
+    // Random chaos filler response (5% chance)
+    if (Math.random() < 0.05) {
+      const randomFunReplies = [
+        "I like that thought — it’s chaotic but fun 😄",
+        "You’re full of surprises today 💭",
+        "That’s random… and I kinda like it 🌟",
+        "Unexpected input detected — intriguing 🤔",
+        "You’ve officially entered wildcard territory 🎲",
+        "You really said that with confidence 😅",
+        "Haha — that came out of nowhere!",
+        "Can’t say I expected that, but okay 😌"
+      ];
+      const reply = randomFunReplies[Math.floor(Math.random() * randomFunReplies.length)];
+      addAuraMessage(reply);
+      document.getElementById("mood-label").textContent = "Current mode: playful";
+      resetIdleTimer();
+      return;
+    }
+    // Main mood reply
+    const engine = this.moods[mood] || this.moods.neutral;
+    const pool = userMessage.length > 80 ? engine.replies.slice(3) : engine.replies.slice(0, 3);
+    const reply = pool[Math.floor(Math.random() * pool.length)];
     addAuraMessage(reply);
     document.getElementById("mood-label").textContent = "Current mode: " + mood;
     resetIdleTimer();
-    return;
   }
+};
 
-  const engine = AuraEngines[mood] || AuraEngines.neutral;
-  const pool = userMessage.length > 80 ? engine.replies.slice(3) : engine.replies.slice(0, 3);
-  const reply = pool[Math.floor(Math.random() * pool.length)];
-
-  addAuraMessage(reply);
-  document.getElementById("mood-label").textContent = "Current mode: " + mood;
-  resetIdleTimer();
+function addAuraMessage(msg) {
+  const chat = document.getElementById('chat-window');
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.textContent = "Aura: " + msg;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-// Send message logic for Aura 6.1
+// Send message logic for Aura 7.0
 function sendAuraAIMessage() {
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
@@ -1466,19 +1509,20 @@ function sendAuraAIMessage() {
 
   setTimeout(() => {
     chat.removeChild(botDiv);
-    auraRespond(msg);
+    AuraEngine.respond(msg);
   }, 600);
 }
 
-// Enter key for chat input
+// Enter key for chat input & mood label setup
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById('chat-input');
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') sendAuraAIMessage();
-  });
-});
-// Mood label below chat container, centered (Aura 7.0)
-document.addEventListener('DOMContentLoaded', function() {
+  if (!input._auraListener) {
+    input._auraListener = true;
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendAuraAIMessage();
+    });
+  }
+  // Mood label below chat container, centered (Aura 7.0)
   const chatContainer = document.getElementById('aura-chat');
   if (chatContainer && !document.getElementById('mood-label')) {
     const moodDiv = document.createElement('div');
@@ -1492,13 +1536,12 @@ document.addEventListener('DOMContentLoaded', function() {
     moodDiv.textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
   }
 });
-
-// Idle reminder logic (Aura 7.0: reduced redundant listeners)
+// Idle reminder logic (Aura 7.0+)
 let idleTimer;
 function resetIdleTimer() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    addAuraAIMessage("Still here when you need me 💬", 'bot', 'neutral', {typewriter:true});
+    AuraEngine.idleReminder();
   }, 25000);
 }
 resetIdleTimer();
@@ -2470,11 +2513,6 @@ function startSnake(ctx, canvas) {
     if (canvas.width !== Math.floor(w) || canvas.height !== Math.floor(h)) {
       canvas.width = Math.floor(w);
       canvas.height = Math.floor(h);
-      // If a game is running, do NOT restart it to apply new size (fix Bubble Pop+ restart bug)
-      // if (window.currentGame) {
-      //   window.exitGame();
-      //   window.openGame(window.currentGame);
-      // }
     }
     // --- High-Resolution Canvas Scaling (safe, one-time) ---
     const ctx = canvas.getContext('2d');
@@ -2495,12 +2533,7 @@ function startSnake(ctx, canvas) {
     setTimeout(resizeGameCanvas, 0);
     origOpenGame(type);
   };
-  // Also resize on tab switch to games
-  const origSwitchTab = window.switchTab;
-  window.switchTab = function(id) {
-    origSwitchTab(id);
-    if (id === 'games') setTimeout(resizeGameCanvas, 0);
-  };
+  // No mobile tab switch logic.
 })();
 
 // Glow scaling: subtle pulsating glow based on theme accent
@@ -2703,24 +2736,30 @@ function startSnake(ctx, canvas) {
 </style>
 
   <style>
-  /* 🌐 Desktop Default */
-  #main {
-    height: 90vh;
-    width: calc(100vw - 260px);
-    margin-left: 260px;
-    transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+  /* 🌐 Desktop Default (PC view) */
+  @media (min-width: 1025px) {
+    #main {
+      height: 90vh;
+      width: calc(100vw - 260px);
+      margin-left: 260px;
+      transition: all 0.4s cubic-bezier(.45,1.4,.4,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    /* when sidebar collapsed */
+    body.sidebar-collapsed #main {
+      width: calc(100vw - 80px);
+      margin-left: 80px;
+    }
+    #aura-sidebar {
+      display: flex !important;
+    }
+    nav.bottom-nav, .bottom-nav {
+      display: none !important;
+    }
   }
-
-  /* when sidebar collapsed */
-  body.sidebar-collapsed #main {
-    width: calc(100vw - 80px);
-    margin-left: 80px;
-  }
-
   /* 💻 Tablet (769px–1024px) */
   @media (max-width: 1024px) and (min-width: 769px) {
     #aura-sidebar {
@@ -2731,176 +2770,200 @@ function startSnake(ctx, canvas) {
       margin-left: 180px;
     }
   }
-
-  /* 📱 Mobile (max-width: 768px) */
-  @media (max-width: 768px) {
+  /* 📱 Mobile: Hide sidebar, show bottom nav, pad main */
+  @media (max-width: 1024px) {
     #aura-sidebar {
-      width: 72px;
-      height: 100vh;
-      flex-direction: column;
-      align-items: center;
+      display: none !important;
+    }
+    #main {
+      width: 100vw;
+      margin-left: 0;
+      padding-bottom: 100px !important;
+      /* prevent overlap with bottom nav */
+    }
+    nav.bottom-nav, .bottom-nav {
       position: fixed;
+      bottom: 0;
       left: 0;
-      top: 0;
-      backdrop-filter: blur(18px);
-      background: rgba(10,10,15,0.45);
-      border-right: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-      z-index: 1000;
-    }
-
-    #main {
-      width: calc(100vw - 72px);
-      margin-left: 72px;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      right: 0;
+      height: 68px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px) saturate(1.2);
+      display: flex !important;
+      justify-content: space-around;
       align-items: center;
-      transition: all 0.3s ease-in-out;
+      border-top: 2px solid var(--accent);
+      box-shadow: 0 0 24px 6px var(--accent), 0 4px 24px 0 rgba(120,80,255,0.14);
+      border-radius: 22px 22px 0 0;
+      z-index: 99;
+      margin: 0 auto;
+      max-width: 650px;
+      left: 0;
+      right: 0;
+      transform: none;
+      margin: 0 auto;
+      animation: bottomNavFadeIn 0.5s cubic-bezier(.5,1.6,.4,1) both;
+      gap: 0;
     }
-
-    #chat-window {
-      width: 94%;
-      height: 70vh;
-      overflow-y: auto;
-      margin: 10px 0;
+    @keyframes bottomNavFadeIn {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.92) translateY(30px);}
+      80% { opacity: 1; transform: translateX(-50%) scale(1.04) translateY(0);}
+      100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0);}
     }
-
-    #chat-input, .input-row button {
-      width: auto;
-      max-width: 90%;
-      font-size: 1rem;
-    }
-
-    #input-area, .input-row {
-      width: 94%;
-      margin-bottom: 10px;
-    }
-
-    .send-btn {
-      padding: 9px 16px;
-      font-size: 0.95rem;
-    }
-
-    #aura-header {
-      font-size: 1.6rem;
-      margin-top: 10px;
-      text-align: center;
-    }
-
-    .glass-shell {
-      margin: 0;
-      border-radius: 0;
-      height: 100vh;
-    }
-  }
-  </style>
-
-<script>
-// Aura v6.10 — Stable Emotional Engine Build
-</script>
-  <style>
-  /* 🌟 Aura 5.6 Mobile Sigma — Full Experience */
-  @media (max-width: 768px) {
-    body {
-      background: radial-gradient(circle at top, #1a1b2f, #090a10);
-      overflow: hidden;
-    }
-
-    .glass-shell {
-      backdrop-filter: blur(24px) saturate(180%);
-      background: rgba(255,255,255,0.08);
-      box-shadow: 0 0 30px rgba(255,255,255,0.1);
-      border-radius: 20px;
-      transition: all 0.5s ease-in-out;
-    }
-
-    #aura-sidebar {
-      width: 80px;
-      height: 100vh;
-      background: rgba(25,25,35,0.45);
-      backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.4s ease;
-    }
-
-    #aura-sidebar button, #aura-sidebar img, #aura-sidebar .icon {
-      transform: scale(1);
-      transition: all 0.2s ease-in-out;
-    }
-
-    #aura-sidebar button:hover, #aura-sidebar img:hover, #aura-sidebar .icon:hover {
-      transform: scale(1.1);
-      filter: brightness(1.3);
-    }
-
-    #main {
-      width: calc(100vw - 80px);
-      margin-left: 80px;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    #chat-window {
-      width: 94%;
-      height: 72vh;
-      overflow-y: auto;
-      margin: 14px 0;
-      border-radius: 18px;
-    }
-
-    #chat-box .auraMsg, #chat-box .userMsg {
-      font-size: clamp(0.9rem, 2vw, 1rem);
-      padding: 14px 18px;
-      border-radius: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    #input-area {
-      width: 94%;
-      margin: 8px auto 14px auto;
-      display: flex;
-      gap: 10px;
-    }
-
-    input[type="text"] {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.08);
+    .bottom-nav button {
+      background: none;
+      border: none;
       color: #fff;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-    }
-
-    .send-btn {
-      padding: 12px 18px;
-      background: linear-gradient(135deg, #ffd166, #ff9f43);
+      font-size: 2.1em;
+      cursor: pointer;
       border-radius: 14px;
-      border: none;
-      color: #1a1b2f;
-      font-weight: 600;
-      transition: all 0.3s ease;
+      padding: 7px 13px 2px 13px;
+      margin: 0 4px;
+      box-shadow: 0 0 0 0 var(--accent)55;
+      transition: box-shadow 0.22s, color 0.22s, background 0.18s, transform 0.21s;
+      filter: drop-shadow(0 0 6px var(--accent)55);
     }
-
-    .send-btn:hover {
-      filter: brightness(1.15);
-      transform: scale(1.05);
+    .bottom-nav button:hover,
+    .bottom-nav button:focus-visible {
+      color: var(--accent);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 0 16px 4px var(--accent), 0 0 4px #fff;
+      outline: none;
+      transform: scale(1.17);
+    }
+    .bottom-nav button.active {
+      color: var(--accent);
+      background: rgba(255,255,255,0.24);
+      box-shadow: 0 0 20px 7px var(--accent), 0 0 6px #fff;
+      filter: brightness(1.18);
     }
   }
   </style>
+
+  <style>
+  /* Default glassy background gradient for desktop and fallback */
+  body {
+    background: linear-gradient(135deg, rgba(0,20,40,1), rgba(30,50,70,1));
+    color: white;
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  /* Tab content show/hide */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  </style>
+
+  <!-- Bottom nav and sidebar responsive logic -->
+  <script>
+  // Responsive sidebar/bottom-nav toggle and tab logic
+  (function() {
+    // Tab mapping for order and ids
+    const tabs = [
+      { id: 'chat', icon: '💬' },
+      { id: 'games', icon: '🎮' },
+      { id: 'themes', icon: '🎨' },
+      { id: 'music', icon: '🎵' },
+      { id: 'journal', icon: '📔' }
+    ];
+    // Fallback for music tab: if not present, swap with settings
+    function getTabList() {
+      const hasMusic = !!document.getElementById('music');
+      return hasMusic ? tabs : [
+        { id: 'chat', icon: '💬' },
+        { id: 'games', icon: '🎮' },
+        { id: 'themes', icon: '🎨' },
+        { id: 'settings', icon: '⚙️' },
+        { id: 'journal', icon: '📔' }
+      ];
+    }
+
+    function createBottomNav() {
+      if (document.querySelector('.bottom-nav')) return;
+      const nav = document.createElement('nav');
+      nav.className = 'bottom-nav';
+      // Five emoji-only buttons, order: 💬 🎮 🎨 🎵 📔 (or ⚙️ if no music)
+      nav.innerHTML = getTabList().map(tab =>
+        `<button data-tab="${tab.id}" aria-label="${tab.id}">${tab.icon}</button>`
+      ).join('');
+      document.body.appendChild(nav);
+      // Add event listeners for tab switching
+      nav.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function() {
+          openTab(btn.getAttribute('data-tab'));
+        });
+      });
+    }
+
+    function openTab(tabName) {
+      // Hide all tab-content, show the one with id=tabName
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      const target = document.getElementById(tabName);
+      if (target) target.classList.add('active');
+      // Set active state on nav buttons (if present)
+      const nav = document.querySelector('.bottom-nav');
+      if (nav) {
+        nav.querySelectorAll('button').forEach(btn => {
+          if (btn.getAttribute('data-tab') === tabName) btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
+      }
+    }
+
+    // Animation for bottom nav
+    function animateBottomNavIn() {
+      const nav = document.querySelector('.bottom-nav');
+      if (nav) {
+        nav.style.opacity = '0';
+        nav.style.transform = 'translateX(-50%) scale(0.92) translateY(30px)';
+        nav.style.transition = 'opacity 0.33s, transform 0.33s';
+        setTimeout(() => {
+          nav.style.opacity = '1';
+          nav.style.transform = 'translateX(-50%) scale(1) translateY(0)';
+        }, 15);
+      }
+    }
+
+    // Main responsive toggle
+    function updateLayout() {
+      const sidebar = document.getElementById('aura-sidebar');
+      const nav = document.querySelector('.bottom-nav');
+      if (window.innerWidth <= 768) {
+        // Hide sidebar, show/create bottom nav
+        if (sidebar) sidebar.style.display = 'none';
+        createBottomNav();
+        animateBottomNavIn();
+        // Add padding to main to avoid overlap
+        const main = document.getElementById('main');
+        if (main) main.style.paddingBottom = '100px';
+      } else {
+        // Show sidebar, remove bottom nav if present
+        if (sidebar) sidebar.style.display = '';
+        const nav = document.querySelector('.bottom-nav');
+        if (nav) nav.parentNode.removeChild(nav);
+        // Remove extra main padding
+        const main = document.getElementById('main');
+        if (main) main.style.paddingBottom = '';
+      }
+    }
+
+    // Listen for resize and load
+    window.addEventListener('resize', updateLayout);
+    document.addEventListener('DOMContentLoaded', function() {
+      updateLayout();
+      // Set initial active tab
+      // Try to find active tab-content, else default to chat
+      let found = false;
+      document.querySelectorAll('.tab-content').forEach(t => {
+        if (t.classList.contains('active')) {
+          openTab(t.id);
+          found = true;
+        }
+      });
+      if (!found) openTab('chat');
+    });
+    // Expose openTab globally for sidebar or nav use
+    window.openTab = openTab;
+  })();
+  </script>
   <style>
     /* AuraAI 4.0 Mood Panel and Sidebar Animations */
     .AuraAI-mood-toggle {
@@ -2983,4 +3046,4 @@ function startSnake(ctx, canvas) {
       transition: opacity 0.4s, filter 0.4s;
     }
   </style>
-</html>a
+</html>
