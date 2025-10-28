@@ -626,13 +626,8 @@ html, body { box-sizing: border-box; }
 </style>
 </head>
 <body>
-<!-- Reminder: After uploading to GitHub Pages, check if AuraAI Mobile (Luna Glass) UI loads on your phone.
-     Verify the following:
-     1. Tahoe wallpaper / animation appears.
-     2. 3×3 home grid shows up.
-     3. Frosted dock is visible at the bottom.
-     If any are missing, note your device model, OS, browser, and whether '?luna=1' was used,
-     so detection can be patched if needed. -->
+<!-- Reminder DISABLED: After uploading to GitHub Pages, check if AuraAI Mobile (Luna Glass) UI loads on your phone.
+     (This reminder is now disabled.) -->
 <!-- PATCH 1: Sidebar Shell Layout -->
 <aside id="aura-sidebar">
   <button id="toggle-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar">&#9776;</button>
@@ -3346,11 +3341,33 @@ function startSnake(ctx, canvas) {
   renderCalendar();
 
   // App Icons Click Events
-  document.querySelectorAll('#AuraAI-home .AuraAI-tile, #auraos-home .auraos-tile').forEach(tile=>{
-    tile.addEventListener('click',()=>{
-      alert(`Launching ${tile.textContent} app...`);
-    });
+  document.querySelectorAll('#auraos-home .auraos-tile').forEach(tile=>{
+  tile.addEventListener('click',()=>{
+    const icon = tile.textContent.trim();
+    const appMap = {
+      '💬': '#chat-window',
+      '🎨': '#creative',
+      '🎮': '#games',
+      '🎵': '#music',
+      '📔': '#journal',
+      '⚙️': '#settings',
+      '🌈': '#themes',
+      '🧠': '#emotion',
+      '📁': '#files'
+    };
+    const targetId = appMap[icon];
+    // Hide all other apps first
+    document.querySelectorAll('.aura-app').forEach(app => app.style.display = 'none');
+    // Show the one that matches the icon
+    if (targetId && document.querySelector(targetId)) {
+      const appEl = document.querySelector(targetId);
+      appEl.style.display = 'block';
+      document.body.classList.add('app-open');
+    } else {
+      console.warn('No matching AuraAI app found for', icon);
+    }
   });
+});
 
   // Dock Buttons
   document.getElementById('btnHome')?.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
