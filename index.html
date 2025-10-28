@@ -512,6 +512,486 @@ html, body { box-sizing: border-box; }
     backdrop-filter: blur(20px) saturate(1.2);
     z-index: 120;
   }
+  /* --- AuraAI Luna Glass v2: Mobile/Tablet Fullscreen App Layouts --- */
+  .aura-app {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 2000;
+    background: rgba(255,255,255,0.13);
+    backdrop-filter: blur(25px) saturate(1.2);
+    border-radius: 32px;
+    box-shadow: 0 10px 60px 0 rgba(0,0,0,0.23), 0 0 0 2px var(--accent, #7cc6ff)22;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98) translateY(24px);
+    transition: opacity 0.36s cubic-bezier(.4,1.2,.2,1), transform 0.36s cubic-bezier(.4,1.2,.2,1);
+    animation: auraAppFadeIn 0.5s cubic-bezier(.4,1.2,.2,1);
+  }
+  .aura-app.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+    transition: opacity 0.44s cubic-bezier(.4,1.2,.2,1), transform 0.44s cubic-bezier(.4,1.2,.2,1);
+  }
+  @keyframes auraAppFadeIn {
+    from { opacity: 0; transform: scale(0.97) translateY(44px);}
+    to { opacity: 1; transform: scale(1) translateY(0);}
+  }
+  .aura-app header.aura-topbar {
+    height: 56px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: rgba(255,255,255,0.16);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    font-weight: 600;
+    font-size: 1.18em;
+    color: var(--accent, #7cc6ff);
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(18px) brightness(1.06);
+    box-shadow: 0 2px 14px 0 rgba(0,0,0,0.13);
+  }
+  .aura-app .close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2.1em;
+    line-height: 1;
+    border-radius: 12px;
+    width: 36px; height: 36px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    margin-left: 10px;
+    text-align: center;
+    font-weight: 600;
+    opacity: 0.88;
+  }
+  .aura-app .close-btn:hover, .aura-app .close-btn:focus-visible {
+    background: rgba(255,255,255,0.24);
+    color: var(--accent, #7cc6ff);
+    outline: none;
+  }
+  /* Aura Chat App */
+  .aura-app .chat-area {
+    flex: 1;
+    padding: 18px 18px 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    background: none;
+  }
+  .aura-app .aura-msg {
+    background: linear-gradient(90deg, var(--accent, #7cc6ff)22 0%, rgba(255,255,255,0.10) 100%);
+    color: #fff;
+    border-radius: 16px 16px 16px 8px;
+    padding: 12px 18px;
+    max-width: 78vw;
+    align-self: flex-start;
+    margin-bottom: 2px;
+    font-size: 1.08em;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+    border-left: 4px solid var(--accent, #7cc6ff);
+    font-weight: 500;
+  }
+  .aura-app .user-msg {
+    background: rgba(124,198,255,0.18);
+    color: #fff;
+    border-radius: 16px 16px 8px 16px;
+    padding: 12px 18px;
+    max-width: 78vw;
+    align-self: flex-end;
+    margin-bottom: 4px;
+    font-size: 1.08em;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+    border-right: 4px solid var(--accent, #7cc6ff);
+    font-weight: 500;
+  }
+  .aura-app .chat-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 18px 18px 18px;
+    background: none;
+  }
+  .aura-app .chat-input input[type="text"] {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 1.08em;
+    outline: none;
+    transition: background 0.18s;
+  }
+  .aura-app .chat-input input[type="text"]:focus {
+    background: rgba(255,255,255,0.18);
+  }
+  .aura-app .chat-input button {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.18em;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+    transition: background 0.18s, color 0.18s, box-shadow 0.22s;
+  }
+  .aura-app .chat-input button:hover, .aura-app .chat-input button:focus-visible {
+    background: #fff;
+    color: var(--accent, #7cc6ff);
+    box-shadow: 0 4px 18px var(--accent, #7cc6ff)33;
+  }
+  /* Creative Studio */
+  .aura-app canvas#creativeCanvas {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    background: rgba(255,255,255,0.09);
+    border-radius: 18px;
+    margin: 18px 18px 0 18px;
+    box-shadow: 0 2px 18px rgba(0,0,0,0.13);
+    display: block;
+  }
+  .aura-app .toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 18px 20px 18px;
+    background: none;
+  }
+  .aura-app .toolbar button {
+    background: rgba(255,255,255,0.14);
+    border: none;
+    border-radius: 12px;
+    font-size: 1.45em;
+    color: #fff;
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.10);
+    transition: background 0.18s, color 0.18s;
+  }
+  .aura-app .toolbar button:hover, .aura-app .toolbar button:focus-visible {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+  }
+  /* Games Hub */
+  .aura-app .game-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 36px 18px 0 18px;
+    align-items: center;
+    flex: 1;
+  }
+  .aura-app .game-cards button {
+    background: rgba(255,255,255,0.10);
+    border: none;
+    border-radius: 18px;
+    color: #fff;
+    font-size: 1.18em;
+    font-weight: 600;
+    padding: 18px 38px;
+    margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  }
+  .aura-app .game-cards button:hover, .aura-app .game-cards button:focus-visible {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+    box-shadow: 0 4px 18px var(--accent, #7cc6ff)33;
+  }
+  /* Music Player */
+  .aura-app .music-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 38px 0 0 0;
+  }
+  .aura-app .music-screen .album {
+    width: 140px; height: 140px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--accent, #7cc6ff) 40%, #fff 100%);
+    box-shadow: 0 4px 22px rgba(0,0,0,0.18);
+    margin-bottom: 8px;
+  }
+  .aura-app .music-screen .controls {
+    display: flex; gap: 18px;
+    justify-content: center; align-items: center;
+  }
+  .aura-app .music-screen .controls button {
+    background: rgba(255,255,255,0.13);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.7em;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+  }
+  .aura-app .music-screen .controls button:hover, .aura-app .music-screen .controls button:focus-visible {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+  }
+  /* Journal */
+  .aura-app textarea {
+    width: 90%;
+    min-height: 160px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.10);
+    border: none;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 1.06em;
+    margin: 24px auto 0 auto;
+    display: block;
+    resize: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.11);
+    backdrop-filter: blur(12px) brightness(1.12);
+  }
+  /* Settings */
+  .aura-app .settings-list {
+    list-style: none;
+    padding: 38px 0 0 0;
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .aura-app .settings-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.09);
+    border-radius: 14px;
+    padding: 14px 18px;
+    color: #fff;
+    font-size: 1.08em;
+    font-weight: 500;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.10);
+  }
+  .aura-app .settings-list button {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 18px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+  }
+  .aura-app .settings-list button:hover, .aura-app .settings-list button:focus-visible {
+    background: #fff;
+    color: var(--accent, #7cc6ff);
+  }
+  /* Themes Grid */
+  .aura-app .theme-grid {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 38px 0 0 0;
+  }
+  .aura-app .theme-card {
+    width: 52px; height: 52px;
+    border-radius: 18px;
+    background: var(--color, #7cc6ff);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+    border: 2.5px solid #fff5;
+    cursor: pointer;
+    transition: box-shadow 0.18s, border 0.18s, transform 0.18s;
+  }
+  .aura-app .theme-card:hover, .aura-app .theme-card:focus-visible {
+    box-shadow: 0 4px 22px var(--color, #7cc6ff)66;
+    border: 2.5px solid var(--color, #7cc6ff);
+    transform: scale(1.05);
+  }
+  /* Emotion Engine */
+  .aura-app .crystal {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7cc6ff 0%, #d28aff 100%);
+    box-shadow: 0 0 44px #7cc6ff77, 0 0 0 12px #fff2;
+    margin: 56px auto 0 auto;
+    animation: crystalSpin 3.6s linear infinite;
+  }
+  @keyframes crystalSpin {
+    0% { filter: hue-rotate(0deg);}
+    100% { filter: hue-rotate(360deg);}
+  }
+  /* Files */
+  .aura-app .file-browser {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 66px;
+  }
+  .aura-app .file-browser button {
+    background: var(--accent, #7cc6ff);
+    color: #181c29;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-weight: 600;
+    font-size: 1.08em;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  }
+  .aura-app .file-browser button:hover, .aura-app .file-browser button:focus-visible {
+    background: #fff;
+    color: var(--accent, #7cc6ff);
+    box-shadow: 0 4px 18px var(--accent, #7cc6ff)33;
+  }
+  /* Responsive for smaller screens */
+  @media (max-width: 700px) {
+    .aura-app {
+      border-radius: 0;
+    }
+    .aura-app header.aura-topbar {
+      border-radius: 0;
+      font-size: 1em;
+      padding: 0 10px;
+    }
+    .aura-app .chat-area,
+    .aura-app .toolbar,
+    .aura-app .chat-input {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+<!-- Luna Glass v2 (Mobile/Tablet) — Redesigned App Layouts (AuraAI Core Apps) -->
+<!-- 💬 Aura Chat -->
+<section id="chat" class="aura-app">
+  <header class="aura-topbar">
+    <span class="app-title">Aura Chat</span>
+    <button class="close-btn" onclick="closeApp('chat')">×</button>
+  </header>
+  <div class="chat-area">
+    <div class="aura-msg aura">Hey there 💙</div>
+    <div class="user-msg">Hi Aura!</div>
+  </div>
+  <div class="chat-input">
+    <input type="text" placeholder="Type your message..." />
+    <button>➤</button>
+  </div>
+</section>
+
+<!-- 🎨 Creative Studio -->
+<section id="creative" class="aura-app">
+  <header class="aura-topbar">
+    <span>Creative Studio</span>
+    <button class="close-btn" onclick="closeApp('creative')">×</button>
+  </header>
+  <canvas id="creativeCanvas"></canvas>
+  <div class="toolbar">
+    <button>🖌️</button>
+    <button>🧽</button>
+    <button>🎨</button>
+    <button>🗑️</button>
+  </div>
+</section>
+
+<!-- 🎮 Games -->
+<section id="games" class="aura-app">
+  <header class="aura-topbar">
+    <span>Games Hub</span>
+    <button class="close-btn" onclick="closeApp('games')">×</button>
+  </header>
+  <div class="game-cards">
+    <button onclick="openGame('bubble')">Bubble Pop+</button>
+    <button onclick="openGame('brick')">Brick Breaker</button>
+  </div>
+</section>
+
+<!-- 🎵 AuraAI Spotify Mini Player -->
+<div class="widget glass mini-player" id="mini-player">
+  <button id="spotifyLogin">Connect Spotify</button>
+  <div class="album-cover"></div>
+  <div class="track-info">
+    <div class="song">No Song Playing</div>
+    <div class="artist">—</div>
+  </div>
+  <div class="controls">
+    <button onclick="spotifyPrev()">⏮</button>
+    <button onclick="spotifyPause()">⏯</button>
+    <button onclick="spotifyNext()">⏭</button>
+  </div>
+</div>
+</section>
+
+<!-- 📔 Journal -->
+<section id="journal" class="aura-app">
+  <header class="aura-topbar">
+    <span>Journal</span>
+    <button class="close-btn" onclick="closeApp('journal')">×</button>
+  </header>
+  <textarea placeholder="Write your thoughts..."></textarea>
+</section>
+
+<!-- ⚙️ Settings -->
+<section id="settings" class="aura-app">
+  <header class="aura-topbar">
+    <span>Settings</span>
+    <button class="close-btn" onclick="closeApp('settings')">×</button>
+  </header>
+  <ul class="settings-list">
+    <li>🌈 Theme <button>Change</button></li>
+    <li>💬 Language <button>EN</button></li>
+    <li>💎 Glass Level <button>High</button></li>
+  </ul>
+</section>
+
+<!-- 🌈 Themes -->
+<section id="themes" class="aura-app">
+  <header class="aura-topbar">
+    <span>Themes</span>
+    <button class="close-btn" onclick="closeApp('themes')">×</button>
+  </header>
+  <div class="theme-grid">
+    <div class="theme-card" style="--color:#29a9e0"></div>
+    <div class="theme-card" style="--color:#e029a9"></div>
+    <div class="theme-card" style="--color:#29e07c"></div>
+  </div>
+</section>
+
+<!-- 🧠 Emotion Engine -->
+<section id="emotion" class="aura-app">
+  <header class="aura-topbar">
+    <span>Emotion Engine</span>
+    <button class="close-btn" onclick="closeApp('emotion')">×</button>
+  </header>
+  <div class="crystal"></div>
+</section>
+
+<!-- 📁 Files -->
+<section id="files" class="aura-app">
+  <header class="aura-topbar">
+    <span>Files</span>
+    <button class="close-btn" onclick="closeApp('files')">×</button>
+  </header>
+  <div class="file-browser">
+    <button>Export JSON</button>
+    <button>Import</button>
+  </div>
+</section>
   .AuraAI-tile {
     width: clamp(64px, 10vw, 92px); height: clamp(64px, 10vw, 92px);
     border-radius: 24px; background: rgba(255,255,255,0.08);
@@ -3373,5 +3853,75 @@ function startSnake(ctx, canvas) {
   document.getElementById('btnHome')?.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
   document.getElementById('btnBack')?.addEventListener('click',()=>history.back());
 </script>
+const clientId = "cb33357b859f4e89b040fefd274ef1f7";
+const redirectUri = "https://auraai-app.github.io/AuraAI";
+const scopes = [
+  "user-read-playback-state",
+  "user-modify-playback-state",
+  "user-read-currently-playing",
+  "streaming",
+  "user-read-email"
+].join(" ");
 
+document.getElementById("spotifyLogin").onclick = () => {
+  const url = new URL("https://accounts.spotify.com/authorize");
+  url.search = new URLSearchParams({
+    client_id: clientId,
+    response_type: "token",
+    redirect_uri: redirectUri,
+    scope: scopes,
+    show_dialog: true
+  });
+  window.location.href = url.toString();
+};
+
+// Handle Spotify redirect and token
+if (window.location.hash.includes("access_token")) {
+  const token = new URLSearchParams(window.location.hash.substring(1)).get("access_token");
+  localStorage.setItem("spotify_token", token);
+  window.history.replaceState({}, document.title, redirectUri);
+}
+
+const token = localStorage.getItem("spotify_token");
+
+// Fetch the currently playing track
+async function fetchCurrentTrack() {
+  if (!token) return;
+  const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (res.status === 204 || res.status > 400) return;
+  const data = await res.json();
+  const song = data.item?.name ?? "—";
+  const artist = data.item?.artists?.map(a => a.name).join(", ") ?? "—";
+  document.querySelector(".mini-player .song").textContent = song;
+  document.querySelector(".mini-player .artist").textContent = artist;
+}
+setInterval(fetchCurrentTrack, 5000);
+
+// Playback controls
+async function spotifyPlay() {
+  await fetch("https://api.spotify.com/v1/me/player/play", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+async function spotifyPause() {
+  await fetch("https://api.spotify.com/v1/me/player/pause", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+async function spotifyNext() {
+  await fetch("https://api.spotify.com/v1/me/player/next", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+async function spotifyPrev() {
+  await fetch("https://api.spotify.com/v1/me/player/previous", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
 </html>
