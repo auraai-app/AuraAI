@@ -483,6 +483,66 @@ html, body { box-sizing: border-box; }
 }
 
 </style>
+
+  /* 🪟 Tahoe Desk window style for mobile apps */
+  .tahoe-window {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.96);
+    width: 90%;
+    max-width: 420px;
+    background: linear-gradient(145deg, rgba(8, 30, 50, 0.8), rgba(20, 60, 100, 0.85));
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 0 1px rgba(255,255,255,0.25);
+    backdrop-filter: blur(25px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+  .tahoe-window.open {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    pointer-events: auto;
+  }
+  .tahoe-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 28px;
+    padding: 0 10px;
+    background: rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px 20px 0 0;
+    backdrop-filter: blur(20px);
+  }
+  .mac-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .mac-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+  }
+  .mac-dot.red { background: #ff5f57; }
+  .mac-dot.yellow { background: #fdbc2e; }
+  .mac-dot.green { background: #28c840; }
+  .tahoe-window h3 {
+    flex: 1;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #e3f1ff;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .tahoe-content {
+    padding: 16px;
+    color: #fff;
+    font-size: 0.95rem;
+  }
 <!-- AuraAI Luna Glass (Unified Mobile/Tablet UI) -->
 <style>
   body.AuraAI-mode {
@@ -921,20 +981,87 @@ html, body { box-sizing: border-box; }
   </div>
 </section>
 
-<!-- 🎵 AuraAI Spotify Mini Player -->
-<div class="widget glass mini-player" id="mini-player">
-  <button id="spotifyLogin">Connect Spotify</button>
-  <div class="album-cover"></div>
-  <div class="track-info">
-    <div class="song">No Song Playing</div>
-    <div class="artist">—</div>
-  </div>
-  <div class="controls">
-    <button onclick="spotifyPrev()">⏮</button>
-    <button onclick="spotifyPause()">⏯</button>
-    <button onclick="spotifyNext()">⏭</button>
+<!-- 🎵 AuraAI Spotify Mini Player (Integrated into Now Playing Widget) -->
+<div class="widget glass" id="now-playing">
+  <h3>Now Playing</h3>
+  <div class="mini-player">
+    <button id="spotifyLogin">Connect Spotify</button>
+    <div class="album-wrapper">
+      <div class="album-glow"></div>
+      <img class="album-cover" src="" alt="Album Cover">
+    </div>
+    <div class="track-info">
+      <div class="song">No Song Playing</div>
+      <div class="artist">—</div>
+    </div>
+    <div class="controls">
+      <button onclick="spotifyPrev()">⏮</button>
+      <button onclick="spotifyPause()">⏯</button>
+      <button onclick="spotifyNext()">⏭</button>
+    </div>
   </div>
 </div>
+</style>
+<!-- Glowing album cover for Now Playing widget (Luna Glass) -->
+<style>
+#now-playing .mini-player {
+  margin-top: 10px;
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 10px;
+  backdrop-filter: blur(10px);
+}
+
+#now-playing .album-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+#now-playing .album-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130px;
+  height: 130px;
+  background: radial-gradient(circle, rgba(0,255,255,0.5), transparent 70%);
+  border-radius: 50%;
+  filter: blur(20px);
+  transform: translate(-50%, -50%);
+  animation: glowPulse 3s infinite ease-in-out;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+#now-playing .album-cover {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 0 12px rgba(0,255,255,0.4);
+  position: relative;
+  z-index: 1;
+}
+
+#now-playing .track-info {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+#now-playing .controls button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  margin: 0 6px;
+  cursor: pointer;
+}
+</style>
 </section>
 
 <!-- 📔 Journal -->
@@ -1977,6 +2104,45 @@ const AuraEngine = {
     ]
   },
   // Safety override for distress
+  // ——— Name & greeting flow (personalization) ———
+  greetingTriggers: ["hi","hello","hey","hai","yo","sup","whats up","what's up","morning","evening","afternoon","hola","namaste","vanakkam","selamat"],
+  extractName: function(raw){
+    // Match patterns like: "my name is Keshav", "I'm Keshav", "I am Keshav", "call me Keshav"
+    const s = String(raw || "").trim();
+    const p = /(my\s+name\s+is|i\s*'?m|i\s+am|call\s+me)\s+([A-Za-z][A-Za-z .'\-]{1,30})/i.exec(s);
+    if (p && p[2]) return p[2].replace(/\s+$/,'');
+    // If Aura explicitly asked for a name and user sent one/two words, accept it
+    if (localStorage.getItem("auraAskedName") === "1") {
+      const simple = s.replace(/[^A-Za-z .'\-]/g,'').trim();
+      if (simple && simple.split(/\s+/).length <= 3 && simple.length <= 30) return simple;
+    }
+    return null;
+  },
+  ensureNameFlow: function(userMessage){
+    const stored = localStorage.getItem("auraName") || "";
+    // If name already set, nothing to do
+    if (stored) return false;
+    // Try to capture a name from current message
+    const maybe = this.extractName(userMessage);
+    if (maybe) {
+      localStorage.setItem("auraName", maybe);
+      localStorage.removeItem("auraAskedName");
+      addAuraMessage(`Nice to meet you, ${maybe}! 💙`);
+      const label = document.getElementById("mood-label");
+      if (label) label.textContent = "Current mode: welcome";
+      return true; // handled
+    }
+    // If not asked yet, ask once
+    if (localStorage.getItem("auraAskedName") !== "1") {
+      addAuraMessage("Hey there 💙 What should I call you?");
+      localStorage.setItem("auraAskedName","1");
+      const label = document.getElementById("mood-label");
+      if (label) label.textContent = "Current mode: intro";
+      return true; // handled
+    }
+    // Already asked; don't keep spamming — fall through to normal replies
+    return false;
+  },
   distressTriggers: [
     "kill myself", "suicide", "want to die", "hurt myself", "self harm",
     "end my life", "can't go on", "die soon", "want to disappear"
@@ -1990,6 +2156,13 @@ const AuraEngine = {
   // Main response logic
   respond: function(userMessage) {
     const msg = userMessage.toLowerCase();
+    // ——— One-time name capture & greeting ———
+    try {
+      if (this.ensureNameFlow(userMessage)) {
+        resetIdleTimer();
+        return;
+      }
+    } catch(e) { /* fail-safe: never break chat */ }
     // Safety override
     for (const trigger of this.distressTriggers) {
       if (msg.includes(trigger)) {
@@ -2001,6 +2174,23 @@ const AuraEngine = {
         resetIdleTimer();
         return;
       }
+    }
+    // ——— Greeting loop guard ———
+    if (this.greetingTriggers.some(g => msg === g || msg.startsWith(g+" "))) {
+      const who = localStorage.getItem("auraName") || "there";
+      // Only greet once per short window
+      const lastGreetTs = Number(sessionStorage.getItem("auraLastGreetTs") || "0");
+      const nowTs = Date.now();
+      if (nowTs - lastGreetTs > 12000) {
+        addAuraMessage(`Hi ${who}! How can I help? ✨`);
+        document.getElementById("mood-label").textContent = "Current mode: friendly";
+        sessionStorage.setItem("auraLastGreetTs", String(nowTs));
+      } else {
+        addAuraMessage("I’m here — what should we do next? 💡");
+        document.getElementById("mood-label").textContent = "Current mode: ready";
+      }
+      resetIdleTimer();
+      return;
     }
     // Existential/ethical awareness
     if (
@@ -2103,7 +2293,9 @@ function addAuraMessage(msg) {
   const chat = document.getElementById('chat-window');
   const div = document.createElement('div');
   div.className = 'message bot';
-  div.textContent = "Aura: " + msg;
+  const who = localStorage.getItem('auraName');
+  const prefix = who ? `Aura to ${who}: ` : "Aura: ";
+  div.textContent = prefix + msg;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -2157,6 +2349,8 @@ document.addEventListener('DOMContentLoaded', function() {
     moodDiv.style.fontWeight = "500";
     chatContainer.appendChild(moodDiv);
     moodDiv.textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
+    const nm = localStorage.getItem("auraName"); 
+    if (nm) addAuraMessage(`Welcome back, ${nm}! 💙`);
   }
 });
 // Idle reminder logic (Aura 7.0+)
@@ -3853,75 +4047,167 @@ function startSnake(ctx, canvas) {
   document.getElementById('btnHome')?.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
   document.getElementById('btnBack')?.addEventListener('click',()=>history.back());
 </script>
-const clientId = "cb33357b859f4e89b040fefd274ef1f7";
-const redirectUri = "https://auraai-app.github.io/AuraAI";
-const scopes = [
-  "user-read-playback-state",
-  "user-modify-playback-state",
-  "user-read-currently-playing",
-  "streaming",
-  "user-read-email"
-].join(" ");
 
-document.getElementById("spotifyLogin").onclick = () => {
-  const url = new URL("https://accounts.spotify.com/authorize");
-  url.search = new URLSearchParams({
-    client_id: clientId,
-    response_type: "token",
-    redirect_uri: redirectUri,
-    scope: scopes,
-    show_dialog: true
-  });
-  window.location.href = url.toString();
-};
+    <!-- 🎵 AuraAI Spotify Mini-Tile -->
+    <div class="widget glass spotify-widget">
+      <h3>Now Playing</h3>
+      <div class="spotify-tile">
+        <button id="spotifyConnect">Connect Spotify</button>
+        <div class="album-wrapper">
+          <div class="album-glow"></div>
+          <img id="albumCover" src="" alt="Album cover">
+        </div>
+        <div class="track-info">
+          <div id="songTitle">No Song Playing</div>
+          <div id="artistName">—</div>
+        </div>
+        <div class="controls">
+          <button id="prevTrack">⏮</button>
+          <button id="pausePlay">⏯</button>
+          <button id="nextTrack">⏭</button>
+        </div>
+      </div>
+    </div>
 
-// Handle Spotify redirect and token
-if (window.location.hash.includes("access_token")) {
-  const token = new URLSearchParams(window.location.hash.substring(1)).get("access_token");
-  localStorage.setItem("spotify_token", token);
-  window.history.replaceState({}, document.title, redirectUri);
-}
+    <script>
+    let accessToken = localStorage.getItem("spotifyAccessToken") || null;
 
-const token = localStorage.getItem("spotify_token");
+    document.getElementById("spotifyConnect").addEventListener("click", () => {
+      const clientId = "cb33357b859f4e89b040fefd274ef1f7";
+      const redirectUri = "https://auraai-app.github.io/AuraAI";
+      const scopes = "user-read-currently-playing user-modify-playback-state user-read-playback-state";
+      const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+      window.location.href = authUrl;
+    });
 
-// Fetch the currently playing track
-async function fetchCurrentTrack() {
-  if (!token) return;
-  const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (res.status === 204 || res.status > 400) return;
-  const data = await res.json();
-  const song = data.item?.name ?? "—";
-  const artist = data.item?.artists?.map(a => a.name).join(", ") ?? "—";
-  document.querySelector(".mini-player .song").textContent = song;
-  document.querySelector(".mini-player .artist").textContent = artist;
-}
-setInterval(fetchCurrentTrack, 5000);
+    function fetchSpotifyNowPlaying() {
+      if (!accessToken) return;
+      fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.item) {
+          document.getElementById("songTitle").textContent = data.item.name;
+          document.getElementById("artistName").textContent = data.item.artists.map(a => a.name).join(", ");
+          const img = data.item.album.images[0].url;
+          document.getElementById("albumCover").src = img;
+          document.querySelector(".album-wrapper").classList.add("active");
+        } else {
+          document.getElementById("songTitle").textContent = "No Song Playing";
+          document.getElementById("artistName").textContent = "—";
+          document.querySelector(".album-wrapper").classList.remove("active");
+        }
+      })
+      .catch(err => console.error("Spotify API error:", err));
+    }
 
-// Playback controls
-async function spotifyPlay() {
-  await fetch("https://api.spotify.com/v1/me/player/play", {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-async function spotifyPause() {
-  await fetch("https://api.spotify.com/v1/me/player/pause", {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-async function spotifyNext() {
-  await fetch("https://api.spotify.com/v1/me/player/next", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-async function spotifyPrev() {
-  await fetch("https://api.spotify.com/v1/me/player/previous", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
+    window.addEventListener("load", () => {
+      if (window.location.hash.includes("access_token")) {
+        const token = new URLSearchParams(window.location.hash.substring(1)).get("access_token");
+        if (token) {
+          localStorage.setItem("spotifyAccessToken", token);
+          accessToken = token;
+          window.location.hash = "";
+        }
+      }
+      if (accessToken) {
+        document.getElementById("spotifyConnect").style.display = "none";
+        fetchSpotifyNowPlaying();
+        setInterval(fetchSpotifyNowPlaying, 10000);
+      }
+    });
+    </script>
+    <style>
+    .spotify-widget {
+      background: rgba(255,255,255,0.05);
+      border-radius: 22px;
+      padding: 16px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,255,255,0.15);
+    }
+
+    .spotify-tile button {
+      background: rgba(0,255,255,0.15);
+      border: none;
+      color: white;
+      border-radius: 12px;
+      padding: 6px 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .spotify-tile button:hover {
+      background: rgba(0,255,255,0.3);
+    }
+
+    .album-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-top: 12px;
+    }
+
+    .album-wrapper img {
+      width: 100px;
+      height: 100px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .album-wrapper .album-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 130px;
+      height: 130px;
+      background: radial-gradient(circle, rgba(0,255,255,0.6), transparent 70%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .album-wrapper.active .album-glow {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .track-info {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .controls button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      margin: 0 6px;
+      cursor: pointer;
+    }
+    </style>
 </html>
+  <script>
+  // Tahoe Desk window controls for mobile apps
+  function openTahoeApp(appId) {
+    document.querySelectorAll('.tahoe-window').forEach(win => win.classList.remove('open'));
+    document.getElementById(`app-${appId}`).classList.add('open');
+  }
+  function closeTahoeApp(appId) {
+    document.getElementById(`app-${appId}`).classList.remove('open');
+  }
+  function minimizeTahoeApp(appId) {
+    const app = document.getElementById(`app-${appId}`);
+    app.style.transform = 'translateX(-50%) scale(0.7)';
+    app.style.opacity = '0';
+    setTimeout(() => { app.classList.remove('open'); }, 200);
+  }
+  function expandTahoeApp(appId) {
+    const app = document.getElementById(`app-${appId}`);
+    app.style.transform = 'translateX(-50%) scale(1.05)';
+    setTimeout(() => { app.style.transform = 'translateX(-50%) scale(1)'; }, 150);
+  }
+  </script>
