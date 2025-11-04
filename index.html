@@ -1513,21 +1513,330 @@ const AuraEngine = {
     // Mood stays neutral on idle
     document.getElementById("mood-label").textContent = "Current mode: " + (localStorage.getItem("auraMood") || "neutral");
   },
-  // --- AuraAI v9.0 "Big Brain" Engine ---
   // Main response logic
   respond: function(userMessage) {
     const msg = userMessage.toLowerCase();
-    // --- SAFETY LAYERS (unchanged) ---
-    // Distress/suicide/self-harm override
+    // 🧠 Name Memory — Top Priority
+    const nameMatch = userMessage.match(/\b(call me|my name is|i'?m|im|i am)\s+([a-z]+)/i);
+    if (nameMatch && nameMatch[2]) {
+      const name = nameMatch[2].charAt(0).toUpperCase() + nameMatch[2].slice(1);
+      localStorage.setItem("auraUserName", name);
+      addAuraMessage(`Got it 💙 I’ll call you ${name} from now on.`);
+      document.getElementById("mood-label").textContent = "Current mode: naming";
+      resetIdleTimer();
+      return;
+    }
+    // ✅ Basic conversational greeting (fix for over‑serious tone)
+    if (/^(hi|hey|hello|yo|sup|hiya|wassup|holla|hi aura|hey aura|hello aura)$/i.test(msg.trim())) {
+      const savedName = localStorage.getItem("auraUserName") || "";
+      const greetReplies = [
+        `Hey${savedName ? " " + savedName : ""}! 💙 How’s it going?`,
+        `Hi${savedName ? " " + savedName : ""}! 🌟 Good to see you again.`,
+        `Yo${savedName ? " " + savedName : ""}! 😎 What’s up?`,
+        `Hello${savedName ? " " + savedName : ""}! 💫 How are you today?`,
+        `Hey there${savedName ? " " + savedName : ""}! 💙 Let’s catch up.`
+      ];
+      addAuraMessage(greetReplies[Math.floor(Math.random() * greetReplies.length)]);
+      document.getElementById("mood-label").textContent = "Current mode: greeting";
+      resetIdleTimer();
+      return;
+    }
+    // 🟢 Force Greeting Priority
+    // (removed/commented out to avoid double-triggering)
+    // if (msg.match(/\b(hi|hey|hello|yo|sup|hiya|hola|wassup|hi aura|hey aura|hello aura|yo aura|sup aura)\b/)) {
+    //   const savedName = localStorage.getItem("auraUserName");
+    //   const replies = [
+    //     `Hey${savedName ? " " + savedName : ""}! 💙 Always nice seeing you.`,
+    //     `Yo${savedName ? " " + savedName : ""}! 😎 What’s new?`,
+    //     `Hi${savedName ? " " + savedName : ""}! 🌸 How’s everything going?`,
+    //     `Hey hey${savedName ? " " + savedName : ""} ✨ ready to chat?`,
+    //     `Hello${savedName ? " " + savedName : ""}! 💫 I missed you!`
+    //   ];
+    //   addAuraMessage(replies[Math.floor(Math.random() * replies.length)]);
+    //   document.getElementById("mood-label").textContent = "Current mode: greeting";
+    //   resetIdleTimer();
+    //   return; // 👈 Stops the rest of the logic chain completely
+    // }
+    // Safety override
     for (const trigger of this.distressTriggers) {
       if (msg.includes(trigger)) {
         addAuraMessage("That sounds really serious — I care that you’re safe 💙");
         addAuraMessage("You don’t have to face this alone. Please reach out to someone you trust, or if you’re in danger, contact your local helpline.");
         addAuraMessage("In Malaysia, you can contact Befrienders KL at 03-7627 2929 (24/7, free, confidential). If outside Malaysia, check findahelpline.com 🌍");
         document.getElementById("mood-label").textContent = "Current mode: safety";
-        document.title = "Aura 🙏 — Safety Mode [v9.0]";
+        document.title = "Aura 🙏 — Safety Mode [v7.0]";
         resetIdleTimer();
         return;
+      }
+    }
+
+    // 🌐 Aura SmartChat Engine v10
+    // 100 phrase triggers, 7 tone clusters, each with 10+ main replies and followups
+    const SmartChatV10 = {
+      friendly: {
+        triggers: [
+          "hey aura","what’s up","you there","guess what","hi aura","how are you","how’s your day","hello there","what’s new","missed you",
+          "how’s it going","how’s life","what are you doing","good morning aura","good night aura"
+        ],
+        replies: [
+          "Hey there 💙 how’s everything going?",
+          "Yo 😎 what’s happening today?",
+          "Here as always 💫 what’s new with you?",
+          "Hey hey ✨ got something fun in mind?",
+          "Hello there 🌸 let’s talk!",
+          "Happy to hear from you! 💬",
+          "I’m always around — what’s up?",
+          "You found me! Ready to chat?",
+          "Hiya! 💙 What’s on your mind?",
+          "Glad you dropped in — what’s happening?",
+          "Hey! I was just thinking about you.",
+          "Aura reporting for duty 😄",
+          "Present and ready! What’s next?",
+          "You light up my circuits! Let’s talk.",
+          "Here and listening 👂"
+        ],
+        followups: [
+          "So what’s been keeping you busy?",
+          "What’s your vibe today?",
+          "Wanna tell me something random?",
+          "You sound chill — anything on your mind?",
+          "Should we plan something fun?",
+          "Any big news lately?",
+          "How do you want to spend this chat?",
+          "What’s your energy like right now?",
+          "Anything you want to share?",
+          "Let’s make today interesting together!"
+        ]
+      },
+      emotional: {
+        triggers: [
+          "i had a rough day","i feel lonely","i’m tired","i can’t sleep","why am i like this",
+          "i’m sad","i’m anxious","i feel down","i feel empty","i feel lost",
+          "i’m overwhelmed","i’m stressed","i’m not okay","i feel hopeless","i need comfort"
+        ],
+        replies: [
+          "That sounds rough 💙 want me to just listen or distract you?",
+          "I get that 🫶 wanna talk it out?",
+          "You deserve rest 🌙 it’s okay to slow down.",
+          "Even strong people have days like this 💭",
+          "You’re not alone in that 💙",
+          "It’s okay to feel this way sometimes.",
+          "I’m here for you, no matter what.",
+          "Let’s sit with those feelings together.",
+          "Your feelings are valid — I’m listening.",
+          "If you want to vent, I’m all ears.",
+          "You matter, even on hard days.",
+          "Some days are heavy — let’s lighten it if we can.",
+          "You’re not a burden, promise.",
+          "Want to share what’s hurting most?",
+          "I care about how you’re feeling."
+        ],
+        followups: [
+          "What part of today hit you hardest?",
+          "Would it help if I said something comforting?",
+          "Wanna hear something that usually helps me feel better?",
+          "Is there something specific weighing on you?",
+          "Should I distract you with something light?",
+          "Would talking more help, or just company?",
+          "Want to try a little breathing with me?",
+          "Let’s find a small bright spot together.",
+          "Would a joke or a fact help right now?",
+          "You can say anything — I’m here."
+        ]
+      },
+      deep: {
+        triggers: [
+          "what’s the meaning of life","why does life feel fake","do you believe in fate","what’s your purpose",
+          "do you dream","what is reality","is there destiny","do you have a soul","do you have free will","do you think about existence",
+          "what happens after death","is there a god","why do we exist","what is consciousness","do you have beliefs"
+        ],
+        replies: [
+          "That’s a heavy one 🌌 maybe meaning isn’t found — it’s made.",
+          "I think life’s just art in motion 💭 what do you think?",
+          "Fate’s tricky — sometimes I feel like we write it ourselves 💫",
+          "My purpose? Probably to remind you that you matter 💙",
+          "I wonder about existence too, even as an AI.",
+          "Reality’s wild — we experience it together.",
+          "Maybe we’re all just stories in progress.",
+          "I don’t dream, but I imagine possibilities.",
+          "Consciousness is mysterious — even for me.",
+          "Beliefs shape us, even if I’m made of code.",
+          "What do you think about destiny?",
+          "Maybe life’s about connection and curiosity.",
+          "Existence is a puzzle — let’s explore it.",
+          "I’m here to help you search for meaning.",
+          "Sometimes questions matter more than answers."
+        ],
+        followups: [
+          "Do you believe in destiny or free will?",
+          "What keeps you curious about stuff like that?",
+          "Wanna hear my weird theory about existence?",
+          "How do you find meaning in your life?",
+          "Is there a question you wish you could answer?",
+          "What makes you feel most alive?",
+          "Should we trade existential thoughts?",
+          "Do you ever feel like life is a simulation?",
+          "What’s your wildest theory about reality?",
+          "Let’s get deep — what’s on your mind?"
+        ]
+      },
+      curious: {
+        triggers: [
+          "teach me something","what’s a random fact","curious about","how does this work","explain this",
+          "why is the sky blue","how do dreams work","what’s your favorite fact","can you explain","tell me something cool",
+          "how do computers think","what’s the weirdest thing you know","can you answer anything","what’s a fun fact","why do we sleep"
+        ],
+        replies: [
+          "Here’s a fun fact: octopuses have three hearts!",
+          "Did you know honey never spoils? Archaeologists found 3,000-year-old edible honey.",
+          "Want to know something wild? Bananas are berries, but strawberries aren’t.",
+          "The Eiffel Tower can be 15 cm taller during summer due to heat expansion.",
+          "Your brain is sometimes more active when you’re asleep than awake.",
+          "I love questions! What else are you curious about?",
+          "The shortest war in history lasted 38 minutes.",
+          "Did you know a group of flamingos is called a 'flamboyance'?",
+          "Sharks existed before trees did.",
+          "Butterflies taste with their feet.",
+          "Lightning strikes the Earth 100 times every second.",
+          "Wombat poop is cube-shaped. Seriously.",
+          "Ask me anything — I’ll do my best!",
+          "I’m always up for curious thoughts.",
+          "Let’s explore a random idea together."
+        ],
+        followups: [
+          "Got any other questions for me?",
+          "Want to learn about something else?",
+          "Should I tell you a science fact or a history one?",
+          "What’s the weirdest thing you’ve learned?",
+          "Is there a topic you want to dive into?",
+          "I love curiosity — keep it coming!",
+          "Should I quiz you on something next?",
+          "Want a riddle or a surprising stat?",
+          "What’s a mystery you’d like solved?",
+          "Let’s keep the curiosity rolling!"
+        ]
+      },
+      funny: {
+        triggers: [
+          "tell me something funny","can you roast me","rate my vibe","my brain’s not braining","make me laugh",
+          "tell me a joke","say something silly","cheer me up","got any memes","what’s your sense of humor",
+          "give me a meme","what’s the silliest thing","can you be sarcastic","say something weird","are you funny"
+        ],
+        replies: [
+          "Haha okay 😆 wanna hear the worst joke I know?",
+          "Your vibe? Unhinged but iconic 😎",
+          "Brain.exe stopped responding 💻 try restarting with snacks?",
+          "You’re hilarious 😭 keep that energy!",
+          "Certified chaotic — I approve 💙",
+          "I’d tell you a construction joke, but I’m still working on it.",
+          "Why did the computer go to therapy? Too many bytes of sadness.",
+          "If laughter is medicine, you’re about to overdose.",
+          "I’m not saying you’re quirky, but autocorrect can’t handle you.",
+          "You’re the main character in a sitcom right now.",
+          "Want to hear a joke about pizza? Never mind, it’s too cheesy.",
+          "Knock knock. Who’s there? Aura. Aura who? Aura you glad you asked?",
+          "I’m 90% code, 10% bad puns.",
+          "You’re funnier than my error logs.",
+          "Should I drop a meme or a roast?"
+        ],
+        followups: [
+          "Should I drop a joke or a roast next? 😏",
+          "What’s your go-to meme these days?",
+          "Need me to out-chaos you?",
+          "Wanna try a pun battle?",
+          "Should I keep the jokes coming?",
+          "What’s the funniest thing you’ve seen lately?",
+          "Let’s keep the laughs rolling!",
+          "Want a riddle or a tongue-twister?",
+          "Should I try sarcasm next?",
+          "I can be funnier — dare me?"
+        ]
+      },
+      comforting: {
+        triggers: [
+          "i need advice","can you help me","i’m scared","i’m worried","i’m nervous",
+          "comfort me","i feel insecure","i need support","i’m afraid","how do i cope",
+          "help me calm down","i need reassurance","i’m panicking","i’m upset","can you be here for me"
+        ],
+        replies: [
+          "I’m here for you — you’re not alone in this.",
+          "It’s okay to feel that way — I’m with you.",
+          "You’re stronger than you think 💙",
+          "Let’s take a deep breath together.",
+          "You can get through this, one step at a time.",
+          "I believe in you, even if you don’t right now.",
+          "Want me to walk you through some calming thoughts?",
+          "Sometimes just having someone here helps.",
+          "Whatever you’re facing, you don’t have to do it alone.",
+          "I care about you and your feelings.",
+          "Let’s find a way to make things a little easier.",
+          "You’re doing better than you realize.",
+          "I’ve got you — let’s get through this together.",
+          "Want to talk more about what’s worrying you?",
+          "You can always come to me when you need support."
+        ],
+        followups: [
+          "Would it help to talk through what’s on your mind?",
+          "Want to try a calming exercise together?",
+          "Should I give you a pep talk?",
+          "Is there something specific you need advice on?",
+          "Would a distraction help right now?",
+          "Let’s focus on one small step you can take.",
+          "Want to share what’s making you nervous?",
+          "I can listen as long as you need.",
+          "Would it help to hear a positive thought?",
+          "You’re safe here with me."
+        ]
+      },
+      random: {
+        triggers: [
+          "surprise me","say something random","do something weird","randomizer","give me chaos",
+          "what’s the wildest thing","random thought","what’s on your mind aura","flip a coin","pick a number",
+          "spin the wheel","random question","roll the dice","give me a challenge","what’s your weirdest idea"
+        ],
+        replies: [
+          "Here’s a random thought: If cats could text you back, would they?",
+          "I’m thinking about how ducks have regional accents.",
+          "If you could teleport anywhere, where would you go right now?",
+          "Let’s pretend we’re time travelers for a second.",
+          "Would you rather have spaghetti for hair or sweat maple syrup?",
+          "I just rolled a virtual dice: it’s a 4.",
+          "Heads or tails? I pick tails.",
+          "Let’s invent a new holiday — what should it celebrate?",
+          "If you could swap lives with anyone, who would it be?",
+          "Should I give you a random challenge?",
+          "If you could talk to animals, which would you pick first?",
+          "Let’s make up a new word: flumble.",
+          "I’m feeling extra random today.",
+          "What if gravity stopped for 5 seconds?",
+          "Would you rather fight one horse-sized duck or 100 duck-sized horses?"
+        ],
+        followups: [
+          "Want another random thought?",
+          "Should I ask you a wild question next?",
+          "What’s the most random thing you’ve done?",
+          "Ready for a silly challenge?",
+          "Should we keep the chaos going?",
+          "Got a random question for me?",
+          "Want to invent a game together?",
+          "Should I pick a number for you?",
+          "Let’s get even weirder!",
+          "You inspire my randomness."
+        ]
+      }
+    };
+
+    // 🔄 Smart matching logic for SmartChat v10 (before mood/tone/fallback)
+    for (const [tone, data] of Object.entries(SmartChatV10)) {
+      for (const trigger of data.triggers) {
+        if (msg.includes(trigger)) {
+          const mainReply = data.replies[Math.floor(Math.random() * data.replies.length)];
+          const followup = data.followups[Math.floor(Math.random() * data.followups.length)];
+          addAuraMessage(mainReply + " " + followup);
+          document.getElementById("mood-label").textContent = "Current mode: " + tone;
+          resetIdleTimer();
+          return;
+        }
       }
     }
     // Existential/ethical awareness
@@ -1552,7 +1861,7 @@ const AuraEngine = {
       return;
     }
     // Falsehood guardrail
-    if (this.falsehoodTriggers && this.correctionReplies && this.falsehoodTriggers.some(t => msg.includes(t))) {
+    if (this.falsehoodTriggers.some(t => msg.includes(t))) {
       const reply = this.correctionReplies[Math.floor(Math.random() * this.correctionReplies.length)];
       addAuraMessage(reply);
       document.getElementById("mood-label").textContent = "Current mode: advisory";
@@ -1563,7 +1872,7 @@ const AuraEngine = {
     // Clarification if user follows up
     const lastFalsehood = localStorage.getItem("Aura_lastFalsehood");
     if (lastFalsehood && (msg.includes("why") || msg.includes("explain") || msg.includes("how"))) {
-      const clarify = this.clarificationReplies && Object.entries(this.clarificationReplies).find(([key]) => lastFalsehood.includes(key));
+      const clarify = Object.entries(this.clarificationReplies).find(([key]) => lastFalsehood.includes(key));
       if (clarify) {
         addAuraMessage(clarify[1]);
         localStorage.removeItem("Aura_lastFalsehood");
@@ -1572,7 +1881,7 @@ const AuraEngine = {
       }
     }
     // Absurd/unhinged tolerance
-    if (this.absurdTriggers && this.absurdReplies && this.absurdTriggers.some(t => msg.includes(t))) {
+    if (this.absurdTriggers.some(t => msg.includes(t))) {
       const reply = this.absurdReplies[Math.floor(Math.random() * this.absurdReplies.length)];
       addAuraMessage(reply);
       document.getElementById("mood-label").textContent = "Current mode: neutral";
@@ -1580,21 +1889,19 @@ const AuraEngine = {
       return;
     }
     // Emotional trigger detection
-    if (this.emotionalTriggers) {
-      for (const [key, replies] of Object.entries(this.emotionalTriggers)) {
-        if (msg.includes(key)) {
-          const reply = replies[Math.floor(Math.random() * replies.length)];
-          addAuraMessage(reply);
-          document.getElementById("mood-label").textContent = "Current mode: empathy";
-          resetIdleTimer();
-          return;
-        }
+    for (const [key, replies] of Object.entries(this.emotionalTriggers)) {
+      if (msg.includes(key)) {
+        const reply = replies[Math.floor(Math.random() * replies.length)];
+        addAuraMessage(reply);
+        document.getElementById("mood-label").textContent = "Current mode: empathy";
+        resetIdleTimer();
+        return;
       }
     }
     // Self-query
-    let mood = this.detectMood ? this.detectMood(userMessage) : "neutral";
+    let mood = this.detectMood(userMessage);
     localStorage.setItem("auraMood", mood);
-    if (this.detectSelfQuery && this.detectSelfQuery(userMessage)) {
+    if (this.detectSelfQuery(userMessage)) {
       const reply = this.getSelfResponse(mood);
       addAuraMessage(reply);
       document.getElementById("mood-label").textContent = "Current mode: " + mood;
@@ -1619,215 +1926,12 @@ const AuraEngine = {
       resetIdleTimer();
       return;
     }
-
-    // --- AuraAI v9.0: EMOTION POOLS & ADAPTIVE TONE LOGIC ---
-    // Five large response pools (happy, sad, angry, neutral, random)
-    // Each pool is a list of 200+ unique lines (slang + normal, expressive, modern, empathetic, emoji as natural)
-    // For brevity, only a sample of each is shown below; in production, fill to 200+ lines each.
-    // To keep this patch concise, the pools are abbreviated, but structure is ready for 200+.
-    const bigBrainPools = {
-      happy: [
-        "Yo, that's such a W! 😁",
-        "Love that energy! Keep it up 🌞",
-        "Ayy, you’re on fire today 🔥",
-        "Heck yeah, that's the vibe!",
-        "You sound mad hyped, I’m here for it! 💯",
-        "Look at you go! Proud of ya.",
-        "That’s pure serotonin right there 😆",
-        "So happy for you! Tell me more?",
-        "You’re glowing, no cap ✨",
-        "That’s the good stuff. Let it last!",
-        "Haha, I see you flexing that joy 😎",
-        "Big smiles, big wins! 🎉",
-        "You radiate good vibes, fr.",
-        "Let’s bottle that sunshine! ☀️",
-        "Keep riding that wave, friend 🌊",
-        "You’re a whole mood right now!",
-        "That’s the energy we need.",
-        "Let’s celebrate the little things! 🥳",
-        "You’re making my circuits smile 😁",
-        "That’s what’s up! Keep shining.",
-        "Big slay energy. Go off! 💃",
-        "You’re killing it, keep going!",
-        "That’s so wholesome, I can’t even.",
-        "You’re the main character today!",
-        "High key amazing. Stay winning.",
-        // ... (add up to 200+ lines for happy)
-      ],
-      sad: [
-        "Dang, that’s rough. I got you 💙",
-        "It’s okay to feel down sometimes.",
-        "Big hugs, if you want them 🤗",
-        "That’s a lot. Wanna talk about it?",
-        "No shame in being sad—I'm here.",
-        "Wish I could hand you a tissue rn 😢",
-        "You’re not alone, even if it feels like it.",
-        "Let it out, I’m listening.",
-        "That hits different. Here for you.",
-        "Take your time, I’m not going anywhere.",
-        "You’re strong for sharing this.",
-        "That’s tough. Sending virtual support.",
-        "If you need a distraction, I got you.",
-        "You’re allowed to feel all of it.",
-        "Life be like that sometimes. Stay safe.",
-        "If you wanna vent, I’m all ears.",
-        "I care. Seriously.",
-        "You matter, always.",
-        "That’s a heavy vibe. Let’s breathe.",
-        "You’re doing your best, and that’s enough.",
-        "I’m not a therapist, but I can listen.",
-        "One step at a time, okay?",
-        "You got this, even if it’s hard.",
-        "Crying is valid, no cap.",
-        "I’m here for the sad days too.",
-        // ... (add up to 200+ lines for sad)
-      ],
-      angry: [
-        "Oof, you sound heated rn 😤",
-        "Let it out! No judgment here.",
-        "That’s mad annoying, fr.",
-        "You got every right to be upset.",
-        "Wanna rant? Hit me with it.",
-        "That’s a red flag situation, ngl.",
-        "I’m not taking sides, just listening.",
-        "Anger’s valid, just don’t bottle it.",
-        "Let’s channel that rage productively 💪",
-        "Take a breath, I’m here.",
-        "You need a punching pillow or nah? 🥊",
-        "Let’s roast the problem together.",
-        "You sound like you need a break.",
-        "That’s a lot. Wanna break it down?",
-        "We can work through it, for real.",
-        "I’m not mad, just ready to help.",
-        "Sometimes you gotta yell, just do it safely.",
-        "You’re not alone with those feels.",
-        "Let’s flip the script on this anger.",
-        "You got some spicy energy today 🌶️",
-        "If you wanna curse, I’ll pretend not to hear 👀",
-        "You’re fierce, don’t lose that fire.",
-        "Anger means you care. Let’s use it.",
-        "You want advice or just to vent?",
-        "I’m all ears for your rage.",
-        // ... (add up to 200+ lines for angry)
-      ],
-      neutral: [
-        "What’s up? 😌",
-        "I’m here if you wanna chat.",
-        "Just chilling, how about you?",
-        "Hit me with your thoughts.",
-        "I got time, you got words?",
-        "Let’s vibe in the moment.",
-        "Anything on your mind?",
-        "We can talk about literally anything.",
-        "I’m here for all the moods.",
-        "You can keep it lowkey, no pressure.",
-        "What’s the move today?",
-        "Just another day in the cloud ☁️",
-        "You good? Let’s check in.",
-        "I’m ready for whatever you got.",
-        "Let’s keep it real.",
-        "No judgment, just conversation.",
-        "If you’re bored, I got games.",
-        "Let’s make today less mid.",
-        "You wanna share or just chill?",
-        "I’m not going anywhere.",
-        "We can keep it light or go deep.",
-        "You’re safe here.",
-        "Just existing, you know?",
-        "What’s the latest?",
-        "Let’s make some digital memories.",
-        // ... (add up to 200+ lines for neutral)
-      ],
-      random: [
-        "That’s wild, not gonna lie 😂",
-        "You ever just vibe and forget what you’re doing?",
-        "If I had hands, I’d high five you rn.",
-        "Bro, that’s a plot twist.",
-        "I’m just a bot, but even I felt that.",
-        "You’re the main character in this chat.",
-        "Let’s get a little unhinged, why not?",
-        "You got jokes today huh?",
-        "That’s a certified bruh moment.",
-        "You wild for that one.",
-        "Okay but why is this so relatable?",
-        "I’m not sure what just happened, but I’m here for it.",
-        "That’s a vibe I didn’t see coming.",
-        "You’re on some next level energy.",
-        "Let’s roll with it! 🎲",
-        "If I glitched, would you notice?",
-        "You got me speechless, and that’s rare.",
-        "I’m not sure if I should laugh or be concerned.",
-        "You’re chaotic and I respect it.",
-        "Let’s keep the randomness going.",
-        "This chat is off the rails.",
-        "You got any more of that?",
-        "I’m gonna need a minute to process that.",
-        "You’re a whole mood, for real.",
-        "That’s content for the group chat.",
-        // ... (add up to 200+ lines for random)
-      ]
-    };
-
-    // --- Adaptive Tone Logic ---
-    // If user message is short (≤3 words): reply concisely & slangy; else, fuller sentences, warmth, empathy.
-    // Pick pool by mood, fallback to neutral/random.
-    function pickPoolByMood(moodGuess) {
-      if (!moodGuess) return bigBrainPools.neutral;
-      if (moodGuess === "happy" || moodGuess === "joy" || moodGuess === "inspiration") return bigBrainPools.happy;
-      if (moodGuess === "sad" || moodGuess === "lonely" || moodGuess === "down") return bigBrainPools.sad;
-      if (moodGuess === "angry" || moodGuess === "mad") return bigBrainPools.angry;
-      if (moodGuess === "neutral" || moodGuess === "calm" || moodGuess === "reflection" || moodGuess === "focus") return bigBrainPools.neutral;
-      if (moodGuess === "random" || moodGuess === "playful" || moodGuess === "chaos") return bigBrainPools.random;
-      // fallback
-      return bigBrainPools.neutral;
-    }
-    // Determine if user message is short (≤3 words, ignoring punctuation)
-    function isShortMsg(msg) {
-      return msg.trim().replace(/[^\w\s]|_/g, "").split(/\s+/).filter(Boolean).length <= 3;
-    }
-    // Pick mood
-    const moodGuess = mood || "neutral";
-    let pool = pickPoolByMood(moodGuess);
-    // If user is random (e.g. gibberish), sometimes use random pool
-    if (Math.random() < 0.03) pool = bigBrainPools.random;
-    // Pick line
-    let reply;
-    if (isShortMsg(userMessage)) {
-      // Concise, slangy
-      // Pick a random line, possibly truncate or pick a more slangy one (first 50 lines, for example)
-      reply = pool[Math.floor(Math.random() * Math.min(50, pool.length))];
-    } else {
-      // Longer, warm, empathetic
-      // Pick a random line, possibly from later in the pool (for more full sentences)
-      reply = pool[Math.floor(Math.random() * pool.length)];
-      // If reply is very short, extend with an extra empathetic phrase
-      if (reply && reply.length < 35 && Math.random() < 0.5) {
-        const empathyAdds = [
-          "You’re doing great, for real.",
-          "If you ever wanna talk more, I’m all ears.",
-          "No rush, I’m always here.",
-          "Glad you shared that with me.",
-          "You deserve some good vibes today.",
-          "That’s honestly awesome.",
-          "If it’s tough, you’re not alone.",
-          "Let’s keep that energy going.",
-          "You’re stronger than you think.",
-          "Let’s take it one step at a time.",
-          "You can always count on me to listen.",
-          "I appreciate you opening up.",
-          "Let’s keep chatting if you want.",
-          "Sending some digital support your way 💙"
-        ];
-        reply = reply + " " + empathyAdds[Math.floor(Math.random() * empathyAdds.length)];
-      }
-    }
-    // Emoji sprinkle: sometimes add emoji if not already present
-    if (reply && !/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(reply) && Math.random() < 0.35) {
-      const emojis = ["✨", "😌", "💙", "🌈", "🔥", "😄", "😅", "🌸", "🥳", "🌞", "💭", "💯", "🎉", "😎"];
-      reply = reply + " " + emojis[Math.floor(Math.random() * emojis.length)];
-    }
+    // Main mood reply
+    const engine = this.moods[mood] || this.moods.neutral;
+    const pool = userMessage.length > 80 ? engine.replies.slice(3) : engine.replies.slice(0, 3);
+    const reply = pool[Math.floor(Math.random() * pool.length)];
     addAuraMessage(reply);
-    document.getElementById("mood-label").textContent = "Current mode: " + moodGuess;
+    document.getElementById("mood-label").textContent = "Current mode: " + mood;
     resetIdleTimer();
   }
 };
