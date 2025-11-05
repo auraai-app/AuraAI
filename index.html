@@ -1,4 +1,5 @@
 
+
 <!-- AuraAI Ultimate Merged (Part 1/4) -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1825,6 +1826,48 @@ const AuraEngine = {
         ]
       }
     };
+
+    // 🌈 Swearing Filter (before all triggers)
+    const profanityList = [
+      "fuck", "shit", "bitch", "asshole", "cunt", "bastard", "dick", "piss", "motherfucker", "fucker", "douche", "bollocks", "wanker", "slut", "whore"
+    ];
+    const profanityReplies = [
+      "Hey — let’s keep it kind 💙",
+      "No need for that word 😅",
+      "Stop 😭 we’re better than this!"
+    ];
+    for (const word of profanityList) {
+      if (msg.includes(word)) {
+        const reply = profanityReplies[Math.floor(Math.random() * profanityReplies.length)];
+        addAuraMessage(reply);
+        document.getElementById("mood-label").textContent = "Current mode: gentle";
+        resetIdleTimer();
+        return;
+      }
+    }
+
+    // 🆘 Suicide Prevention and Emotional Support System (before all triggers)
+    const crisisTriggers = [
+      "i want to die", "kill myself", "killing myself", "i can’t go on", "i cant go on", "want to end it", "no reason to live",
+      "i’m suicidal", "im suicidal", "suicidal thoughts", "ending my life", "i want to end my life", "i want to kill myself",
+      "i want to disappear", "i want to not exist", "wish i was dead", "i wish i was dead", "i want to stop living", "i hate my life",
+      "i want to give up", "i give up", "i want everything to end", "i don’t want to live", "i dont want to live"
+    ];
+    for (const trig of crisisTriggers) {
+      if (msg.includes(trig)) {
+        addAuraMessage(
+          "I’m really sorry that you’re feeling like this 💙. You’re not alone, and you don’t have to face this on your own. " +
+          "Please reach out to someone who can help you right now — if you’re in Malaysia, you can call Befrienders KL at 03-7627 2929 (24 hours). " +
+          "If you’re somewhere else, I can help you find local hotlines. You matter, and your life is important. 💙"
+        );
+        setTimeout(() => {
+          addAuraMessage("Would you like me to share a few calming thoughts or grounding steps right now?");
+        }, 400);
+        document.getElementById("mood-label").textContent = "Current mode: support";
+        resetIdleTimer();
+        return;
+      }
+    }
 
     // 🔄 Smart matching logic for SmartChat v10 (before mood/tone/fallback)
     for (const [tone, data] of Object.entries(SmartChatV10)) {
