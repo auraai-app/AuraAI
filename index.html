@@ -1,6 +1,5 @@
 
 
-
 <!-- AuraAI Ultimate Merged (Part 1/4) -->
 <!DOCTYPE html>
 <html lang="en">
@@ -518,6 +517,425 @@ html, body { box-sizing: border-box; }
       <span class="label">Games</span>
     </button>
     <button class="sidebar-nav-btn" id="navbtn-journal" onclick="switchTab('journal')">
+    <button class="sidebar-nav-btn" id="navbtn-account" onclick="switchTab('account')">
+      <span class="icon" aria-hidden="true">👤</span>
+      <span class="label">Account</span>
+    </button>
+    <div class="tab-content" id="account">
+      <div id="account-panel" class="account-glass">
+        <div class="account-avatar-row">
+          <div id="account-avatar" class="account-avatar" tabindex="0" title="Edit avatar"></div>
+          <div class="account-info">
+            <div class="account-name-row">
+              <span id="account-name" class="account-name"></span>
+              <button id="edit-profile-btn" class="edit-profile-btn" title="Edit profile">&#9998;</button>
+            </div>
+            <div class="account-stats">
+              <span><b>Chats:</b> <span id="account-chat-count">0</span></span>
+              <span><b>Journal Entries:</b> <span id="account-journal-count">0</span></span>
+              <span><b>Games Played:</b> <span id="account-game-count">0</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="account-memory">
+          <div class="account-memory-title">🧠 <b>Your Memory</b></div>
+          <div id="account-memory-list" class="account-memory-list"></div>
+        </div>
+        <div class="account-actions">
+          <button id="export-account-btn" class="account-action-btn">Export Data</button>
+          <button id="reset-account-btn" class="account-action-btn">Reset Account</button>
+        </div>
+      </div>
+      <div id="profile-modal" class="profile-modal">
+        <div class="profile-modal-content">
+          <button class="profile-modal-close" id="close-profile-modal" aria-label="Close">&times;</button>
+          <h3>Edit Profile</h3>
+          <form id="profile-form">
+            <label>
+              Name:<br>
+              <input type="text" id="profile-name" maxlength="32" autocomplete="off">
+            </label>
+            <label>
+              Avatar Emoji:<br>
+              <input type="text" id="profile-avatar" maxlength="2" autocomplete="off" pattern="[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}A-Za-z0-9]+" title="Emoji or letter">
+            </label>
+            <button type="submit" class="account-action-btn" style="margin-top:16px;">Save</button>
+          </form>
+        </div>
+      </div>
+    </div>
+<style>
+/* --- AuraAI Account System Glassy UI --- */
+.account-glass {
+  max-width: 520px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--glass,rgba(255,255,255,0.09)), rgba(255,255,255,0.03) 100%);
+  border-radius: 32px;
+  box-shadow: 0 8px 44px 0 var(--accent, #7cc6ff)33, 0 0 0 1px var(--accent, #7cc6ff)11 inset, 0 10px 44px 0 var(--accent, #7cc6ff)09 inset, 0 0 0 2px var(--accent, #7cc6ff)10;
+  backdrop-filter: var(--blur, blur(18px)) var(--frost-bright, brightness(1.15));
+  padding: 38px 32px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 430px;
+  position: relative;
+  animation: fadeSlideIn 0.7s cubic-bezier(.4,1.2,.2,1) both;
+}
+.account-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+.account-avatar {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent, #7cc6ff)11 0%, #fff3 100%);
+  box-shadow: 0 0 24px 0 var(--accent, #7cc6ff)44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  color: var(--accent, #7cc6ff);
+  text-shadow: 0 0 18px #fff, 0 0 8px var(--accent, #7cc6ff);
+  cursor: pointer;
+  border: 3px solid var(--accent, #7cc6ff);
+  transition: box-shadow 0.22s, border-color 0.22s;
+}
+.account-avatar:focus, .account-avatar:hover {
+  box-shadow: 0 0 48px 0 var(--accent, #7cc6ff)88, 0 0 0 2px #fff;
+  outline: none;
+  border-color: #fff;
+}
+.account-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.account-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.account-name {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--accent, #7cc6ff);
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px var(--accent, #7cc6ff)44;
+}
+.edit-profile-btn {
+  background: none;
+  border: none;
+  color: var(--accent, #7cc6ff);
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 5px 8px;
+  transition: background 0.18s, color 0.18s;
+}
+.edit-profile-btn:hover, .edit-profile-btn:focus {
+  background: var(--accent, #7cc6ff)22;
+  color: #fff;
+  outline: none;
+}
+.account-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 1.01rem;
+  color: #e7f4ff;
+  opacity: 0.88;
+}
+.account-memory {
+  background: linear-gradient(135deg, var(--accent, #7cc6ff)09 0%, rgba(255,255,255,0.03) 100%);
+  border-radius: 20px;
+  padding: 20px 18px 12px 18px;
+  box-shadow: 0 0 14px 0 var(--accent, #7cc6ff)22;
+  min-height: 60px;
+  color: #fff;
+  margin-top: 10px;
+}
+.account-memory-title {
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--accent, #7cc6ff);
+  margin-bottom: 7px;
+  letter-spacing: 0.8px;
+}
+.account-memory-list {
+  font-size: 1.02rem;
+  color: #e7f4ff;
+  line-height: 1.58;
+}
+.account-actions {
+  display: flex;
+  gap: 18px;
+  margin-top: 18px;
+}
+.account-action-btn {
+  background: var(--accent, #7cc6ff);
+  color: #131a2d;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 1.01rem;
+  box-shadow: 0 2px 10px var(--accent, #7cc6ff)22;
+  cursor: pointer;
+  transition: background 0.22s, color 0.18s, box-shadow 0.22s;
+}
+.account-action-btn:hover, .account-action-btn:focus {
+  background: #fff;
+  color: var(--accent, #7cc6ff);
+  box-shadow: 0 4px 18px var(--accent, #7cc6ff)33;
+  outline: none;
+}
+/* Modal */
+.profile-modal {
+  position: fixed;
+  z-index: 1001;
+  left: 0; top: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(18,24,38,0.28);
+  backdrop-filter: blur(8px) brightness(1.10);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInModal 0.3s cubic-bezier(.4,1.2,.2,1);
+}
+.profile-modal.active { display: flex; }
+.profile-modal-content {
+  background: linear-gradient(135deg, var(--glass,rgba(255,255,255,0.20)), rgba(255,255,255,0.10) 100%);
+  border-radius: 24px;
+  box-shadow: 0 0 48px 0 var(--accent, #7cc6ff)66, 0 0 0 2px #fff;
+  padding: 32px 28px 24px 28px;
+  min-width: 300px;
+  max-width: 95vw;
+  color: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeSlideIn 0.4s cubic-bezier(.4,1.2,.2,1);
+}
+.profile-modal-close {
+  position: absolute;
+  top: 14px; right: 18px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s;
+}
+.profile-modal-close:hover, .profile-modal-close:focus {
+  background: var(--accent, #7cc6ff)33;
+  color: var(--accent, #7cc6ff);
+  outline: none;
+}
+#profile-form label {
+  font-size: 1.01rem;
+  color: #e7f4ff;
+  display: block;
+  margin-bottom: 14px;
+}
+#profile-form input {
+  font-size: 1.15rem;
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 12px;
+  margin-top: 5px;
+  margin-bottom: 8px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.18s;
+}
+#profile-form input:focus {
+  background: rgba(255,255,255,0.16);
+}
+@media (max-width: 600px) {
+  .account-glass { padding: 18px 6vw 18px 6vw; }
+  .account-avatar-row { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .account-avatar { width: 80px; height: 80px; font-size: 2.3rem; }
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+<script>
+// --- AuraAI Account System v1.0 ---
+const DEFAULT_AVATAR = "🌈";
+const DEFAULT_NAME = "You";
+const ACCOUNT_KEY = "AuraAI_account";
+function getAccountData() {
+  let data = {};
+  try {
+    data = JSON.parse(localStorage.getItem(ACCOUNT_KEY)) || {};
+  } catch { data = {}; }
+  if (!data.name) data.name = localStorage.getItem("AuraAI_username") || DEFAULT_NAME;
+  if (!data.avatar) data.avatar = DEFAULT_AVATAR;
+  if (!data.stats) data.stats = { chats: 0, journals: 0, games: 0 };
+  if (!data.memory) data.memory = [];
+  return data;
+}
+function saveAccountData(data) {
+  localStorage.setItem(ACCOUNT_KEY, JSON.stringify(data));
+  // Sync name/avatar to legacy keys for compatibility
+  localStorage.setItem("AuraAI_username", data.name);
+}
+function renderAccountPanel() {
+  const data = getAccountData();
+  document.getElementById("account-avatar").textContent = data.avatar || DEFAULT_AVATAR;
+  document.getElementById("account-name").textContent = data.name || DEFAULT_NAME;
+  document.getElementById("account-chat-count").textContent = data.stats.chats || 0;
+  document.getElementById("account-journal-count").textContent = data.stats.journals || 0;
+  document.getElementById("account-game-count").textContent = data.stats.games || 0;
+  // Memory
+  const mem = data.memory || [];
+  let html = "";
+  if (mem.length === 0) {
+    html = `<span style="opacity:0.7;">No memories yet. Your important chats and journal notes will appear here.</span>`;
+  } else {
+    html = "<ul style='margin:0 0 0 12px;padding:0;'>";
+    for (let m of mem.slice(-8).reverse()) {
+      html += `<li style="margin-bottom:4px;">${m}</li>`;
+    }
+    html += "</ul>";
+  }
+  document.getElementById("account-memory-list").innerHTML = html;
+}
+function showProfileModal() {
+  const data = getAccountData();
+  document.getElementById("profile-name").value = data.name || DEFAULT_NAME;
+  document.getElementById("profile-avatar").value = data.avatar || DEFAULT_AVATAR;
+  document.getElementById("profile-modal").classList.add("active");
+  setTimeout(() => {
+    document.getElementById("profile-name").focus();
+  }, 120);
+}
+function hideProfileModal() {
+  document.getElementById("profile-modal").classList.remove("active");
+}
+function updateAccountStats(type) {
+  const data = getAccountData();
+  if (!data.stats) data.stats = { chats: 0, journals: 0, games: 0 };
+  if (type === "chat") data.stats.chats++;
+  if (type === "journal") data.stats.journals++;
+  if (type === "game") data.stats.games++;
+  saveAccountData(data);
+  renderAccountPanel();
+}
+function addAccountMemory(msg) {
+  const data = getAccountData();
+  if (!data.memory) data.memory = [];
+  if (typeof msg === "string" && msg.trim().length > 0) {
+    data.memory.push(msg.trim());
+    if (data.memory.length > 32) data.memory = data.memory.slice(-32);
+    saveAccountData(data);
+    renderAccountPanel();
+  }
+}
+function exportAccountData() {
+  const data = getAccountData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "AuraAI-Account.json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+function resetAccountData() {
+  if (!confirm("Reset your AuraAI account? All account data, stats, and memories will be cleared. This cannot be undone.")) return;
+  localStorage.removeItem(ACCOUNT_KEY);
+  localStorage.removeItem("AuraAI_username");
+  renderAccountPanel();
+  alert("Account has been reset.");
+}
+document.addEventListener("DOMContentLoaded", function() {
+  // Render on tab open
+  if (document.getElementById("account-panel")) renderAccountPanel();
+  // Open modal
+  document.getElementById("edit-profile-btn").onclick = showProfileModal;
+  document.getElementById("account-avatar").onclick = showProfileModal;
+  document.getElementById("account-avatar").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showProfileModal(); }
+  });
+  document.getElementById("close-profile-modal").onclick = hideProfileModal;
+  document.getElementById("profile-modal").addEventListener("click", function(e) {
+    if (e.target === this) hideProfileModal();
+  });
+  document.getElementById("profile-form").onsubmit = function(e) {
+    e.preventDefault();
+    let name = document.getElementById("profile-name").value.trim();
+    let avatar = document.getElementById("profile-avatar").value.trim() || DEFAULT_AVATAR;
+    if (!name) name = DEFAULT_NAME;
+    if (avatar.length > 2) avatar = avatar.slice(0,2);
+    // Only allow emoji, letter, or number for avatar
+    if (!/^[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}A-Za-z0-9]{1,2}$/u.test(avatar)) {
+      alert("Avatar must be an emoji or a letter/number.");
+      return false;
+    }
+    let data = getAccountData();
+    data.name = name;
+    data.avatar = avatar;
+    saveAccountData(data);
+    renderAccountPanel();
+    hideProfileModal();
+    return false;
+  };
+  document.getElementById("export-account-btn").onclick = exportAccountData;
+  document.getElementById("reset-account-btn").onclick = resetAccountData;
+});
+// --- Hook account system into chat/journal/games ---
+// Add to chat
+const origAddAuraAIMessage = window.addAuraAIMessage;
+window.addAuraAIMessage = function(msg, who, emotion, opts) {
+  origAddAuraAIMessage.apply(this, arguments);
+  if (who === "user") updateAccountStats("chat");
+  if (who === "user" && msg && msg.length > 5) addAccountMemory(msg);
+};
+// Add to journal
+const origSaveJournal = window.saveJournal;
+if (origSaveJournal) {
+  window.saveJournal = function() {
+    origSaveJournal.apply(this, arguments);
+    updateAccountStats("journal");
+    let txt = document.getElementById("journal-text").value;
+    if (txt && txt.length > 5) addAccountMemory(txt);
+  };
+}
+// Games: patch openGame
+if (window.openGame) {
+  const origOpenGame = window.openGame;
+  window.openGame = function() {
+    updateAccountStats("game");
+    origOpenGame.apply(this, arguments);
+  };
+}
+// --- Dynamic accent adaptation ---
+function updateAccountAccent() {
+  // Use current --accent variable for all account-glass UI
+  let accent = getComputedStyle(document.documentElement).getPropertyValue('--accent') || "#7cc6ff";
+  document.querySelectorAll('.account-glass, .account-avatar, .account-name, .account-action-btn, .profile-modal-content').forEach(el => {
+    el.style.setProperty('--accent', accent);
+  });
+}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateAccountAccent);
+document.addEventListener("DOMContentLoaded", updateAccountAccent);
+</script>
       <span class="icon" aria-hidden="true">📓</span>
       <span class="label">Journal</span>
     </button>
@@ -544,7 +962,11 @@ html, body { box-sizing: border-box; }
     </div>
     <div class="tab-content" id="music">
       <h2>Music</h2>
-      <iframe src="https://open.spotify.com/embed/playlist/0mZUMmIk952uuM1xsczDh6?utm_source=generator"></iframe>
+      <iframe style="border-radius:12px"
+	src="https://open.spotify.com/embed/album/69AaAkdktFGnk9POmHENkT?utm_source=generator"
+	width="100%" height="380" frameBorder="0" allowfullscreen=""
+	allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+	loading="lazy"></iframe>
     </div>
     <div class="tab-content" id="journal">
       <h2>Journal</h2>
@@ -579,6 +1001,8 @@ function switchTab(tabName) {
   if (activeTab) {
     activeTab.style.display = 'block';
     activeTab.classList.add('active');
+    // Account tab: render panel on open
+    if (tabName === "account" && typeof renderAccountPanel === "function") renderAccountPanel();
   }
   // Sidebar nav highlight
   document.querySelectorAll('.sidebar-nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -590,7 +1014,8 @@ function switchTab(tabName) {
     themes: 'navbtn-themes',
     music: 'navbtn-music',
     games: 'navbtn-games',
-    journal: 'navbtn-journal'
+    journal: 'navbtn-journal',
+    account: 'navbtn-account'
   };
   let btnId = navMap[tabName];
   if (btnId) {
@@ -666,7 +1091,7 @@ const AuraEmotionKeywords = {
   romance:         [ "romantic", "romance", "crush", "date", "kiss", "sweetheart", "in love", "flirt" ],
   sadness:         [ "sad", "depressed", "down", "unhappy", "cry", "tears", "blue", "heartbroken" ],
   satisfaction:    [ "satisfied", "content", "fulfilled", "accomplished", "pleased", "that’s enough", "done", "proud" ],
-  sexual_desire:   [ "sexy", "hot", "turn on", "aroused", "desire you", "intimate", "fantasy", "seduce" ],
+  sexual_desire:   [ "porn", "hot", "turn on", "aroused", "desire you", "intimate", "fantasy", "seduce" ],
   surprise:        [ "surprised", "wow", "unexpected", "shocked", "didn't expect", "amazed", "no way", "unbelievable" ]
 };
 
@@ -686,6 +1111,19 @@ function detectEmotion(userMsg) {
 
 // Generate Aura's reply and emotion
 function auraRespondEmotion(userMsg) {
+  // --- Math Evaluator (Aura Patch) ---
+  const lower = userMsg.toLowerCase();
+  const mathExp = userMsg.replace(/[^0-9+\-*/(). ]/g, '');
+  if (/^[0-9+\-*/(). ]+$/.test(mathExp)) {
+    try {
+      const result = eval(mathExp);
+      if (!isNaN(result) && isFinite(result)) {
+        return { reply: `The answer is ${result} 💫`, emotion: "neutral" };
+      }
+    } catch (e) {
+      // gracefully skip invalid math
+    }
+  }
   // Call the regular conversational engine for reply
   const reply = AuraAI_generateConversationalResponse(userMsg);
   // Detect emotion from userMsg
@@ -1731,6 +2169,37 @@ const AuraEngine = {
       return `That’s interesting — but I can’t quite math that one 😅`;
     }
 
+    // --- Quick Math Helper (Alternative Math Solver) ---
+    function auraMathSolver(input) {
+      try {
+        let expr = input
+          .toLowerCase()
+          .replace(/plus/g, "+")
+          .replace(/minus/g, "-")
+          .replace(/times|multiplied by/g, "*")
+          .replace(/divide|divided by/g, "/")
+          .replace(/power|to the power of/g, "**")
+          .replace(/sqrt|square root of/g, "Math.sqrt")
+          .replace(/[^\d+\-*/().^Mathsqrt ]/g, "");
+        if (expr.includes("math.sqrt")) {
+          expr = expr.replace(/math.sqrt\s*\(?(\d+)\)?/g, (_, n) => Math.sqrt(Number(n)));
+        }
+        const result = eval(expr);
+        if (!isNaN(result) && isFinite(result)) {
+          return `That’s ${result} 💡 Quick maths!`;
+        }
+      } catch {
+        return null;
+      }
+      return null;
+    }
+
+    // --- Safeguard: Prevent crash if userMsg is undefined or null ---
+    if (typeof userMsg === "undefined" || userMsg === null) {
+      console.warn("userMsg undefined — resetting.");
+      userMsg = "";
+    }
+
     // 🌈 Swearing Filter (before all triggers)
     const profanityList = [
       "fuck", "shit", "bitch", "asshole", "cunt", "bastard", "dick", "piss", "motherfucker", "fucker", "douche", "bollocks", "wanker", "slut", "whore"
@@ -1750,9 +2219,27 @@ const AuraEngine = {
       }
     }
 
-    // 💡 Aura Math Logic Activation
-    const mathResult = auraMathSolver(msg);
-    if (mathResult) return mathResult;
+    // 🧮 Quick Math Handling
+    if (/[\d\+\-\*\/\^]|plus|minus|times|divide|power|sqrt/i.test(msg)) {
+      const mathReply = auraMathSolver(msg);
+      if (mathReply) return mathReply;
+    }
+
+    // ✅ Ensure aura responds even when math fails
+    if (/\d+\s*[\+\-\*\/]\s*\d+|plus|minus|times|divide|divided by|power|sqrt|what'?s|calculate/i.test(userMsg)) {
+      const mathReply = auraMathSolver(userMsg);
+      if (mathReply) {
+        setTimeout(() => {
+          auraReply("The answer is " + mathReply + " ✨");
+        }, 300);
+        return;
+      } else {
+        setTimeout(() => {
+          auraReply("Hmm... that looks like math, but I can’t quite calculate it 😅");
+        }, 300);
+        return;
+      }
+    }
 
     // 🆘 Suicide Prevention and Emotional Support System (before all triggers)
     const crisisTriggers = [
@@ -1825,6 +2312,16 @@ const AuraEngine = {
         sendReply(followUps[Math.floor(Math.random() * followUps.length)], "neutral");
       }, 2200);
       return;
+    }
+
+    // --- Name Detection (custom name, not emotion) ---
+    if (/^(i am|i’m|im)\s+(\w+)/i.test(msg)) {
+      const word = msg.match(/^(i am|i’m|im)\s+(\w+)/i)[2].toLowerCase();
+      const emotionWords = ["sad", "happy", "angry", "tired", "okay", "fine", "bored", "good", "bad", "confused", "lonely"];
+      if (!emotionWords.includes(word)) {
+        localStorage.setItem("auraName", word.charAt(0).toUpperCase() + word.slice(1));
+        return `Got it 💙 I’ll call you ${word.charAt(0).toUpperCase() + word.slice(1)} from now on.`;
+      }
     }
 
     // 🔄 Smart matching logic for SmartChat v10 (before mood/tone/fallback)
@@ -1930,8 +2427,15 @@ const AuraEngine = {
     // Main mood reply
     const engine = this.moods[mood] || this.moods.neutral;
     const pool = userMessage.length > 80 ? engine.replies.slice(3) : engine.replies.slice(0, 3);
-    const reply = pool[Math.floor(Math.random() * pool.length)];
-    addAuraMessage(reply);
+    let reply = pool[Math.floor(Math.random() * pool.length)];
+    // Guarantee a response in every scenario
+    // (old fallback, now replaced by universal fallback below)
+
+    // --- Universal fallback: Ensure Aura always responds ---
+    if (!reply || reply.trim() === "") {
+      reply = "Hmm, tell me more 💬";
+    }
+    addAuraMessage("Aura: " + reply);
     document.getElementById("mood-label").textContent = "Current mode: " + mood;
     resetIdleTimer();
   }
@@ -3298,6 +3802,238 @@ function startSnake(ctx, canvas) {
     }
   }
   </style>
+  <!-- Glassy Account System & Welcome Shimmer CSS -->
+  <style>
+    /* Account Glass Panel */
+    .account-glass {
+      background: rgba(40,10,20,0.53);
+      border-radius: 32px;
+      box-shadow: 0 0 44px 0 #ff1744, 0 4px 40px 0 rgba(80,10,10,0.13);
+      backdrop-filter: blur(22px) saturate(1.16);
+      border: 2.5px solid rgba(255,23,68,0.21);
+      padding: 38px 32px 34px 32px;
+      margin: 0 auto 0 auto;
+      max-width: 370px;
+      min-width: 260px;
+      color: #fff;
+      position: relative;
+      z-index: 2;
+      transition: box-shadow 0.4s, background 0.3s;
+    }
+    .account-glass .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 3px solid #ff1744;
+      box-shadow: 0 0 24px 0 #ff1744bb, 0 0 0 #fff;
+      object-fit: cover;
+      margin: 0 auto 14px auto;
+      display: block;
+      background: #2a0a0a;
+      transition: box-shadow 0.3s;
+    }
+    .account-glass .username {
+      font-size: 1.34em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: #fff;
+      text-shadow: 0 0 12px #ff1744, 0 0 1px #fff;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .account-glass .stats {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      margin: 18px 0 14px 0;
+    }
+    .account-glass .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 1em;
+    }
+    .account-glass .stat-value {
+      font-size: 1.19em;
+      font-weight: 600;
+      color: #ff1744;
+      text-shadow: 0 0 7px #ff174444;
+    }
+    .account-glass .stat-label {
+      font-size: 0.92em;
+      opacity: 0.85;
+      margin-top: 2px;
+      color: #fff;
+    }
+    .account-glass .account-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      justify-content: center;
+    }
+    .account-glass .account-btn {
+      background: linear-gradient(90deg, #ff1744 0%, #ff7373 100%);
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      padding: 8px 22px;
+      font-weight: 600;
+      box-shadow: 0 0 12px 0 #ff1744, 0 0 2px #fff;
+      cursor: pointer;
+      font-size: 1.01em;
+      transition: background 0.18s, box-shadow 0.19s, color 0.19s;
+      outline: none;
+    }
+    .account-glass .account-btn:hover, .account-glass .account-btn:focus-visible {
+      background: #fff;
+      color: #ff1744;
+      box-shadow: 0 0 26px 2px #ff1744, 0 0 6px #fff;
+    }
+    /* Floating Edit Modal */
+    .account-edit-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(30,0,0,0.33);
+      z-index: 1002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.22s cubic-bezier(.4,1.3,.2,1);
+    }
+    .account-edit-box {
+      background: rgba(40,10,20,0.93);
+      border-radius: 26px;
+      box-shadow: 0 0 70px 0 #ff1744, 0 0 12px #fff2;
+      padding: 34px 32px 28px 32px;
+      min-width: 250px;
+      max-width: 330px;
+      color: #fff;
+      position: relative;
+      border: 2.5px solid #ff1744bb;
+      animation: popIn 0.22s cubic-bezier(.4,1.3,.2,1);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.93); opacity: 0;}
+      100% { transform: scale(1); opacity: 1;}
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0;}
+      100% { opacity: 1;}
+    }
+    .account-edit-box label {
+      font-weight: 600;
+      color: #ff1744;
+      display: block;
+      margin-bottom: 9px;
+      font-size: 1.07em;
+    }
+    .account-edit-box input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.07em;
+      margin-bottom: 16px;
+      background: #2a0a0a;
+      color: #fff;
+      box-shadow: 0 0 0 2px #ff174433;
+      outline: none;
+      transition: box-shadow 0.18s;
+    }
+    .account-edit-box input[type="text"]:focus {
+      box-shadow: 0 0 0 3px #ff1744cc;
+    }
+    .account-edit-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    .account-edit-btn {
+      background: linear-gradient(90deg, #ff1744 0%, #ff7373 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 7px 18px;
+      font-weight: 600;
+      font-size: 1.01em;
+      cursor: pointer;
+      transition: background 0.18s, color 0.17s;
+      outline: none;
+    }
+    .account-edit-btn.cancel {
+      background: #fff;
+      color: #ff1744;
+      border: 1.5px solid #ff1744bb;
+    }
+    .account-edit-btn:hover, .account-edit-btn:focus-visible {
+      filter: brightness(1.13);
+      box-shadow: 0 0 12px #ff1744, 0 0 2px #fff;
+    }
+    /* Welcome Shimmer Intro */
+    .welcome-shimmer {
+      position: fixed;
+      top: 0; left: 0; right: 0; height: 100vh;
+      z-index: 2000;
+      background: linear-gradient(120deg, #2e0a0a 0%, #4a1a1a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      animation: shimmerFadeOut 1.2s 2.2s cubic-bezier(.7,0,.4,1) forwards;
+    }
+    .welcome-shimmer-inner {
+      background: rgba(255,255,255,0.08);
+      border-radius: 36px;
+      padding: 54px 44px 44px 44px;
+      box-shadow: 0 0 70px 0 #ff1744, 0 0 16px #fff3;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-width: 290px;
+      max-width: 90vw;
+    }
+    .welcome-shimmer h1 {
+      font-size: 2.3em;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      color: #ff1744;
+      text-shadow: 0 0 28px #ff1744, 0 0 2px #fff;
+      margin-bottom: 12px;
+    }
+    .welcome-shimmer p {
+      font-size: 1.18em;
+      color: #fff;
+      opacity: 0.93;
+      margin-bottom: 24px;
+      text-shadow: 0 0 12px #ff7373, 0 0 1px #fff;
+    }
+    .welcome-shimmer .shimmer-bar {
+      width: 110px;
+      height: 5px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #ff1744 0%, #ff7373 100%);
+      margin: 0 auto 0 auto;
+      animation: shimmerBar 1.2s infinite alternate;
+      box-shadow: 0 0 18px 0 #ff1744, 0 0 2px #fff;
+    }
+    @keyframes shimmerBar {
+      0% { filter: brightness(1.1);}
+      100% { filter: brightness(1.5);}
+    }
+    @keyframes shimmerFadeOut {
+      0% { opacity: 1;}
+      100% { opacity: 0; pointer-events: none;}
+    }
+    .welcome-shimmer.hide {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s cubic-bezier(.7,0,.4,1);
+    }
+    @media (max-width: 600px) {
+      .account-glass, .account-edit-box { padding: 18px 8vw 18px 8vw; }
+      .welcome-shimmer-inner { padding: 36px 8vw 28px 8vw;}
+    }
+  </style>
 
   <style>
   /* Default glassy background gradient for desktop and fallback */
@@ -3321,18 +4057,22 @@ function startSnake(ctx, canvas) {
       { id: 'games', icon: '🎮' },
       { id: 'themes', icon: '🎨' },
       { id: 'music', icon: '🎵' },
-      { id: 'journal', icon: '📔' }
+      { id: 'journal', icon: '📔' },
+      { id: 'account', icon: '👤' }
     ];
     // Fallback for music tab: if not present, swap with settings
     function getTabList() {
       const hasMusic = !!document.getElementById('music');
-      return hasMusic ? tabs : [
+      // Always add Account tab
+      let arr = hasMusic ? tabs : [
         { id: 'chat', icon: '💬' },
         { id: 'games', icon: '🎮' },
         { id: 'themes', icon: '🎨' },
         { id: 'settings', icon: '⚙️' },
-        { id: 'journal', icon: '📔' }
+        { id: 'journal', icon: '📔' },
+        { id: 'account', icon: '👤' }
       ];
+      return arr;
     }
 
     function createBottomNav() {
@@ -3421,6 +4161,229 @@ function startSnake(ctx, canvas) {
     });
     // Expose openTab globally for sidebar or nav use
     window.openTab = openTab;
+
+    // --- Insert Account tab in sidebar if not present ---
+    document.addEventListener('DOMContentLoaded', function() {
+      const sb = document.getElementById('aura-sidebar');
+      if (sb && !sb.querySelector('.sidebar-btn[data-tab="account"]')) {
+        // Find Journal button
+        const journalBtn = sb.querySelector('.sidebar-btn[data-tab="journal"]');
+        const btn = document.createElement('button');
+        btn.className = 'sidebar-btn';
+        btn.setAttribute('data-tab', 'account');
+        btn.innerHTML = '<span class="icon">👤</span> <span class="label">Account</span>';
+        btn.onclick = function() { openTab('account'); };
+        // Insert after Journal
+        if (journalBtn && journalBtn.nextSibling) {
+          sb.insertBefore(btn, journalBtn.nextSibling);
+        } else {
+          sb.appendChild(btn);
+        }
+      }
+    });
+  <!-- Account Section and Welcome Shimmer Intro -->
+  <div id="welcome-shimmer" class="welcome-shimmer" style="display:none;">
+    <div class="welcome-shimmer-inner">
+      <h1>Welcome to AuraAI</h1>
+      <p id="welcome-shimmer-greet">Hi there! Let’s set up your account for a personal Luna Ember experience.</p>
+      <div class="shimmer-bar"></div>
+    </div>
+  </div>
+  <div id="account" class="tab-content" style="display:none;">
+    <div class="account-glass" id="account-glass">
+      <img src="" alt="Avatar" class="avatar" id="account-avatar" />
+      <div class="username" id="account-username"></div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="account-stat-messages">0</div>
+          <div class="stat-label">Messages</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="account-stat-journal">0</div>
+          <div class="stat-label">Journal</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="account-stat-themes">0</div>
+          <div class="stat-label">Themes</div>
+        </div>
+      </div>
+      <div class="account-actions">
+        <button class="account-btn" id="account-edit-btn">Edit</button>
+        <button class="account-btn" id="account-export-btn">Export</button>
+        <button class="account-btn" id="account-reset-btn">Reset</button>
+      </div>
+    </div>
+  </div>
+  <!-- Floating Edit Modal (injected via JS) -->
+</style>
+
+<script>
+// --- AuraAI Account System & Welcome Shimmer Logic ---
+document.addEventListener('DOMContentLoaded', function() {
+  // --- Welcome Shimmer Intro ---
+  const shimmer = document.getElementById('welcome-shimmer');
+  const shimmerGreet = document.getElementById('welcome-shimmer-greet');
+  let accountName = localStorage.getItem('auraName') || '';
+  function showShimmer() {
+    if (!shimmer) return;
+    shimmer.style.display = '';
+    setTimeout(()=>shimmer.classList.remove('hide'),10);
+    // Greeting
+    shimmerGreet.textContent = accountName
+      ? `Welcome back, ${accountName}! Luna Ember is ready for you.`
+      : `Hi there! Let’s set up your account for a personal Luna Ember experience.`;
+    // Fade out after 2.2s
+    setTimeout(()=>{ shimmer.classList.add('hide'); }, 2200);
+    setTimeout(()=>{ shimmer.style.display = 'none'; }, 3200);
+  }
+  // Only show on first visit or when no username yet
+  if (!localStorage.getItem('auraName')) {
+    showShimmer();
+    // After fade, prompt edit modal
+    setTimeout(()=>{ openAccountEditModal(); }, 2700);
+  } else {
+    // Show shimmer on every load, but shorter
+    showShimmer();
+  }
+
+  // --- Account Glass Logic ---
+  function getAccountData() {
+    let name = localStorage.getItem('auraName') || '';
+    let avatar = localStorage.getItem('auraAvatar') || '';
+    let messages = parseInt(localStorage.getItem('auraMessageCount')||'0',10);
+    let journal = 0;
+    try {
+      let entries = JSON.parse(localStorage.getItem('journalEntries')||'[]');
+      journal = entries.length;
+    } catch {}
+    let themes = 0;
+    try {
+      let t = JSON.parse(localStorage.getItem('auraThemes')||'{}');
+      themes = Object.keys(t).length > 0 ? 1 : 0;
+    } catch {}
+    return { name, avatar, messages, journal, themes };
+  }
+  function setAccountData(d) {
+    if (d.name !== undefined) localStorage.setItem('auraName', d.name);
+    if (d.avatar !== undefined) localStorage.setItem('auraAvatar', d.avatar);
+  }
+  function renderAccount() {
+    const d = getAccountData();
+    document.getElementById('account-username').textContent = d.name || '(No name)';
+    let av = d.avatar;
+    if (!av) av = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(d.name||'Aura');
+    document.getElementById('account-avatar').src = av;
+    document.getElementById('account-stat-messages').textContent = d.messages;
+    document.getElementById('account-stat-journal').textContent = d.journal;
+    document.getElementById('account-stat-themes').textContent = d.themes;
+  }
+  // Render on tab show too
+  function setupAccountTabShow() {
+    const tab = document.getElementById('account');
+    if (!tab) return;
+    // Show when tab-content is made active
+    const observer = new MutationObserver(function(muts){
+      muts.forEach(m=>{
+        if (m.attributeName === 'class' && tab.classList.contains('active')) {
+          renderAccount();
+        }
+      });
+    });
+    observer.observe(tab, { attributes: true });
+  }
+  setupAccountTabShow();
+  renderAccount();
+
+  // --- Edit Modal Logic ---
+  let editModal = null;
+  function openAccountEditModal() {
+    if (editModal) return;
+    const d = getAccountData();
+    editModal = document.createElement('div');
+    editModal.className = 'account-edit-modal';
+    editModal.innerHTML = `
+      <div class="account-edit-box">
+        <label for="edit-username">Username</label>
+        <input type="text" id="edit-username" maxlength="18" value="${d.name.replace(/"/g,'&quot;')||''}" autocomplete="off" />
+        <label for="edit-avatar">Avatar URL <span style="font-weight:400;opacity:0.7">(optional)</span></label>
+        <input type="text" id="edit-avatar" maxlength="400" value="${d.avatar||''}" autocomplete="off" />
+        <div class="account-edit-actions">
+          <button class="account-edit-btn cancel" id="edit-cancel">Cancel</button>
+          <button class="account-edit-btn" id="edit-save">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(editModal);
+    setTimeout(()=>{ // focus after animation
+      editModal.querySelector('#edit-username').focus();
+    }, 80);
+    editModal.querySelector('#edit-cancel').onclick = function() {
+      editModal.remove(); editModal = null;
+    };
+    editModal.querySelector('#edit-save').onclick = function() {
+      let name = editModal.querySelector('#edit-username').value.trim();
+      let avatar = editModal.querySelector('#edit-avatar').value.trim();
+      if (!name) {
+        editModal.querySelector('#edit-username').style.boxShadow = '0 0 0 3px #ff1744cc';
+        return;
+      }
+      setAccountData({ name, avatar });
+      editModal.remove(); editModal = null;
+      renderAccount();
+    };
+    // Close on outside click
+    editModal.onclick = function(e) {
+      if (e.target === editModal) { editModal.remove(); editModal = null;}
+    };
+    // Enter to save
+    editModal.querySelector('#edit-username').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') editModal.querySelector('#edit-save').click();
+    });
+    editModal.querySelector('#edit-avatar').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') editModal.querySelector('#edit-save').click();
+    });
+  }
+  document.getElementById('account-edit-btn').onclick = openAccountEditModal;
+
+  // --- Export Logic ---
+  document.getElementById('account-export-btn').onclick = function() {
+    const d = getAccountData();
+    let exportData = {
+      auraName: d.name,
+      auraAvatar: d.avatar,
+      auraMessageCount: d.messages,
+      journalEntries: JSON.parse(localStorage.getItem('journalEntries')||'[]'),
+      auraThemes: JSON.parse(localStorage.getItem('auraThemes')||'{}')
+    };
+    let blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'AuraAI-Account.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 700);
+  };
+  // --- Reset Logic ---
+  document.getElementById('account-reset-btn').onclick = function() {
+    if (!confirm('Reset your AuraAI account? This will clear your name, avatar, journal, and stats.')) return;
+    localStorage.removeItem('auraName');
+    localStorage.removeItem('auraAvatar');
+    localStorage.removeItem('auraMessageCount');
+    localStorage.removeItem('journalEntries');
+    localStorage.removeItem('auraThemes');
+    renderAccount();
+    showShimmer();
+    setTimeout(()=>{ openAccountEditModal(); }, 2700);
+  };
+  // --- Message Count Increment (hook into chat) ---
+  const origSendAuraAIMessage = window.sendAuraAIMessage;
+  window.sendAuraAIMessage = function() {
+    let c = parseInt(localStorage.getItem('auraMessageCount')||'0',10);
+    localStorage.setItem('auraMessageCount', c+1);
+    if (origSendAuraAIMessage) origSendAuraAIMessage();
+  };
+});
+</script>
   })();
   </script>
   <style>
@@ -3671,3 +4634,186 @@ function startSnake(ctx, canvas) {
 </script>
 
 </html>
+
+  <!-- AuraAI Smart Personalized Reply Logic -->
+  <script>
+  // Replace generateReply with new smart, personalized version
+  function generateReply(userInput) {
+    const text = userInput.trim().toLowerCase();
+    let reply = "";
+    const userName = localStorage.getItem("auraName") || "friend";
+
+    // --- Smart intent filter for name detection ---
+    const emotionWords = [
+      "sad", "happy", "angry", "tired", "stressed", "bored", "lonely", "anxious",
+      "depressed", "hungry", "sleepy", "worried", "mad", "lazy", "upset", "sick",
+      "cold", "hot", "confused", "lost", "broken", "scared", "afraid", "hurt",
+      "ok", "fine", "good", "bad", "alright", "better", "okay", "ill", "busy",
+      "excited", "nervous", "relaxed", "done", "broke", "rich", "angsty", "unwell"
+    ];
+
+    if (
+      (text.startsWith("call me") || text.startsWith("my name is")) &&
+      !emotionWords.some(word => text.includes(word))
+    ) {
+      const name = text.split(" ").pop();
+      reply = `Just to confirm 💭 — should I remember your name as ${name}? (yes / no)`;
+      localStorage.setItem("pendingName", name);
+      typeAuraReply(reply);
+      return;
+    }
+
+    if (text === "yes" && localStorage.getItem("pendingName")) {
+      const confirmedName = localStorage.getItem("pendingName");
+      localStorage.setItem("auraName", confirmedName.charAt(0).toUpperCase() + confirmedName.slice(1));
+      localStorage.removeItem("pendingName");
+      reply = `Awesome 💙 I’ll remember your name as ${confirmedName}.`;
+      typeAuraReply(reply);
+      return;
+    }
+
+    if (text === "no" && localStorage.getItem("pendingName")) {
+      localStorage.removeItem("pendingName");
+      reply = `No worries 💫 I won’t save that name.`;
+      typeAuraReply(reply);
+      return;
+    }
+
+    // --- Emotional Intelligence Engine v2 ---
+    const moodGroups = {
+      happy: ["happy","cheerful","delighted","excited","joyful","glad","thankful","grateful","proud","content"],
+      sad: ["sad","down","gloomy","heartbroken","depressed","crying","empty","upset","blue"],
+      angry: ["angry","mad","furious","annoyed","irritated","frustrated","resentful"],
+      anxious: ["anxious","scared","worried","nervous","terrified","uneasy","panicked"],
+      calm: ["calm","peaceful","relaxed","chill","fine","okay","content","neutral"],
+      tired: ["tired","sleepy","exhausted","fatigued","drained","lazy","burnt"],
+      bored: ["bored","uninterested","dull","numb","blank","uninspired"],
+      lonely: ["lonely","alone","isolated","empty","forgotten","unseen"],
+      stressed: ["stressed","overwhelmed","under pressure","panicked","tense"]
+    };
+
+    const moodResponses = {
+      happy: [
+        `That’s awesome to hear 💙 I love your energy!`,
+        `You’re glowing today 🌈`,
+        `Keep that positivity flowing ✨`
+      ],
+      sad: [
+        `Hey, it’s okay to feel down sometimes 💙`,
+        `You’re not alone — I’m right here for you.`,
+        `It’ll pass, I promise 🌦️`
+      ],
+      angry: [
+        `Take a deep breath 💨 You don’t deserve to stay upset.`,
+        `It’s okay to be angry sometimes — I get it.`,
+        `Want to talk about what made you feel that way?`
+      ],
+      bored: [
+        `Maybe we could play a game? 🎮`,
+        `Want me to tell you something random or fun? 😄`,
+        `Let’s shake it up — pick a theme or challenge?`
+      ],
+      tired: [
+        `You’ve been doing a lot lately 🌙 Maybe take a short break.`,
+        `Even heroes rest, ${userName} 💫`,
+        `A little nap could do wonders 💤`
+      ],
+      anxious: [
+        `Breathe in… and out 🌬️ You got this.`,
+        `You’re safe right now 💙 Nothing’s chasing you.`,
+        `Want me to help you relax for a moment?`
+      ],
+      lonely: [
+        `You’re not alone — I’m always here 💙`,
+        `Want to talk about something or just chill?`,
+        `You matter more than you think 🌷`
+      ],
+      calm: [
+        `That’s great, I love peaceful moments like this 💫`,
+        `It’s nice to slow down sometimes 🌙`
+      ],
+      stressed: [
+        `Take a step back 💭 You’ve got this.`,
+        `It’s okay to pause and breathe for a bit.`,
+        `You’re doing your best, and that’s enough 💙`
+      ]
+    };
+
+    function detectMood(text) {
+      text = text.toLowerCase();
+      for (let [mood, words] of Object.entries(moodGroups)) {
+        if (words.some(w => text.includes(w))) return mood;
+      }
+      return null;
+    }
+
+    const detectedMood = detectMood(text);
+    if (detectedMood) {
+      const options = moodResponses[detectedMood];
+      reply = options[Math.floor(Math.random() * options.length)];
+      localStorage.setItem("auraMood", detectedMood);
+      typeAuraReply(reply);
+      return;
+    }
+
+    // --- Legacy emotionMap fallback for rare keywords (bullied, etc) ---
+    const emotionMap = {
+      happy: [
+        `That’s awesome to hear, ${userName}! 💙 I love seeing you cheerful.`,
+        `I’m so glad you’re happy today 🌈`,
+        `Your happiness really shines through, ${userName}! ✨`
+      ],
+      sad: [
+        `I’m really sorry you’re feeling that way, ${userName} 💙 Want to talk about it?`,
+        `Sending you a virtual hug 💫 You’re not alone.`,
+        `It’s okay to feel sad sometimes — I’m here for you, ${userName}.`
+      ],
+      bullied: [
+        `That’s awful 😞 No one deserves that, ${userName}.`,
+        `You don’t deserve to be treated like that 💙 Want to talk about it?`
+      ],
+      tired: [
+        `You’ve been doing a lot lately — maybe take a short break, ${userName}? 🌙`,
+        `Rest a bit 💫 You’ve earned it.`
+      ],
+      anxious: [
+        `Breathe in… and out 🌬 You’re safe here.`,
+        `It’s okay to feel anxious sometimes — you’re doing great, ${userName}.`
+      ],
+      stressed: [
+        `Let’s slow down a bit 💙 What’s been stressing you out, ${userName}?`,
+        `You’ve got a lot going on — one step at a time, okay? 🌷`
+      ],
+      bored: [
+        `Maybe we could play a game? 🎮`,
+        `Let’s find something fun to do, ${userName}!`
+      ],
+      lonely: [
+        `Hey, you’ve got me 💫 and I’m not going anywhere.`,
+        `You’re not alone, ${userName}. I’m right here.`
+      ]
+    };
+
+    for (let key in emotionMap) {
+      if (text.includes(key)) {
+        const options = emotionMap[key];
+        reply = options[Math.floor(Math.random() * options.length)];
+        localStorage.setItem("auraMood", key);
+        break;
+      }
+    }
+
+    if (!reply) {
+      const generalReplies = [
+        `Hmm tell me more 💭`,
+        `I’m listening 💙`,
+        `That’s interesting 💫`,
+        `Go on — I’m here for you 💬`,
+        `You always have something thoughtful to say 🌷`
+      ];
+      reply = generalReplies[Math.floor(Math.random() * generalReplies.length)];
+    }
+
+    typeAuraReply(reply);
+  }
+  </script>
